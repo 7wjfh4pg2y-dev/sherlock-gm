@@ -840,10 +840,10 @@
 <!-- MAP FULLSCREEN MODAL -->
 <div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);overflow:hidden;cursor:grab;">
   <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
-  <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:8px;">
-    <button class="btn btn-secondary btn-sm" onclick="mapZoom(0.25)">＋</button>
-    <button class="btn btn-secondary btn-sm" onclick="mapZoomReset()">Reset</button>
-    <button class="btn btn-secondary btn-sm" onclick="mapZoom(-0.25)">－</button>
+  <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:6px;background:rgba(20,15,10,0.85);border:1px solid var(--sepia);border-radius:4px;padding:6px 10px;backdrop-filter:blur(4px);">
+    <button onclick="mapZoom(1.3)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">＋</button>
+    <button onclick="mapZoomReset()" style="height:36px;padding:0 12px;background:transparent;color:var(--parchment);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Courier Prime',monospace;font-size:0.75rem;letter-spacing:0.08em;cursor:pointer;">RESET</button>
+    <button onclick="mapZoom(0.77)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">－</button>
   </div>
   <div id="map-pan-container" style="transform-origin:center center;will-change:transform;position:absolute;">
     <img id="map-fullscreen-img" src="" alt="Map of London" style="display:block;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);user-select:none;-webkit-user-drag:none;">
@@ -1159,8 +1159,8 @@ function applyMapTransform() {
     `translate(${mapX}px, ${mapY}px) scale(${mapScale})`;
 }
 
-function mapZoom(delta) {
-  mapScale = Math.min(8, Math.max(mapFitScale * 0.5, mapScale + delta * mapFitScale));
+function mapZoom(factor) {
+  mapScale = Math.min(mapFitScale * 16, Math.max(mapFitScale * 0.9, mapScale * factor));
   applyMapTransform();
 }
 
@@ -1182,7 +1182,7 @@ function calcMapFitScale(img) {
     overlay.addEventListener('wheel', e => {
       if (!overlay.classList.contains('open')) return;
       e.preventDefault();
-      mapZoom(e.deltaY < 0 ? 0.25 : -0.25);
+      mapZoom(e.deltaY < 0 ? 1.15 : 0.87);
     }, { passive: false });
 
     overlay.addEventListener('mousedown', e => {
