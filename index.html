@@ -702,6 +702,7 @@
         </select>
       </div>
       <button class="btn btn-secondary btn-sm" onclick="showNewCase()">+ New Case</button>
+      <button class="btn btn-secondary btn-sm" onclick="showMapsLibrary()">🗺 Maps</button>
       <button class="btn btn-danger btn-sm" id="delete-case-btn" onclick="deleteCase()" style="display:none">Delete Case</button>
       <button class="btn btn-secondary btn-sm" onclick="gmLogout()">Logout</button>
     </div>
@@ -816,6 +817,26 @@
   <img id="lightbox-img" src="" alt="">
 </div>
 
+<!-- MAPS LIBRARY MODAL -->
+<div class="modal-overlay" id="modal-maps-library" onclick="if(event.target===this)closeModal('modal-maps-library')">
+  <div class="modal" style="max-width:700px;width:100%;">
+    <button class="modal-close" onclick="closeModal('modal-maps-library')">×</button>
+    <div class="modal-title">Maps Library</div>
+    <div class="field">
+      <label>Map Name</label>
+      <input type="text" id="new-map-name" placeholder="e.g. London 1895">
+    </div>
+    <div class="field">
+      <label>Image File</label>
+      <input type="file" id="new-map-file" accept="image/*" style="color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.85rem;">
+    </div>
+    <div id="maps-library-error" class="error-msg"></div>
+    <button class="btn btn-primary btn-sm" onclick="uploadLibraryMap()" style="margin-bottom:20px;">↑ Upload Map</button>
+    <hr style="border:none;border-top:1px solid var(--parchment-darker);margin-bottom:16px;">
+    <div id="maps-library-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
+  </div>
+</div>
+
 <!-- MAP FULLSCREEN MODAL -->
 <div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);" onclick="if(event.target===this)closeModal('modal-map')">
   <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
@@ -881,6 +902,8 @@ let currentCaseId = null;
 let currentCaseName = null;
 let currentCaseDescription = '';
 let currentMapUrl = '';
+let currentMapId = null;
+let mapsLibrary = [];
 let allClues = [];
 let playerSubscription = null;
 let isGM = false;
@@ -944,6 +967,7 @@ async function enterGM() {
   isGM = true;
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge gm">Game Master</span>';
   showScreen('gm-screen');
+  await loadMapsLibrary();
   await loadCases();
 }
 
@@ -987,7 +1011,8 @@ async function onCaseChange() {
   }
   const { data: caseData } = await sb.from('cases').select('*').eq('id', currentCaseId).single();
   currentCaseDescription = caseData?.description || '';
-  currentMapUrl = caseData?.map_url || '';
+  currentMapId = caseData?.map_id || null;
+  currentMapUrl = currentMapId ? (mapsLibrary.find(m => m.id === currentMapId)?.url || '') : '';
   // Share link
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
@@ -1018,39 +1043,98 @@ function gmBriefingHTML() {
 }
 
 function gmMapHTML() {
-  const url = currentMapUrl;
+  const selected = mapsLibrary.find(m => m.id === currentMapId);
+  const options = mapsLibrary.map(m =>
+    `<option value="${m.id}" ${m.id === currentMapId ? 'selected' : ''}>${escapeHtml(m.name)}</option>`
+  ).join('');
   return `<div class="case-briefing-panel" style="margin-bottom:24px;">
     <div class="briefing-header" onclick="toggleBriefing('gm-map-body')">
-      <span>Map of London</span><span id="gm-map-toggle" class="briefing-toggle">▾</span>
+      <span>Case Map</span><span id="gm-map-toggle" class="briefing-toggle">▾</span>
     </div>
     <div id="gm-map-body" class="briefing-body">
-      ${url ? `<img src="${url}" alt="Map of London" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map uploaded yet.</p>'}
-      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-        ${url ? '↺ Replace Map' : '↑ Upload Map'}
-        <input type="file" accept="image/*" style="display:none;" onchange="uploadMap(this)">
-      </label>
-      ${url ? `<button class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="openMapFullscreen()">⤢ Fullscreen</button>` : ''}
-      <div id="gm-map-error" class="error-msg"></div>
+      ${selected ? `<img src="${selected.url}" alt="${escapeHtml(selected.name)}" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;display:block;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map attached to this case.</p>'}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="case-map-select" style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;background:var(--ink-dark);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
+          <option value="">— No map —</option>
+          ${options}
+        </select>
+        ${selected ? `<button class="btn btn-secondary btn-sm" onclick="openMapFullscreen()">⤢ Fullscreen</button>` : ''}
+      </div>
     </div>
   </div>`;
 }
 
-async function uploadMap(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const errEl = document.getElementById('gm-map-error');
+async function attachMapToCase(mapId) {
+  const { error } = await sb.from('cases').update({ map_id: mapId || null }).eq('id', currentCaseId);
+  if (error) { toast('Error saving map selection.'); return; }
+  currentMapId = mapId || null;
+  currentMapUrl = mapsLibrary.find(m => m.id === mapId)?.url || '';
+  toast('Map updated.');
+  renderGMClues();
+}
+
+async function loadMapsLibrary() {
+  const { data } = await sb.from('maps').select('*').order('created_at');
+  mapsLibrary = data || [];
+}
+
+async function showMapsLibrary() {
+  await loadMapsLibrary();
+  renderMapsLibraryModal();
+  openModal('modal-maps-library');
+}
+
+function renderMapsLibraryModal() {
+  const grid = document.getElementById('maps-library-grid');
+  if (!mapsLibrary.length) {
+    grid.innerHTML = '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);">No maps uploaded yet.</p>';
+    return;
+  }
+  grid.innerHTML = mapsLibrary.map(m => `
+    <div style="border:1px solid var(--parchment-darker);overflow:hidden;border-radius:2px;">
+      <img src="${m.url}" alt="${escapeHtml(m.name)}" style="width:100%;height:140px;object-fit:cover;display:block;cursor:pointer;" onclick="openMapPreview('${m.url}')">
+      <div style="padding:8px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <span style="font-family:'Courier Prime',monospace;font-size:0.8rem;color:var(--parchment);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.name)}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteMap('${m.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function uploadLibraryMap() {
+  const nameEl = document.getElementById('new-map-name');
+  const fileEl = document.getElementById('new-map-file');
+  const errEl = document.getElementById('maps-library-error');
+  const name = nameEl.value.trim();
+  const file = fileEl.files[0];
+  if (!name) { errEl.textContent = 'Enter a map name.'; return; }
+  if (!file) { errEl.textContent = 'Select an image.'; return; }
   errEl.textContent = 'Uploading…';
   const ext = file.name.split('.').pop();
-  const path = `${currentCaseId}/map_${Date.now()}.${ext}`;
+  const path = `maps/${Date.now()}.${ext}`;
   const { error: upErr } = await sb.storage.from('clues').upload(path, file);
   if (upErr) { errEl.textContent = upErr.message; return; }
   const { data: urlData } = sb.storage.from('clues').getPublicUrl(path);
-  const mapUrl = urlData.publicUrl;
-  const { error: dbErr } = await sb.from('cases').update({ map_url: mapUrl }).eq('id', currentCaseId);
+  const { error: dbErr } = await sb.from('maps').insert({ name, url: urlData.publicUrl });
   if (dbErr) { errEl.textContent = dbErr.message; return; }
-  currentMapUrl = mapUrl;
-  toast('Map uploaded!');
-  renderGMClues();
+  nameEl.value = '';
+  fileEl.value = '';
+  errEl.textContent = '';
+  await loadMapsLibrary();
+  renderMapsLibraryModal();
+  toast('Map added to library!');
+}
+
+async function deleteMap(id) {
+  if (!confirm('Remove this map from the library?')) return;
+  await sb.from('maps').delete().eq('id', id);
+  await loadMapsLibrary();
+  renderMapsLibraryModal();
+  toast('Map removed.');
+}
+
+function openMapPreview(url) {
+  document.getElementById('map-fullscreen-img').src = url;
+  openModal('modal-map');
 }
 
 function openMapFullscreen() {
@@ -1260,7 +1344,9 @@ async function enterPlayer(caseId) {
   currentCaseId = caseId;
   currentCaseName = caseData.name;
   currentCaseDescription = caseData.description || '';
-  currentMapUrl = caseData.map_url || '';
+  currentMapId = caseData.map_id || null;
+  const mapEntry = mapsLibrary.find(m => m.id === currentMapId);
+  currentMapUrl = mapEntry?.url || '';
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
