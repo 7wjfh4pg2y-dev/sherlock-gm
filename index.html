@@ -1152,7 +1152,7 @@ function openMapPreview(url) {
 }
 
 // ── MAP PAN / ZOOM ──
-let mapScale = 1, mapFitScale = 1, mapX = 0, mapY = 0, mapDragging = false, mapDragStart = null;
+let mapScale = 1, mapFitScale = 1, mapX = 0, mapY = 0, mapDragging = false, mapDragStart = null, mapDidMove = false;
 
 function applyMapTransform() {
   document.getElementById('map-pan-container').style.transform =
@@ -1188,18 +1188,21 @@ function calcMapFitScale(img) {
     overlay.addEventListener('mousedown', e => {
       if (e.target.closest('button')) return;
       mapDragging = true;
+      mapDidMove = false;
       mapDragStart = { x: e.clientX - mapX, y: e.clientY - mapY };
       overlay.style.cursor = 'grabbing';
     });
 
     window.addEventListener('mousemove', e => {
       if (!mapDragging) return;
+      mapDidMove = true;
       mapX = e.clientX - mapDragStart.x;
       mapY = e.clientY - mapDragStart.y;
       applyMapTransform();
     });
 
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', e => {
+      if (mapDragging && !mapDidMove && e.target === overlay) closeModal('modal-map');
       mapDragging = false;
       document.getElementById('modal-map').style.cursor = 'grab';
     });
