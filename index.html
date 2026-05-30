@@ -1182,9 +1182,7 @@ function calcMapFitScale(img) {
     overlay.addEventListener('wheel', e => {
       if (!overlay.classList.contains('open')) return;
       e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.15 : -0.15;
-      mapScale = Math.min(8, Math.max(0.5, mapScale + delta));
-      applyMapTransform();
+      mapZoom(e.deltaY < 0 ? 0.25 : -0.25);
     }, { passive: false });
 
     overlay.addEventListener('mousedown', e => {
