@@ -722,6 +722,9 @@
     <div class="player-case-title" id="player-case-title">Loading case…</div>
     <div class="player-meta" id="player-meta"></div>
     <div id="player-briefing" style="display:none"></div>
+    <div id="player-map-btn-wrap" style="display:none;margin-bottom:20px;">
+      <button class="btn btn-secondary" onclick="openMapFullscreen()">🗺 View Map of London</button>
+    </div>
     <div id="player-content">
       <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
     </div>
@@ -813,6 +816,12 @@
   <img id="lightbox-img" src="" alt="">
 </div>
 
+<!-- MAP FULLSCREEN MODAL -->
+<div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);" onclick="if(event.target===this)closeModal('modal-map')">
+  <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
+  <img id="map-fullscreen-img" src="" alt="Map of London" style="max-width:95vw;max-height:92vh;object-fit:contain;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);">
+</div>
+
 <!-- CLUE EXPAND MODAL -->
 <div class="modal-overlay" id="modal-clue-expand" style="align-items:center;justify-content:center;" onclick="if(event.target===this)closeModal('modal-clue-expand')">
   <div id="clue-expand-inner" style="background:var(--parchment);border:2px solid var(--sepia);max-width:700px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:8px 8px 0 rgba(0,0,0,0.5);">
@@ -871,6 +880,7 @@ const store = {
 let currentCaseId = null;
 let currentCaseName = null;
 let currentCaseDescription = '';
+let currentMapUrl = '';
 let allClues = [];
 let playerSubscription = null;
 let isGM = false;
@@ -977,6 +987,7 @@ async function onCaseChange() {
   }
   const { data: caseData } = await sb.from('cases').select('*').eq('id', currentCaseId).single();
   currentCaseDescription = caseData?.description || '';
+  currentMapUrl = caseData?.map_url || '';
   // Share link
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
@@ -1004,6 +1015,53 @@ function gmBriefingHTML() {
       </div>
     </div>
   </div>`;
+}
+
+function gmMapHTML() {
+  const url = currentMapUrl;
+  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
+    <div class="briefing-header" onclick="toggleBriefing('gm-map-body')">
+      <span>Map of London</span><span id="gm-map-toggle" class="briefing-toggle">▾</span>
+    </div>
+    <div id="gm-map-body" class="briefing-body">
+      ${url ? `<img src="${url}" alt="Map of London" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map uploaded yet.</p>'}
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        ${url ? '↺ Replace Map' : '↑ Upload Map'}
+        <input type="file" accept="image/*" style="display:none;" onchange="uploadMap(this)">
+      </label>
+      ${url ? `<button class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="openMapFullscreen()">⤢ Fullscreen</button>` : ''}
+      <div id="gm-map-error" class="error-msg"></div>
+    </div>
+  </div>`;
+}
+
+async function uploadMap(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const errEl = document.getElementById('gm-map-error');
+  errEl.textContent = 'Uploading…';
+  const ext = file.name.split('.').pop();
+  const path = `${currentCaseId}/map_${Date.now()}.${ext}`;
+  const { error: upErr } = await sb.storage.from('clues').upload(path, file);
+  if (upErr) { errEl.textContent = upErr.message; return; }
+  const { data: urlData } = sb.storage.from('clues').getPublicUrl(path);
+  const mapUrl = urlData.publicUrl;
+  const { error: dbErr } = await sb.from('cases').update({ map_url: mapUrl }).eq('id', currentCaseId);
+  if (dbErr) { errEl.textContent = dbErr.message; return; }
+  currentMapUrl = mapUrl;
+  toast('Map uploaded!');
+  renderGMClues();
+}
+
+function openMapFullscreen() {
+  if (!currentMapUrl) return;
+  document.getElementById('map-fullscreen-img').src = currentMapUrl;
+  openModal('modal-map');
+}
+
+function renderPlayerMap() {
+  const wrap = document.getElementById('player-map-btn-wrap');
+  wrap.style.display = currentMapUrl ? '' : 'none';
 }
 
 function escapeHtml(str) {
@@ -1059,7 +1117,7 @@ async function loadGMClues() {
 function renderGMClues() {
   const revealed = allClues.filter(c => c.revealed);
   const unrevealed = allClues.filter(c => !c.revealed);
-  let html = gmBriefingHTML();
+  let html = gmBriefingHTML() + gmMapHTML();
 
   // Unrevealed
   html += `<div class="clues-section-title" style="color:var(--parchment)">Unrevealed <span class="counter-badge">${unrevealed.length}</span></div>`;
@@ -1202,9 +1260,11 @@ async function enterPlayer(caseId) {
   currentCaseId = caseId;
   currentCaseName = caseData.name;
   currentCaseDescription = caseData.description || '';
+  currentMapUrl = caseData.map_url || '';
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
+  renderPlayerMap();
   showScreen('player-screen');
   await loadPlayerClues();
   subscribePlayer();
