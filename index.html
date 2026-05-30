@@ -838,9 +838,16 @@
 </div>
 
 <!-- MAP FULLSCREEN MODAL -->
-<div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);" onclick="if(event.target===this)closeModal('modal-map')">
+<div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);overflow:hidden;cursor:grab;">
   <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
-  <img id="map-fullscreen-img" src="" alt="Map of London" style="max-width:95vw;max-height:92vh;object-fit:contain;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);">
+  <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:8px;">
+    <button class="btn btn-secondary btn-sm" onclick="mapZoom(0.25)">＋</button>
+    <button class="btn btn-secondary btn-sm" onclick="mapZoomReset()">Reset</button>
+    <button class="btn btn-secondary btn-sm" onclick="mapZoom(-0.25)">－</button>
+  </div>
+  <div id="map-pan-container" style="transform-origin:center center;will-change:transform;">
+    <img id="map-fullscreen-img" src="" alt="Map of London" style="max-width:95vw;max-height:92vh;object-fit:contain;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);display:block;user-select:none;-webkit-user-drag:none;">
+  </div>
 </div>
 
 <!-- CLUE EXPAND MODAL -->
@@ -1137,9 +1144,96 @@ function openMapPreview(url) {
   openModal('modal-map');
 }
 
+// ── MAP PAN / ZOOM ──
+let mapScale = 1, mapX = 0, mapY = 0, mapDragging = false, mapDragStart = null;
+
+function applyMapTransform() {
+  document.getElementById('map-pan-container').style.transform =
+    `translate(${mapX}px, ${mapY}px) scale(${mapScale})`;
+}
+
+function mapZoom(delta) {
+  mapScale = Math.min(8, Math.max(0.5, mapScale + delta));
+  applyMapTransform();
+}
+
+function mapZoomReset() {
+  mapScale = 1; mapX = 0; mapY = 0;
+  applyMapTransform();
+}
+
+(function initMapInteraction() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('modal-map');
+
+    overlay.addEventListener('wheel', e => {
+      if (!overlay.classList.contains('open')) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      mapScale = Math.min(8, Math.max(0.5, mapScale + delta));
+      applyMapTransform();
+    }, { passive: false });
+
+    overlay.addEventListener('mousedown', e => {
+      if (e.target.closest('button')) return;
+      mapDragging = true;
+      mapDragStart = { x: e.clientX - mapX, y: e.clientY - mapY };
+      overlay.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!mapDragging) return;
+      mapX = e.clientX - mapDragStart.x;
+      mapY = e.clientY - mapDragStart.y;
+      applyMapTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      mapDragging = false;
+      document.getElementById('modal-map').style.cursor = 'grab';
+    });
+
+    // Touch pinch-to-zoom
+    let lastTouchDist = null;
+    overlay.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        lastTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY);
+      } else if (e.touches.length === 1) {
+        mapDragging = true;
+        mapDragStart = { x: e.touches[0].clientX - mapX, y: e.touches[0].clientY - mapY };
+      }
+    }, { passive: true });
+
+    overlay.addEventListener('touchmove', e => {
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY);
+        if (lastTouchDist) {
+          mapScale = Math.min(8, Math.max(0.5, mapScale * (dist / lastTouchDist)));
+          applyMapTransform();
+        }
+        lastTouchDist = dist;
+      } else if (e.touches.length === 1 && mapDragging) {
+        mapX = e.touches[0].clientX - mapDragStart.x;
+        mapY = e.touches[0].clientY - mapDragStart.y;
+        applyMapTransform();
+      }
+    }, { passive: true });
+
+    overlay.addEventListener('touchend', () => {
+      mapDragging = false;
+      lastTouchDist = null;
+    });
+  });
+})();
+
 function openMapFullscreen() {
   if (!currentMapUrl) return;
   document.getElementById('map-fullscreen-img').src = currentMapUrl;
+  mapZoomReset();
   openModal('modal-map');
 }
 
