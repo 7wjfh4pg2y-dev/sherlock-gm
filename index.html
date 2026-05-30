@@ -621,6 +621,41 @@
     letter-spacing: 0.05em;
   }
 
+  .case-briefing-panel {
+    border: 1px solid var(--parchment-darker);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .briefing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.04);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--parchment);
+    cursor: pointer;
+    user-select: none;
+  }
+  .briefing-header:hover { background: rgba(255,255,255,0.08); }
+  .briefing-toggle { font-size: 0.85rem; opacity: 0.6; }
+  .briefing-body {
+    padding: 16px 20px;
+    border-top: 1px solid var(--parchment-darker);
+  }
+  .briefing-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.92rem;
+    color: var(--parchment);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    margin: 0;
+  }
+
   hr.ornamental {
     border: none;
     text-align: center;
@@ -686,6 +721,7 @@
   <div id="player-screen" class="screen">
     <div class="player-case-title" id="player-case-title">Loading case…</div>
     <div class="player-meta" id="player-meta"></div>
+    <div id="player-briefing" style="display:none"></div>
     <div id="player-content">
       <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
     </div>
@@ -717,6 +753,10 @@
     <div class="field">
       <label>Case Name</label>
       <input type="text" id="new-case-name" placeholder="e.g. The Munitions Magnate">
+    </div>
+    <div class="field">
+      <label>Case Introduction / Briefing</label>
+      <textarea id="new-case-description" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier Prime',monospace;font-size:0.9rem;background:var(--ink-dark);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;"></textarea>
     </div>
     <div id="new-case-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="createCase()">Open Case File</button>
@@ -774,7 +814,7 @@
 </div>
 
 <!-- CLUE EXPAND MODAL -->
-<div class="modal-overlay" id="modal-clue-expand" style="align-items:center;justify-content:center;">
+<div class="modal-overlay" id="modal-clue-expand" style="align-items:center;justify-content:center;" onclick="if(event.target===this)closeModal('modal-clue-expand')">
   <div id="clue-expand-inner" style="background:var(--parchment);border:2px solid var(--sepia);max-width:700px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:8px 8px 0 rgba(0,0,0,0.5);">
     <button class="modal-close" onclick="closeModal('modal-clue-expand')" style="position:sticky;top:8px;right:8px;float:right;z-index:10;">×</button>
     <div id="clue-expand-title" style="font-family:'Playfair Display',serif;font-size:1.3rem;padding:20px 24px 0;border-bottom:1px solid var(--parchment-darker);padding-bottom:14px;margin-bottom:0;"></div>
@@ -830,6 +870,7 @@ const store = {
 
 let currentCaseId = null;
 let currentCaseName = null;
+let currentCaseDescription = '';
 let allClues = [];
 let playerSubscription = null;
 let isGM = false;
@@ -913,10 +954,12 @@ function showNewCase() { openModal('modal-new-case'); }
 async function createCase() {
   const name = document.getElementById('new-case-name').value.trim();
   if (!name) { document.getElementById('new-case-error').textContent = 'Enter a case name.'; return; }
-  const { data, error } = await sb.from('cases').insert({ name }).select().single();
+  const description = document.getElementById('new-case-description').value.trim();
+  const { data, error } = await sb.from('cases').insert({ name, description }).select().single();
   if (error) { document.getElementById('new-case-error').textContent = error.message; return; }
   closeModal('modal-new-case');
   document.getElementById('new-case-name').value = '';
+  document.getElementById('new-case-description').value = '';
   await loadCases();
   document.getElementById('case-select').value = data.id;
   onCaseChange();
@@ -932,11 +975,73 @@ async function onCaseChange() {
     document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
     return;
   }
+  const { data: caseData } = await sb.from('cases').select('*').eq('id', currentCaseId).single();
+  currentCaseDescription = caseData?.description || '';
   // Share link
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
   document.getElementById('share-box').style.display = 'flex';
   await loadGMClues();
+}
+
+function gmBriefingHTML() {
+  const desc = currentCaseDescription;
+  return `<div class="case-briefing-panel" id="gm-briefing-panel">
+    <div class="briefing-header" onclick="toggleBriefing('gm-briefing-body')">
+      <span>Case Briefing</span><span id="gm-briefing-toggle" class="briefing-toggle">▾</span>
+    </div>
+    <div id="gm-briefing-body" class="briefing-body">
+      <div id="gm-briefing-display" style="${desc ? '' : 'display:none'}">
+        <p class="briefing-text" id="gm-briefing-text">${desc ? escapeHtml(desc) : ''}</p>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="showGMBriefingEdit()">✏️ Edit Briefing</button>
+      </div>
+      <div id="gm-briefing-edit" style="${desc ? 'display:none' : ''}">
+        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier Prime',monospace;font-size:0.9rem;background:var(--ink-dark);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-primary btn-sm" onclick="saveGMBriefing()">Save</button>
+          ${desc ? '<button class="btn btn-secondary btn-sm" onclick="cancelGMBriefingEdit()">Cancel</button>' : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleBriefing(bodyId) {
+  const body = document.getElementById(bodyId);
+  const toggle = bodyId === 'gm-briefing-body'
+    ? document.getElementById('gm-briefing-toggle')
+    : document.getElementById('player-briefing-toggle');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  toggle.textContent = open ? '▸' : '▾';
+}
+
+function showGMBriefingEdit() {
+  document.getElementById('gm-briefing-display').style.display = 'none';
+  document.getElementById('gm-briefing-edit').style.display = '';
+  document.getElementById('gm-briefing-input').value = currentCaseDescription;
+}
+
+function cancelGMBriefingEdit() {
+  document.getElementById('gm-briefing-edit').style.display = 'none';
+  document.getElementById('gm-briefing-display').style.display = '';
+}
+
+async function saveGMBriefing() {
+  const text = document.getElementById('gm-briefing-input').value.trim();
+  const { error } = await sb.from('cases').update({ description: text }).eq('id', currentCaseId);
+  if (error) { toast('Error saving briefing.'); return; }
+  currentCaseDescription = text;
+  document.getElementById('gm-briefing-text').textContent = text;
+  if (text) {
+    document.getElementById('gm-briefing-display').style.display = '';
+    document.getElementById('gm-briefing-edit').style.display = 'none';
+  }
+  toast('Briefing saved.');
 }
 
 function copyShareLink() {
@@ -954,7 +1059,7 @@ async function loadGMClues() {
 function renderGMClues() {
   const revealed = allClues.filter(c => c.revealed);
   const unrevealed = allClues.filter(c => !c.revealed);
-  let html = '';
+  let html = gmBriefingHTML();
 
   // Unrevealed
   html += `<div class="clues-section-title" style="color:var(--parchment)">Unrevealed <span class="counter-badge">${unrevealed.length}</span></div>`;
@@ -1096,8 +1201,10 @@ async function enterPlayer(caseId) {
   closeModal('modal-player-join');
   currentCaseId = caseId;
   currentCaseName = caseData.name;
+  currentCaseDescription = caseData.description || '';
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
   document.getElementById('player-case-title').textContent = caseData.name;
+  renderPlayerBriefing();
   showScreen('player-screen');
   await loadPlayerClues();
   subscribePlayer();
@@ -1128,6 +1235,21 @@ function renderPlayerClues(clues) {
   });
   html += '</div>';
   document.getElementById('player-content').innerHTML = html;
+}
+
+function renderPlayerBriefing() {
+  const desc = currentCaseDescription;
+  const el = document.getElementById('player-briefing');
+  if (!desc) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = `<div class="case-briefing-panel">
+    <div class="briefing-header" onclick="toggleBriefing('player-briefing-body')">
+      <span>Case Briefing</span><span id="player-briefing-toggle" class="briefing-toggle">▾</span>
+    </div>
+    <div id="player-briefing-body" class="briefing-body">
+      <p class="briefing-text">${escapeHtml(desc)}</p>
+    </div>
+  </div>`;
 }
 
 function subscribePlayer() {
