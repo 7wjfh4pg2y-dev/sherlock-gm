@@ -1345,8 +1345,11 @@ async function enterPlayer(caseId) {
   currentCaseName = caseData.name;
   currentCaseDescription = caseData.description || '';
   currentMapId = caseData.map_id || null;
-  const mapEntry = mapsLibrary.find(m => m.id === currentMapId);
-  currentMapUrl = mapEntry?.url || '';
+  currentMapUrl = '';
+  if (currentMapId) {
+    const { data: mapData } = await sb.from('maps').select('url').eq('id', currentMapId).single();
+    currentMapUrl = mapData?.url || '';
+  }
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
