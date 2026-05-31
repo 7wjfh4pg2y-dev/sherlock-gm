@@ -664,6 +664,84 @@
     color: var(--parchment-darker);
   }
   hr.ornamental::before { content: '— ✦ —'; font-size: 0.9rem; }
+
+  /* ── COLOR SWATCHES ── */
+  .color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: var(--ink); transform: scale(1.15); }
+
+  /* ── NOTEBOOK ── */
+  .notebook-section {
+    margin-top: 40px;
+  }
+  .notebook-header {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.3rem;
+    color: var(--parchment);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .notebook-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(245,234,214,0.2);
+  }
+  .notebook-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .notebook-textarea {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--parchment-darker);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.88rem;
+    color: var(--ink);
+    resize: none;
+    line-height: 1.6;
+    min-height: 70px;
+    outline: none;
+    background-image: repeating-linear-gradient(transparent, transparent 22px, rgba(139,105,20,0.12) 22px, rgba(139,105,20,0.12) 23px);
+  }
+  .notebook-textarea:focus { border-color: var(--sepia); }
+  .notebook-notes { display: flex; flex-direction: column; gap: 12px; }
+  .notebook-note {
+    background: var(--parchment);
+    border-left: 3px solid currentColor;
+    padding: 10px 14px;
+    position: relative;
+  }
+  .notebook-note-meta {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .notebook-note-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
 </style>
 </head>
 <body>
@@ -728,6 +806,15 @@
     </div>
     <div id="player-content">
       <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
+    </div>
+    <div id="player-notebook-section" class="notebook-section" style="display:none">
+      <hr class="ornamental">
+      <div class="notebook-header">The Irregulars' Notebook</div>
+      <div class="notebook-input-row">
+        <textarea class="notebook-textarea" id="notebook-input" placeholder="Record your deductions…" rows="3"></textarea>
+        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;margin-top:2px;" onclick="addNote()">Add Note</button>
+      </div>
+      <div class="notebook-notes" id="notebook-notes"></div>
     </div>
   </div>
 
@@ -804,10 +891,36 @@
     <div class="modal-title">Join a Case</div>
     <div class="field">
       <label>Case Code</label>
-      <input type="text" id="player-case-code" placeholder="Paste code from GM" onkeydown="if(event.key==='Enter')doPlayerJoin()">
+      <input type="text" id="player-case-code" placeholder="Paste code from GM">
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="player-name-input" placeholder="e.g. Dr. Watson" maxlength="32">
+    </div>
+    <div class="field">
+      <label>Note Colour</label>
+      <div class="color-swatches" id="join-color-swatches"></div>
     </div>
     <div id="player-join-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="doPlayerJoin()">Enter the Case Room</button>
+  </div>
+</div>
+
+<!-- IDENTITY MODAL (for URL-based joins) -->
+<div class="modal-overlay" id="modal-player-identity">
+  <div class="modal">
+    <div class="modal-title">Identify Yourself</div>
+    <p style="font-family:'Courier Prime',monospace;font-size:0.78rem;color:var(--fog);margin-bottom:16px;letter-spacing:0.04em;">Before you enter the case room, tell us who you are.</p>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="identity-name-input" placeholder="e.g. Dr. Watson" maxlength="32">
+    </div>
+    <div class="field">
+      <label>Note Colour</label>
+      <div class="color-swatches" id="identity-color-swatches"></div>
+    </div>
+    <div id="identity-error" class="error-msg"></div>
+    <button class="btn btn-primary btn-full" onclick="confirmIdentity()">Enter the Case Room</button>
   </div>
 </div>
 
@@ -1447,11 +1560,18 @@ async function uploadClue() {
 }
 
 // ── PLAYER ──
-function showPlayerJoin() { openModal('modal-player-join'); }
+function showPlayerJoin() {
+  renderSwatches('join-color-swatches', playerColor);
+  openModal('modal-player-join');
+}
 
 async function doPlayerJoin() {
   const code = document.getElementById('player-case-code').value.trim();
-  if (!code) { document.getElementById('player-join-error').textContent = 'Enter a case code.'; return; }
+  const name = document.getElementById('player-name-input').value.trim();
+  const errEl = document.getElementById('player-join-error');
+  if (!code) { errEl.textContent = 'Enter a case code.'; return; }
+  if (!name) { errEl.textContent = 'Enter your name.'; return; }
+  playerName = name;
   await enterPlayer(code);
 }
 
@@ -1476,8 +1596,11 @@ async function enterPlayer(caseId) {
   renderPlayerBriefing();
   renderPlayerMap();
   showScreen('player-screen');
+  document.getElementById('player-notebook-section').style.display = '';
   await loadPlayerClues();
+  await loadNotes();
   subscribePlayer();
+  subscribeNotes();
 }
 
 async function loadPlayerClues() {
@@ -1630,12 +1753,117 @@ async function deleteClue(id) {
   toast('Clue deleted.');
 }
 
+// ── PLAYER IDENTITY ──
+const PLAYER_COLORS = [
+  { label: 'Crimson',  value: '#8b1a1a' },
+  { label: 'Navy',     value: '#1a3060' },
+  { label: 'Forest',   value: '#1a4a1a' },
+  { label: 'Plum',     value: '#5a1a5a' },
+  { label: 'Teal',     value: '#1a5050' },
+  { label: 'Chestnut', value: '#7a3010' },
+  { label: 'Slate',    value: '#2a3a50' },
+  { label: 'Umber',    value: '#5a3a10' },
+];
+
+let playerName = '';
+let playerColor = PLAYER_COLORS[0].value;
+let pendingCaseId = null;
+
+function renderSwatches(containerId, selectedColor, onChange) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  PLAYER_COLORS.forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'color-swatch' + (c.value === selectedColor ? ' selected' : '');
+    s.style.background = c.value;
+    s.title = c.label;
+    s.onclick = () => {
+      playerColor = c.value;
+      container.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+      s.classList.add('selected');
+      if (onChange) onChange(c.value);
+    };
+    container.appendChild(s);
+  });
+}
+
+// ── NOTES ──
+let notesSubscription = null;
+
+async function loadNotes() {
+  const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at');
+  renderNotes(data || []);
+}
+
+function renderNotes(notes) {
+  const container = document.getElementById('notebook-notes');
+  if (!notes.length) {
+    container.innerHTML = '<div style="font-family:\'Courier Prime\',monospace;font-size:0.8rem;color:var(--fog);font-style:italic;">No notes yet. Be the first to record a deduction.</div>';
+    return;
+  }
+  container.innerHTML = notes.map(n => {
+    const date = new Date(n.created_at);
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="notebook-note" style="color:${n.player_color}">
+      <div class="notebook-note-meta">${escapeHtml(n.player_name)} · ${time}</div>
+      <div class="notebook-note-text">${escapeHtml(n.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function addNote() {
+  const input = document.getElementById('notebook-input');
+  const content = input.value.trim();
+  if (!content) return;
+  const { error } = await sb.from('notes').insert({
+    case_id: currentCaseId,
+    player_name: playerName,
+    player_color: playerColor,
+    content,
+  });
+  if (error) { toast('Error saving note.'); return; }
+  input.value = '';
+}
+
+function subscribeNotes() {
+  if (notesSubscription) sb.removeChannel(notesSubscription);
+  notesSubscription = sb.channel('notes-' + currentCaseId)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `case_id=eq.${currentCaseId}` },
+      () => loadNotes())
+    .subscribe();
+}
+
+// ── IDENTITY MODAL (URL join) ──
+let _identityResolveFn = null;
+
+function promptIdentity() {
+  return new Promise(resolve => {
+    _identityResolveFn = resolve;
+    renderSwatches('identity-color-swatches', playerColor);
+    document.getElementById('identity-name-input').value = playerName;
+    document.getElementById('identity-error').textContent = '';
+    openModal('modal-player-identity');
+  });
+}
+
+function confirmIdentity() {
+  const name = document.getElementById('identity-name-input').value.trim();
+  if (!name) { document.getElementById('identity-error').textContent = 'Enter your name.'; return; }
+  playerName = name;
+  closeModal('modal-player-identity');
+  if (_identityResolveFn) { _identityResolveFn(); _identityResolveFn = null; }
+}
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', async () => {
+  // Render join modal swatches
+  renderSwatches('join-color-swatches', playerColor);
+
   // Check for player link
   const params = new URLSearchParams(location.search);
   const caseParam = params.get('case');
   if (caseParam) {
+    await promptIdentity();
     await enterPlayer(caseParam);
     return;
   }
