@@ -991,6 +991,15 @@
   </div>
 </div>
 
+<!-- KICKED OVERLAY -->
+<div id="kicked-overlay" style="display:none;position:fixed;inset:0;background:rgba(8,6,3,0.97);z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="font-family:'Courier New',Courier,monospace;font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Access Revoked</div>
+  <div style="font-family:'Palatino Linotype',Palatino,Georgia,serif;font-size:1.5rem;color:var(--parchment);text-align:center;">You have been removed from this case<br>by the Game Master.</div>
+  <div style="width:60px;height:1px;background:var(--sepia);margin:4px 0;"></div>
+  <div style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--fog);">Close this window or return to the landing page.</div>
+  <button class="btn btn-secondary" style="margin-top:8px;" onclick="location.href=location.pathname">Return to Landing</button>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1017,6 +1026,7 @@ let currentMapUrl = '';
 let currentMapId = null;
 let mapsLibrary = [];
 let allClues = [];
+let allPlayers = [];
 let playerSubscription = null;
 let isGM = false;
 
@@ -1174,6 +1184,61 @@ function gmMapHTML() {
       </div>
     </div>
   </div>`;
+}
+
+function gmPlayersHTML() {
+  const active = allPlayers.filter(p => !p.is_kicked);
+  const kicked = allPlayers.filter(p => p.is_kicked);
+  const rowStyle = 'display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
+  const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.82rem;color:var(--parchment);flex:1;`;
+
+  const playerRow = (p, isKicked) => `
+    <div style="${rowStyle}">
+      <div style="width:10px;height:10px;border-radius:50%;background:${p.player_color};flex-shrink:0;border:1px solid rgba(255,255,255,0.2);"></div>
+      <span style="${nameStyle}${isKicked ? 'opacity:0.45;text-decoration:line-through;' : ''}">${escapeHtml(p.player_name)}</span>
+      ${isKicked
+        ? `<button class="btn btn-secondary btn-sm" onclick="unkickPlayer('${p.id}')">Reinstate</button>
+           <button class="btn btn-danger btn-sm" onclick="deletePlayerData('${p.id}','${escapeHtml(p.player_name)}','${p.player_color}')">Delete</button>`
+        : `<button class="btn btn-danger btn-sm" onclick="kickPlayer('${p.id}')">Kick</button>`}
+    </div>`;
+
+  const body = !allPlayers.length
+    ? `<p style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--fog);margin:0;">No players have joined yet.</p>`
+    : `${active.map(p => playerRow(p, false)).join('')}
+       ${kicked.length ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(201,169,110,0.2);">
+         <div style="font-family:'Courier New',Courier,monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--fog);margin-bottom:6px;">Removed</div>
+         ${kicked.map(p => playerRow(p, true)).join('')}
+       </div>` : ''}`;
+
+  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
+    <div class="briefing-header" onclick="toggleBriefing('gm-players-body')">
+      <span>Players <span class="counter-badge">${active.length}</span></span>
+      <span id="gm-players-toggle" class="briefing-toggle">▾</span>
+    </div>
+    <div id="gm-players-body" class="briefing-body" style="padding:10px 16px;">
+      ${body}
+    </div>
+  </div>`;
+}
+
+async function kickPlayer(id) {
+  await sb.from('players').update({ is_kicked: true }).eq('id', id);
+  await loadGMClues();
+  toast('Player removed.');
+}
+
+async function unkickPlayer(id) {
+  await sb.from('players').update({ is_kicked: false }).eq('id', id);
+  await loadGMClues();
+  toast('Player reinstated.');
+}
+
+async function deletePlayerData(id, name, color) {
+  if (!confirm(`Delete all data for "${name}"? This removes their notes and cannot be undone.`)) return;
+  await sb.from('notes').delete().eq('case_id', currentCaseId).eq('player_name', name).eq('player_color', color);
+  await sb.from('players').delete().eq('id', id);
+  await loadGMClues();
+  toast('Player data deleted.');
 }
 
 async function attachMapToCase(mapId) {
@@ -1381,6 +1446,7 @@ function toggleBriefing(bodyId) {
   const body = document.getElementById(bodyId);
   const toggleId = bodyId === 'gm-briefing-body' ? 'gm-briefing-toggle'
     : bodyId === 'gm-map-body' ? 'gm-map-toggle'
+    : bodyId === 'gm-players-body' ? 'gm-players-toggle'
     : 'player-briefing-toggle';
   const toggle = document.getElementById(toggleId);
   const open = body.style.display !== 'none';
@@ -1419,15 +1485,19 @@ function copyShareLink() {
 
 // ── GM CLUES ──
 async function loadGMClues() {
-  const { data } = await sb.from('clues').select('*').eq('case_id', currentCaseId).order('position');
-  allClues = data || [];
+  const [cluesRes, playersRes] = await Promise.all([
+    sb.from('clues').select('*').eq('case_id', currentCaseId).order('position'),
+    sb.from('players').select('*').eq('case_id', currentCaseId).order('joined_at'),
+  ]);
+  allClues = cluesRes.data || [];
+  allPlayers = playersRes.data || [];
   renderGMClues();
 }
 
 function renderGMClues() {
   const revealed = allClues.filter(c => c.revealed);
   const unrevealed = allClues.filter(c => !c.revealed);
-  let html = gmBriefingHTML() + gmMapHTML();
+  let html = gmBriefingHTML() + gmMapHTML() + gmPlayersHTML();
 
   // Unrevealed
   html += `<div class="clues-section-title" style="color:var(--parchment)">Unrevealed <span class="counter-badge">${unrevealed.length}</span></div>`;
@@ -1567,12 +1637,30 @@ async function doPlayerJoin() {
   await enterPlayer(code);
 }
 
+let kickSubscription = null;
+
 async function enterPlayer(caseId) {
   const { data: caseData, error } = await sb.from('cases').select('*').eq('id', caseId).single();
   if (error || !caseData) {
     document.getElementById('player-join-error') && (document.getElementById('player-join-error').textContent = 'Case not found.');
     return;
   }
+
+  // Check if already kicked
+  const { data: existing } = await sb.from('players')
+    .select('is_kicked').eq('case_id', caseId).eq('player_name', playerName).single();
+  if (existing?.is_kicked) {
+    const errEl = document.getElementById('player-join-error') || document.getElementById('identity-error');
+    if (errEl) errEl.textContent = 'You have been removed from this case by the Game Master.';
+    return;
+  }
+
+  // Register player
+  await sb.from('players').upsert(
+    { case_id: caseId, player_name: playerName, player_color: playerColor, is_kicked: false },
+    { onConflict: 'case_id,player_name' }
+  );
+
   closeModal('modal-player-join');
   currentCaseId = caseId;
   currentCaseName = caseData.name;
@@ -1593,6 +1681,25 @@ async function enterPlayer(caseId) {
   await loadNotes();
   subscribePlayer();
   subscribeNotes();
+  subscribeKick(caseId);
+}
+
+function subscribeKick(caseId) {
+  if (kickSubscription) sb.removeChannel(kickSubscription);
+  kickSubscription = sb.channel('kick-' + caseId)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'players', filter: `case_id=eq.${caseId}` },
+      payload => {
+        if (payload.new.player_name === playerName && payload.new.is_kicked) showKickedScreen();
+      })
+    .subscribe();
+}
+
+function showKickedScreen() {
+  if (playerSubscription) sb.removeChannel(playerSubscription);
+  if (notesSubscription) sb.removeChannel(notesSubscription);
+  if (kickSubscription) sb.removeChannel(kickSubscription);
+  const el = document.getElementById('kicked-overlay');
+  el.style.display = 'flex';
 }
 
 async function loadPlayerClues() {
