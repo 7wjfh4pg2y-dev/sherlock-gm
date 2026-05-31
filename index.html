@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Consulting Detective — Evidence Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap');
   :root {
     --ink: #14100a;
     --parchment: #f4e8ce;
@@ -25,7 +29,7 @@
   body {
     background: #0e0b06;
     color: var(--ink);
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     min-height: 100vh;
     background-image:
       radial-gradient(ellipse at 15% 40%, #241a07 0%, transparent 55%),
@@ -62,15 +66,15 @@
   }
 
   .masthead-title {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1.25rem;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 1.3rem;
     font-weight: 400;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     color: var(--ink);
   }
 
   .masthead-sub {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.65rem;
     color: var(--fog);
     letter-spacing: 0.18em;
@@ -79,7 +83,7 @@
   }
 
   .mode-badge {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.68rem;
     padding: 4px 12px;
     border: 1px solid currentColor;
@@ -137,7 +141,7 @@
   }
 
   .landing-eyebrow {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.72rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -147,7 +151,7 @@
   }
 
   .landing-title {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 2rem;
     font-weight: 700;
     text-align: center;
@@ -179,7 +183,7 @@
   }
 
   .btn {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.78rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -247,7 +251,7 @@
   }
 
   .modal-title {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
     font-size: 1.45rem;
     font-weight: 700;
     color: var(--ink);
@@ -257,7 +261,7 @@
   .field { margin-bottom: 16px; }
   .field label {
     display: block;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.68rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -270,7 +274,7 @@
     padding: 10px 12px;
     border: 1px solid var(--parchment-darker);
     background: var(--paper);
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-size: 0.95rem;
     color: var(--ink);
     outline: none;
@@ -290,7 +294,7 @@
   .modal-close:hover { color: var(--ink); }
 
   .error-msg {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.75rem;
     color: var(--red);
     margin-top: 8px;
@@ -320,7 +324,7 @@
     padding: 10px 14px;
     border: 1px solid var(--parchment-darker);
     background: var(--parchment);
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-size: 0.95rem;
     color: var(--ink);
     cursor: pointer;
@@ -339,7 +343,7 @@
   }
 
   .share-link-label {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.68rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -348,7 +352,7 @@
   }
 
   .share-link-url {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.8rem;
     color: var(--parchment);
     flex: 1;
@@ -358,7 +362,7 @@
 
   /* ── CLUE GRID ── */
   .clues-section-title {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
     font-size: 1.05rem;
     font-style: italic;
     color: var(--parchment-dark);
@@ -402,7 +406,7 @@
     content: '✓ REVEALED';
     position: absolute;
     top: 6px; right: 6px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.52rem;
     letter-spacing: 0.12em;
     background: var(--green);
@@ -418,7 +422,7 @@
 
   .clue-label {
     padding: 8px 10px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.70rem;
     letter-spacing: 0.06em;
     color: var(--ink);
@@ -428,7 +432,7 @@
   .clue-thumb-text {
     width: 100%; height: 110px;
     padding: 10px 12px;
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-size: 0.8rem; line-height: 1.5;
     color: var(--ink); background: var(--paper);
     overflow: hidden;
@@ -438,7 +442,7 @@
 
   .revealed-card-text {
     padding: 16px;
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-size: 0.95rem; line-height: 1.7;
     color: var(--ink); background: var(--paper);
     min-height: 120px;
@@ -453,7 +457,7 @@
   .clue-action-btn {
     flex: 1; padding: 6px 4px;
     border: none; background: transparent;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.63rem; letter-spacing: 0.05em;
     cursor: pointer; transition: background 0.15s;
   }
@@ -473,7 +477,7 @@
     min-height: 150px; cursor: pointer;
     color: var(--fog);
     transition: all 0.2s;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.73rem; letter-spacing: 0.1em; gap: 8px;
   }
   .clue-add-card:hover { border-color: rgba(184,160,120,0.8); color: var(--parchment-dark); }
@@ -493,7 +497,7 @@
 
 
   .player-case-title {
-    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
     font-size: 1.7rem;
     font-weight: 700;
     color: var(--parchment);
@@ -502,7 +506,7 @@
   }
 
   .player-meta {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.70rem;
     color: var(--fog);
     letter-spacing: 0.12em;
@@ -533,7 +537,7 @@
 
   .revealed-card-label {
     padding: 10px 12px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.73rem;
     letter-spacing: 0.08em;
     border-top: 1px solid var(--parchment-darker);
@@ -542,7 +546,7 @@
 
   .empty-state {
     color: var(--fog);
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-style: italic;
     font-size: 1.15rem;
     text-align: center;
@@ -574,7 +578,7 @@
     border: 1px dashed var(--parchment-darker);
     background: var(--paper);
     padding: 18px; text-align: center; cursor: pointer;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.73rem; color: var(--fog);
     letter-spacing: 0.08em; transition: all 0.2s; margin-bottom: 4px;
   }
@@ -585,7 +589,7 @@
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: #1a1208; color: var(--parchment);
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.78rem; letter-spacing: 0.1em;
     padding: 11px 22px;
     border: 1px solid var(--sepia);
@@ -602,7 +606,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .counter-badge {
-    font-family: 'Courier New', Courier, monospace; font-size: 0.68rem;
+    font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.68rem;
     background: var(--sepia); color: var(--parchment);
     padding: 2px 8px; letter-spacing: 0.06em;
   }
@@ -615,7 +619,7 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 18px;
     background: rgba(255,255,255,0.03);
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--parchment-dark); cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(201,169,110,0.2);
@@ -624,7 +628,7 @@
   .briefing-toggle { font-size: 0.85rem; opacity: 0.5; }
   .briefing-body { padding: 18px 20px; }
   .briefing-text {
-    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-size: 0.95rem; color: var(--parchment-dark);
     line-height: 1.8; white-space: pre-wrap; margin: 0;
   }
@@ -659,7 +663,7 @@
     margin-top: 40px;
   }
   .notebook-header {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 1.3rem;
     color: var(--parchment);
     margin-bottom: 16px;
@@ -684,7 +688,7 @@
     padding: 10px 12px;
     background: var(--paper);
     border: 1px solid var(--parchment-darker);
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.88rem;
     color: var(--ink);
     resize: none;
@@ -702,14 +706,14 @@
     position: relative;
   }
   .notebook-note-meta {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     opacity: 0.7;
     margin-bottom: 4px;
   }
   .notebook-note-text {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.88rem;
     line-height: 1.6;
     white-space: pre-wrap;
@@ -733,8 +737,8 @@
       <div class="landing-eyebrow">Sherlock Holmes: Consulting Detective</div>
       <div class="landing-title">The Case Room</div>
       <div class="landing-divider"><span class="landing-divider-icon">🔍</span></div>
-      <p style="font-family:'Courier New',Courier,monospace; text-align:center; color: var(--sepia); font-size:0.85rem; line-height:1.7; margin-bottom:24px; white-space:nowrap;">
-        A private chamber for the Game Master to present evidence,<br>and for investigators to review the clues gathered thus far.
+      <p style="font-family:'Courier Prime','Courier New',monospace; text-align:center; color: var(--sepia); font-size:0.82rem; line-height:1.8; margin-bottom:24px; padding:0 12px;">
+        A private chamber for the Game Master to present evidence, and for investigators to review the clues gathered thus far.
       </p>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="showGMLogin()">Enter as GM</button>
