@@ -1027,7 +1027,9 @@ let currentMapId = null;
 let mapsLibrary = [];
 let allClues = [];
 let allPlayers = [];
+let allNotes = [];
 let playerSubscription = null;
+let gmSubscription = null;
 let isGM = false;
 
 // ── UTILS ──
@@ -1081,6 +1083,7 @@ function doGMLogin() {
 }
 
 function gmLogout() {
+  if (gmSubscription) sb.removeChannel(gmSubscription);
   store.remove(GM_SESSION_KEY);
   location.reload();
 }
@@ -1140,6 +1143,7 @@ async function onCaseChange() {
   document.getElementById('share-url').textContent = shareUrl;
   document.getElementById('share-box').style.display = 'flex';
   await loadGMClues();
+  subscribeGMUpdates(currentCaseId);
 }
 
 function gmBriefingHTML() {
@@ -1239,6 +1243,46 @@ async function deletePlayerData(id, name, color) {
   await sb.from('players').delete().eq('id', id);
   await loadGMClues();
   toast('Player data deleted.');
+}
+
+function gmNotesHTML() {
+  const mono = `font-family:'Courier New',Courier,monospace;`;
+  const noNotes = `<p style="${mono}font-size:0.8rem;color:var(--fog);margin:0;">No notes have been written yet.</p>`;
+  const rows = allNotes.length ? allNotes.map(n => {
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div style="border-left:3px solid ${n.player_color};padding:8px 12px;margin-bottom:8px;background:rgba(244,232,206,0.06);">
+      <div style="${mono}font-size:0.66rem;letter-spacing:0.08em;color:${n.player_color};opacity:0.85;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+        <span>${escapeHtml(n.player_name)} · ${time}</span>
+        <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
+      </div>
+      <div style="${mono}font-size:0.85rem;color:var(--parchment-dark);line-height:1.55;white-space:pre-wrap;">${escapeHtml(n.content)}</div>
+    </div>`;
+  }).join('') : noNotes;
+
+  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
+    <div class="briefing-header" onclick="toggleBriefing('gm-notes-body')">
+      <span>Investigators' Notes <span class="counter-badge">${allNotes.length}</span></span>
+      <span id="gm-notes-toggle" class="briefing-toggle">▾</span>
+    </div>
+    <div id="gm-notes-body" class="briefing-body" style="padding:12px 16px;">
+      ${rows}
+    </div>
+  </div>`;
+}
+
+async function gmDeleteNote(id) {
+  await sb.from('notes').delete().eq('id', id);
+  await loadGMClues();
+}
+
+function subscribeGMUpdates(caseId) {
+  if (gmSubscription) sb.removeChannel(gmSubscription);
+  gmSubscription = sb.channel('gm-live-' + caseId)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `case_id=eq.${caseId}` },
+      () => loadGMClues())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `case_id=eq.${caseId}` },
+      () => loadGMClues())
+    .subscribe();
 }
 
 async function attachMapToCase(mapId) {
@@ -1447,6 +1491,7 @@ function toggleBriefing(bodyId) {
   const toggleId = bodyId === 'gm-briefing-body' ? 'gm-briefing-toggle'
     : bodyId === 'gm-map-body' ? 'gm-map-toggle'
     : bodyId === 'gm-players-body' ? 'gm-players-toggle'
+    : bodyId === 'gm-notes-body' ? 'gm-notes-toggle'
     : 'player-briefing-toggle';
   const toggle = document.getElementById(toggleId);
   const open = body.style.display !== 'none';
@@ -1485,19 +1530,21 @@ function copyShareLink() {
 
 // ── GM CLUES ──
 async function loadGMClues() {
-  const [cluesRes, playersRes] = await Promise.all([
+  const [cluesRes, playersRes, notesRes] = await Promise.all([
     sb.from('clues').select('*').eq('case_id', currentCaseId).order('position'),
     sb.from('players').select('*').eq('case_id', currentCaseId).order('joined_at'),
+    sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at'),
   ]);
   allClues = cluesRes.data || [];
   allPlayers = playersRes.data || [];
+  allNotes = notesRes.data || [];
   renderGMClues();
 }
 
 function renderGMClues() {
   const revealed = allClues.filter(c => c.revealed);
   const unrevealed = allClues.filter(c => !c.revealed);
-  let html = gmBriefingHTML() + gmMapHTML() + gmPlayersHTML();
+  let html = gmBriefingHTML() + gmMapHTML() + gmPlayersHTML() + gmNotesHTML();
 
   // Unrevealed
   html += `<div class="clues-section-title" style="color:var(--parchment)">Unrevealed <span class="counter-badge">${unrevealed.length}</span></div>`;
