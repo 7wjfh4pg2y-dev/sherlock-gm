@@ -706,18 +706,34 @@
     position: relative;
   }
   .notebook-note-meta {
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Courier Prime', 'Courier New', Courier, monospace;
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     opacity: 0.7;
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   .notebook-note-text {
-    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-family: 'Courier Prime', 'Courier New', Courier, monospace;
     font-size: 0.88rem;
     line-height: 1.6;
     white-space: pre-wrap;
   }
+  .note-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: currentColor;
+    opacity: 0.5;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .note-action-btn:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1765,10 +1781,13 @@ function renderSwatches(containerId, selectedColor, onChange) {
 
 // ── NOTES ──
 let notesSubscription = null;
+let currentNotes = [];
+const minimizedNotes = new Set();
 
 async function loadNotes() {
   const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at');
-  renderNotes(data || []);
+  currentNotes = data || [];
+  renderNotes(currentNotes);
 }
 
 function renderNotes(notes) {
@@ -1780,11 +1799,31 @@ function renderNotes(notes) {
   container.innerHTML = notes.map(n => {
     const date = new Date(n.created_at);
     const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isOwn = n.player_name === playerName && n.player_color === playerColor;
+    const isMinimized = minimizedNotes.has(n.id);
+    const actionBtn = isOwn
+      ? `<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')">✕</button>`
+      : `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
     return `<div class="notebook-note" style="color:${n.player_color}">
-      <div class="notebook-note-meta">${escapeHtml(n.player_name)} · ${time}</div>
-      <div class="notebook-note-text">${escapeHtml(n.content)}</div>
+      <div class="notebook-note-meta">
+        <span>${escapeHtml(n.player_name)} · ${time}</span>
+        ${actionBtn}
+      </div>
+      ${isMinimized ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
     </div>`;
   }).join('');
+}
+
+async function deleteNote(id) {
+  const { error } = await sb.from('notes').delete().eq('id', id);
+  if (error) { toast('Error deleting note.'); return; }
+  await loadNotes();
+}
+
+function toggleMinimizeNote(id) {
+  if (minimizedNotes.has(id)) minimizedNotes.delete(id);
+  else minimizedNotes.add(id);
+  renderNotes(currentNotes);
 }
 
 async function addNote() {
