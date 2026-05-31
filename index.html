@@ -2,15 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Consulting Detective — Evidence Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap');
   :root {
@@ -30,14 +28,14 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background-color: #3a1f0a;
-    background-image: url('https://aczebumbhhqhagtshtpm.supabase.co/storage/v1/object/public/assets/sherlock-holmes_texture-box_C1.jpg');
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center;
+    background: #0e0b06;
     color: var(--ink);
     font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 15% 40%, #241a07 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 15%, #1a1005 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 90%, #1c1408 0%, transparent 60%);
   }
 
   /* GRAIN OVERLAY */
@@ -65,6 +63,9 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 3px 16px rgba(0,0,0,0.5);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(122,92,18,0.07) 24px, rgba(122,92,18,0.07) 25px),
+      linear-gradient(180deg, #fdf5e0 0%, var(--parchment) 50%, var(--parchment-dark) 100%);
   }
 
   .masthead-title {
@@ -204,16 +205,15 @@
   .btn-primary:hover { background: var(--sepia); border-color: var(--sepia); }
 
   .btn-secondary {
-    border-color: var(--sepia-light);
-    color: var(--parchment);
-    background: rgba(20,12,4,0.72);
+    border-color: var(--sepia);
+    color: var(--sepia);
   }
   .btn-secondary:hover { background: var(--sepia); color: var(--parchment); }
 
   .btn-danger {
     border-color: var(--red);
-    color: #ff6b6b;
-    background: rgba(20,12,4,0.72);
+    color: var(--red);
+    background: transparent;
   }
   .btn-danger:hover { background: var(--red); color: var(--parchment); }
 
@@ -316,9 +316,6 @@
     align-items: center;
     flex-wrap: wrap;
     margin-bottom: 24px;
-    background: rgba(15,8,2,0.65);
-    padding: 12px 16px;
-    border: 1px solid rgba(184,137,42,0.3);
     padding-bottom: 18px;
     border-bottom: 1px solid rgba(245,234,214,0.12);
   }
@@ -338,7 +335,7 @@
   }
 
   .share-link-box {
-    background: rgba(20,12,4,0.72);
+    background: rgba(244,232,206,0.06);
     border: 1px dashed rgba(184,137,42,0.5);
     padding: 12px 18px;
     margin-bottom: 24px;
@@ -349,7 +346,6 @@
   }
 
   .share-link-label {
-    color: var(--sepia-light);
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.68rem;
     letter-spacing: 0.15em;
@@ -359,7 +355,6 @@
   }
 
   .share-link-url {
-    color: #d4c090;
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.8rem;
     color: var(--parchment);
@@ -370,7 +365,6 @@
 
   /* ── CLUE GRID ── */
   .clues-section-title {
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
     font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
     font-size: 1.05rem;
     font-style: italic;
@@ -447,6 +441,7 @@
     color: var(--ink); background: var(--paper);
     overflow: hidden;
     display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+    background-image: repeating-linear-gradient(transparent, transparent 19px, rgba(122,92,18,0.13) 19px, rgba(122,92,18,0.13) 20px);
   }
 
   .revealed-card-text {
@@ -457,6 +452,7 @@
     height: 170px;
     flex-shrink: 0;
     overflow: hidden;
+    background-image: repeating-linear-gradient(transparent, transparent 24px, rgba(122,92,18,0.1) 24px, rgba(122,92,18,0.1) 25px);
   }
 
   .clue-actions {
@@ -471,16 +467,16 @@
     font-size: 0.63rem; letter-spacing: 0.05em;
     cursor: pointer; transition: background 0.15s;
   }
-  .clue-action-btn.reveal { color: #1a6b1a; border-right: 1px solid var(--parchment-darker); font-weight: 700; }
+  .clue-action-btn.reveal { color: var(--green); border-right: 1px solid var(--parchment-darker); }
   .clue-action-btn.reveal:hover { background: #e8f5e8; }
   .clue-action-btn.hide { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
   .clue-action-btn.hide:hover { background: var(--parchment-dark); }
-  .clue-action-btn.edit { color: var(--ink); border-right: 1px solid var(--parchment-darker); font-weight: 700; }
+  .clue-action-btn.edit { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
   .clue-action-btn.edit:hover { background: var(--parchment-dark); }
-  .clue-action-btn.del  { color: #8b1a1a; font-weight: 700; }
+  .clue-action-btn.del  { color: var(--red); }
   .clue-action-btn.del:hover  { background: #f5e8e8; }
 
-  .clue-action-btn.reveal { color: #1a6b1a; border-right: 1px solid var(--parchment-darker); font-weight: 700; }
+  .clue-action-btn.reveal { color: var(--green); border-right: 1px solid var(--parchment-darker); }
   .clue-action-btn.reveal:hover { background: #e8f5e8; }
   .clue-action-btn.hide { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
   .clue-action-btn.hide:hover { background: var(--parchment-dark); }
@@ -517,7 +513,6 @@
 
 
   .player-case-title {
-    text-shadow: 2px 2px 6px rgba(0,0,0,0.9);
     font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
     font-size: 1.7rem;
     font-weight: 700;
@@ -529,8 +524,7 @@
   .player-meta {
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.70rem;
-    color: var(--parchment);
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    color: var(--fog);
     letter-spacing: 0.12em;
     margin-bottom: 24px;
     text-transform: uppercase;
@@ -568,8 +562,7 @@
   }
 
   .empty-state {
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-    color: var(--parchment);
+    color: var(--fog);
     font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
     font-style: italic;
     font-size: 1.15rem;
@@ -636,11 +629,10 @@
   }
 
   .case-briefing-panel {
-    border: 1px solid rgba(201,169,110,0.5);
+    border: 1px solid rgba(201,169,110,0.3);
     margin-bottom: 24px;
     overflow: hidden;
-    box-shadow: 2px 3px 12px rgba(0,0,0,0.4);
-    background: rgba(20,12,4,0.7);
+    box-shadow: 2px 3px 12px rgba(0,0,0,0.3);
   }
   .briefing-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -657,16 +649,12 @@
   .briefing-toggle { font-size: 0.85rem; opacity: 0.5; }
   .briefing-body {
     padding: 20px 24px;
-    background-color: #f0e6cc;
+    background-image: repeating-linear-gradient(transparent, transparent 27px, rgba(139,105,20,0.07) 27px, rgba(139,105,20,0.07) 28px);
   }
   .briefing-text {
     font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
-    font-size: 0.95rem;
-    color: var(--ink);
-    line-height: 1.75;
-    white-space: pre-wrap;
-    margin: 0;
-    
+    font-size: 0.95rem; color: var(--parchment-dark);
+    line-height: 1.8; white-space: pre-wrap; margin: 0;
   }
 
   hr.ornamental {
@@ -701,7 +689,6 @@
     border-top: 1px solid rgba(245,234,214,0.1);
   }
   .notebook-header {
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
     font-family: 'Playfair Display', Georgia, serif;
     font-size: 1.3rem;
     font-style: italic;
@@ -742,13 +729,14 @@
     line-height: 1.6;
     min-height: 70px;
     outline: none;
-    line-height: 22px;
-    
+    background-image: repeating-linear-gradient(transparent, transparent 22px, rgba(139,105,20,0.12) 22px, rgba(139,105,20,0.12) 23px);
   }
   .notebook-textarea:focus { border-color: var(--sepia); }
   .notebook-notes { display: flex; flex-direction: column; gap: 16px; }
   .notebook-note {
     background: var(--parchment);
+    background-image: 
+      repeating-linear-gradient(transparent, transparent 27px, rgba(139,105,20,0.13) 27px, rgba(139,105,20,0.13) 28px);
     border: 1px solid var(--parchment-darker);
     border-left: 4px solid currentColor;
     padding: 14px 18px 12px;
@@ -757,7 +745,13 @@
     overflow: hidden;
     max-width: 100%;
   }
-
+  .notebook-note::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 32px;
+    width: 1px; height: 100%;
+    background: rgba(180,100,100,0.15);
+  }
   .notebook-note-meta {
     font-family: 'Courier Prime', 'Courier New', Courier, monospace;
     font-size: 0.7rem;
@@ -769,7 +763,7 @@
     align-items: center;
     justify-content: space-between;
     padding-bottom: 6px;
-
+    border-bottom: 1px dashed rgba(139,105,20,0.25);
   }
   .notebook-note-text {
     font-family: 'IM Fell English', Georgia, serif;
@@ -855,8 +849,13 @@
     <div class="player-case-title" id="player-case-title">Loading case…</div>
     <div class="player-meta" id="player-meta"></div>
     <div id="player-briefing" style="display:none"></div>
-    <div id="player-map-btn-wrap" style="display:none;margin-bottom:20px;">
-      <button class="btn btn-secondary" onclick="openMapFullscreen()">🗺 View Map of London</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+      <div id="player-map-btn-wrap" style="display:none;">
+        <button class="btn btn-secondary" onclick="openMapFullscreen()">🗺 View Map of London</button>
+      </div>
+      <div>
+        <button class="btn btn-secondary" onclick="openDirectoryFlipbook()">📖 London Directory</button>
+      </div>
     </div>
     <div id="player-content">
       <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
@@ -975,6 +974,55 @@
     </div>
     <div id="identity-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="confirmIdentity()">Enter the Case Room</button>
+  </div>
+</div>
+
+<!-- DIRECTORY FLIPBOOK MODAL -->
+<div id="modal-flipbook" style="display:none;position:fixed;inset:0;background:rgba(5,3,1,0.95);z-index:800;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:900px;height:100vh;display:flex;flex-direction:column;padding:12px;">
+    
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;">
+      <div style="font-family:'Special Elite','Courier New',monospace;color:var(--parchment);font-size:1rem;letter-spacing:0.1em;">
+        📖 LONDON DIRECTORY
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'Courier Prime','Courier New',monospace;font-size:0.75rem;color:var(--fog);">
+          Page <span id="flipbook-current">1</span> of <span id="flipbook-total">-</span>
+        </span>
+        <input type="number" id="flipbook-goto" min="1" placeholder="Go to page" 
+          style="width:90px;padding:4px 8px;background:rgba(245,234,214,0.1);border:1px solid rgba(139,105,20,0.4);color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.75rem;outline:none;"
+          onkeydown="if(event.key==='Enter')goToPage()">
+        <button onclick="goToPage()" class="btn btn-secondary btn-sm">Go</button>
+        <button onclick="closeDirectoryFlipbook()" style="background:none;border:none;color:var(--fog);font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+      </div>
+    </div>
+
+    <!-- Flipbook stage -->
+    <div id="flipbook-stage" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+      
+      <!-- Left arrow -->
+      <button onclick="flipbookPrev()" id="flipbook-prev" style="position:absolute;left:0;z-index:10;background:rgba(15,8,2,0.7);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);font-size:1.8rem;padding:12px 10px;cursor:pointer;height:80px;transition:background 0.15s;" onmouseover="this.style.background='rgba(139,105,20,0.4)'" onmouseout="this.style.background='rgba(15,8,2,0.7)'">‹</button>
+      
+      <!-- Page display -->
+      <div id="flipbook-spread" style="display:flex;gap:4px;align-items:center;justify-content:center;max-height:calc(100vh - 120px);">
+        <canvas id="flipbook-canvas-left" style="max-height:calc(100vh - 120px);box-shadow:-4px 0 20px rgba(0,0,0,0.6);border:1px solid rgba(139,105,20,0.2);"></canvas>
+        <canvas id="flipbook-canvas-right" style="max-height:calc(100vh - 120px);box-shadow:4px 0 20px rgba(0,0,0,0.6);border:1px solid rgba(139,105,20,0.2);"></canvas>
+      </div>
+
+      <!-- Right arrow -->
+      <button onclick="flipbookNext()" id="flipbook-next" style="position:absolute;right:0;z-index:10;background:rgba(15,8,2,0.7);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);font-size:1.8rem;padding:12px 10px;cursor:pointer;height:80px;transition:background 0.15s;" onmouseover="this.style.background='rgba(139,105,20,0.4)'" onmouseout="this.style.background='rgba(15,8,2,0.7)'">›</button>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="height:3px;background:rgba(139,105,20,0.2);margin-top:10px;flex-shrink:0;border-radius:2px;">
+      <div id="flipbook-progress" style="height:100%;background:var(--sepia);border-radius:2px;transition:width 0.3s;width:0%;"></div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="flipbook-loading" style="position:absolute;color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.85rem;letter-spacing:0.1em;display:none;">
+      <span class="spinner"></span> Loading directory…
+    </div>
   </div>
 </div>
 
@@ -1256,7 +1304,7 @@ function gmPlayersHTML() {
   const active = allPlayers.filter(p => !p.is_kicked);
   const kicked = allPlayers.filter(p => p.is_kicked);
   const rowStyle = 'display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
-  const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.82rem;color:var(--ink);flex:1;`;
+  const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.82rem;color:var(--parchment);flex:1;`;
 
   const playerRow = (p, isKicked) => `
     <div style="${rowStyle}">
@@ -1311,16 +1359,12 @@ function gmNotesHTML() {
   const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.8rem;color:var(--fog);margin:0;font-style:italic;">No notes have been written yet.</p>`;
   const rows = allNotes.length ? allNotes.map(n => {
     const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const isMin = gmMinimizedNotes.has(n.id);
     return `<div class="notebook-note" style="color:${n.player_color};margin-bottom:12px;">
       <div class="notebook-note-meta">
         <span>${escapeHtml(n.player_name)} · ${time}</span>
-        <span style="display:flex;gap:6px;align-items:center;">
-          <button onclick="gmToggleMinimizeNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.85rem;padding:0 2px;line-height:1;" title="${isMin ? 'Expand' : 'Minimise'}">${isMin ? '▸' : '▾'}</button>
-          <button onclick="gmConfirmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.6;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
-        </span>
+        <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
       </div>
-      ${isMin ? '' : `<div class="notebook-note-text" style="color:var(--ink);">${escapeHtml(n.content)}</div>`}
+      <div class="notebook-note-text" style="color:var(--ink);">${escapeHtml(n.content)}</div>
     </div>`;
   }).join('') : noNotes;
 
@@ -1333,19 +1377,6 @@ function gmNotesHTML() {
       ${rows}
     </div>
   </div>`;
-}
-
-const gmMinimizedNotes = new Set();
-
-function gmToggleMinimizeNote(id) {
-  if (gmMinimizedNotes.has(id)) gmMinimizedNotes.delete(id);
-  else gmMinimizedNotes.add(id);
-  renderGMClues();
-}
-
-function gmConfirmDeleteNote(id) {
-  if (!confirm('Delete this note? This cannot be undone.')) return;
-  gmDeleteNote(id);
 }
 
 async function gmDeleteNote(id) {
@@ -1767,17 +1798,9 @@ async function doPlayerJoin() {
 let kickSubscription = null;
 
 async function enterPlayer(caseId) {
-  // Show screen immediately with loading state
-  closeModal('modal-player-join');
-  document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
-  document.getElementById('player-case-title').textContent = 'Loading…';
-  document.getElementById('player-meta').textContent = '';
-  document.getElementById('player-content').innerHTML = '<div class="empty-state">Loading case…</div>';
-  showScreen('player-screen');
-
   const { data: caseData, error } = await sb.from('cases').select('*').eq('id', caseId).single();
   if (error || !caseData) {
-    document.getElementById('player-case-title').textContent = 'Case not found.';
+    document.getElementById('player-join-error') && (document.getElementById('player-join-error').textContent = 'Case not found.');
     return;
   }
 
@@ -1785,8 +1808,8 @@ async function enterPlayer(caseId) {
   const { data: existing } = await sb.from('players')
     .select('is_kicked').eq('case_id', caseId).eq('player_name', playerName).single();
   if (existing?.is_kicked) {
-    document.getElementById('player-case-title').textContent = 'Access denied.';
-    document.getElementById('player-content').innerHTML = '<div class="empty-state">You have been removed from this case by the Game Master.</div>';
+    const errEl = document.getElementById('player-join-error') || document.getElementById('identity-error');
+    if (errEl) errEl.textContent = 'You have been removed from this case by the Game Master.';
     return;
   }
 
@@ -1796,6 +1819,7 @@ async function enterPlayer(caseId) {
     { onConflict: 'case_id,player_name' }
   );
 
+  closeModal('modal-player-join');
   currentCaseId = caseId;
   currentCaseName = caseData.name;
   currentCaseDescription = caseData.description || '';
@@ -1805,9 +1829,11 @@ async function enterPlayer(caseId) {
     const { data: mapData } = await sb.from('maps').select('url').eq('id', currentMapId).single();
     currentMapUrl = mapData?.url || '';
   }
+  document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
   renderPlayerMap();
+  showScreen('player-screen');
   document.getElementById('player-notebook-section').style.display = '';
   await loadPlayerClues();
   await loadNotes();
@@ -1901,7 +1927,7 @@ function openClueExpand(clue) {
   document.getElementById('clue-expand-title').textContent = clue.location_name;
   const body = document.getElementById('clue-expand-body');
   if (clue.clue_text) {
-    body.innerHTML = `<div style="padding:24px 28px;font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:1rem;line-height:1.75;color:var(--ink);background:var(--paper);min-height:200px;">${clue.clue_text}</div>`;
+    body.innerHTML = `<div style="padding:24px 28px;font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:1.1rem;line-height:1.9;color:var(--ink);background:var(--paper);background-image:repeating-linear-gradient(transparent,transparent 30px,rgba(139,105,20,0.12) 30px,rgba(139,105,20,0.12) 31px);min-height:200px;">${clue.clue_text}</div>`;
   } else {
     body.innerHTML = `<img src="${clue.image_url}" style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#1a1208;" alt="${clue.location_name}">`;
   }
@@ -2045,9 +2071,9 @@ function renderNotes(notes) {
     const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const isOwn = n.player_name === playerName && n.player_color === playerColor;
     const isMinimized = minimizedNotes.has(n.id);
-    const minimizeBtn = `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
-    const deleteBtn = isOwn ? `<button class="note-action-btn" title="Delete note" onclick="confirmDeleteNote('${n.id}')" style="color:var(--red);margin-left:4px;">✕</button>` : '';
-    const actionBtn = minimizeBtn + deleteBtn;
+    const actionBtn = isOwn
+      ? `<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')">✕</button>`
+      : `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
     return `<div class="notebook-note" style="color:${n.player_color}">
       <div class="notebook-note-meta">
         <span>${escapeHtml(n.player_name)} · ${time}</span>
@@ -2056,11 +2082,6 @@ function renderNotes(notes) {
       ${isMinimized ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
     </div>`;
   }).join('');
-}
-
-function confirmDeleteNote(id) {
-  if (!confirm('Delete this note? This cannot be undone.')) return;
-  deleteNote(id);
 }
 
 async function deleteNote(id) {
@@ -2118,6 +2139,103 @@ function confirmIdentity() {
   closeModal('modal-player-identity');
   if (_identityResolveFn) { _identityResolveFn(); _identityResolveFn = null; }
 }
+
+// ── DIRECTORY FLIPBOOK ──
+const DIRECTORY_URL = "https://aczebumbhhqhagtshtpm.supabase.co/storage/v1/object/public/assets/SH_Directory_compressed.pdf";
+let pdfDoc = null;
+let flipbookCurrentSpread = 0;
+let flipbookTotalPages = 0;
+let flipbookRendering = false;
+
+async function openDirectoryFlipbook() {
+  const modal = document.getElementById("modal-flipbook");
+  modal.style.display = "flex";
+  document.getElementById("flipbook-loading").style.display = "block";
+  if (!pdfDoc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    try {
+      pdfDoc = await pdfjsLib.getDocument({ url: DIRECTORY_URL }).promise;
+      flipbookTotalPages = pdfDoc.numPages;
+      document.getElementById("flipbook-total").textContent = flipbookTotalPages;
+      document.getElementById("flipbook-goto").max = flipbookTotalPages;
+    } catch(e) {
+      document.getElementById("flipbook-loading").textContent = "Failed to load directory.";
+      return;
+    }
+  }
+  document.getElementById("flipbook-loading").style.display = "none";
+  await renderSpread(flipbookCurrentSpread);
+}
+
+function closeDirectoryFlipbook() {
+  document.getElementById("modal-flipbook").style.display = "none";
+}
+
+async function renderSpread(spreadIndex) {
+  if (flipbookRendering) return;
+  flipbookRendering = true;
+  const leftPage = spreadIndex === 0 ? null : spreadIndex * 2;
+  const rightPage = spreadIndex === 0 ? 1 : spreadIndex * 2 + 1;
+  const canvasLeft = document.getElementById("flipbook-canvas-left");
+  const canvasRight = document.getElementById("flipbook-canvas-right");
+  canvasLeft.style.display = leftPage ? "block" : "none";
+  canvasRight.style.display = rightPage <= flipbookTotalPages ? "block" : "none";
+  const stageH = window.innerHeight - 140;
+  const stageW = (window.innerWidth > 900 ? 900 : window.innerWidth) - 100;
+  const pageW = leftPage ? stageW / 2 - 4 : stageW;
+  if (rightPage <= flipbookTotalPages) {
+    const page = await pdfDoc.getPage(rightPage);
+    const vp = page.getViewport({ scale: 1 });
+    const scale = Math.min(pageW / vp.width, stageH / vp.height);
+    const svp = page.getViewport({ scale });
+    canvasRight.width = svp.width;
+    canvasRight.height = svp.height;
+    await page.render({ canvasContext: canvasRight.getContext("2d"), viewport: svp }).promise;
+  }
+  if (leftPage && leftPage <= flipbookTotalPages) {
+    const page = await pdfDoc.getPage(leftPage);
+    const vp = page.getViewport({ scale: 1 });
+    const scale = Math.min(pageW / vp.width, stageH / vp.height);
+    const svp = page.getViewport({ scale });
+    canvasLeft.width = svp.width;
+    canvasLeft.height = svp.height;
+    await page.render({ canvasContext: canvasLeft.getContext("2d"), viewport: svp }).promise;
+  }
+  const displayPage = spreadIndex === 0 ? 1 : spreadIndex * 2;
+  document.getElementById("flipbook-current").textContent = displayPage;
+  document.getElementById("flipbook-progress").style.width = (displayPage / flipbookTotalPages * 100) + "%";
+  document.getElementById("flipbook-prev").style.opacity = spreadIndex === 0 ? "0.3" : "1";
+  const maxSpread = Math.ceil((flipbookTotalPages - 1) / 2);
+  document.getElementById("flipbook-next").style.opacity = spreadIndex >= maxSpread ? "0.3" : "1";
+  flipbookCurrentSpread = spreadIndex;
+  flipbookRendering = false;
+}
+
+async function flipbookNext() {
+  const maxSpread = Math.ceil((flipbookTotalPages - 1) / 2);
+  if (flipbookCurrentSpread < maxSpread) await renderSpread(flipbookCurrentSpread + 1);
+}
+
+async function flipbookPrev() {
+  if (flipbookCurrentSpread > 0) await renderSpread(flipbookCurrentSpread - 1);
+}
+
+async function goToPage() {
+  const input = document.getElementById("flipbook-goto");
+  const page = parseInt(input.value);
+  if (!page || page < 1 || page > flipbookTotalPages) return;
+  const spread = page === 1 ? 0 : Math.ceil((page - 1) / 2);
+  await renderSpread(spread);
+  input.value = "";
+}
+
+document.addEventListener("keydown", (e) => {
+  if (document.getElementById("modal-flipbook").style.display === "flex") {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") flipbookNext();
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") flipbookPrev();
+    if (e.key === "Escape") closeDirectoryFlipbook();
+  }
+});
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', async () => {
