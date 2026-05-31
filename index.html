@@ -1285,16 +1285,15 @@ async function deletePlayerData(id, name, color) {
 }
 
 function gmNotesHTML() {
-  const mono = `font-family:'Courier New',Courier,monospace;`;
-  const noNotes = `<p style="${mono}font-size:0.8rem;color:var(--fog);margin:0;">No notes have been written yet.</p>`;
+  const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.8rem;color:var(--fog);margin:0;font-style:italic;">No notes have been written yet.</p>`;
   const rows = allNotes.length ? allNotes.map(n => {
     const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `<div style="border-left:3px solid ${n.player_color};padding:8px 12px;margin-bottom:8px;background:rgba(244,232,206,0.06);">
-      <div style="${mono}font-size:0.66rem;letter-spacing:0.08em;color:${n.player_color};opacity:0.85;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+    return `<div class="notebook-note" style="color:${n.player_color};margin-bottom:12px;">
+      <div class="notebook-note-meta">
         <span>${escapeHtml(n.player_name)} · ${time}</span>
         <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
       </div>
-      <div style="${mono}font-size:0.85rem;color:var(--parchment-dark);line-height:1.55;white-space:pre-wrap;">${escapeHtml(n.content)}</div>
+      <div class="notebook-note-text" style="color:var(--ink);">${escapeHtml(n.content)}</div>
     </div>`;
   }).join('') : noNotes;
 
@@ -1940,14 +1939,14 @@ async function deleteClue(id) {
 
 // ── PLAYER IDENTITY ──
 const PLAYER_COLORS = [
-  { label: 'Crimson',  value: '#8b1a1a' },
-  { label: 'Navy',     value: '#1a3060' },
-  { label: 'Forest',   value: '#1a4a1a' },
-  { label: 'Plum',     value: '#5a1a5a' },
-  { label: 'Teal',     value: '#1a5050' },
-  { label: 'Chestnut', value: '#7a3010' },
-  { label: 'Slate',    value: '#2a3a50' },
-  { label: 'Umber',    value: '#5a3a10' },
+  { label: 'Crimson',  value: '#e05555' },
+  { label: 'Navy',     value: '#5588dd' },
+  { label: 'Forest',   value: '#55bb55' },
+  { label: 'Plum',     value: '#cc66cc' },
+  { label: 'Teal',     value: '#44cccc' },
+  { label: 'Amber',    value: '#e8a030' },
+  { label: 'Sky',      value: '#55aaee' },
+  { label: 'Coral',    value: '#ee7755' },
 ];
 
 let playerName = '';
