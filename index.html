@@ -900,9 +900,9 @@ const GM_SESSION_KEY = 'sherlockgm_session';
 // localStorage may be blocked on file:// — fall back to in-memory store
 const _memStore = {};
 const store = {
-  get: k => { try { return store.get(k); } catch(e) { return _memStore[k] ?? null; } },
-  set: (k, v) => { try { store.set(k, v); } catch(e) { _memStore[k] = v; } },
-  remove: k => { try { store.remove(k); } catch(e) { delete _memStore[k]; } }
+  get: k => { try { return localStorage.getItem(k); } catch(e) { return _memStore[k] ?? null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch(e) { _memStore[k] = v; } },
+  remove: k => { try { localStorage.removeItem(k); } catch(e) { delete _memStore[k]; } }
 };
 
 let currentCaseId = null;
@@ -1039,7 +1039,7 @@ function gmBriefingHTML() {
         <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="showGMBriefingEdit()">✏️ Edit Briefing</button>
       </div>
       <div id="gm-briefing-edit" style="${desc ? 'display:none' : ''}">
-        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier Prime',monospace;font-size:0.9rem;background:var(--ink-dark);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
+        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier Prime',monospace;font-size:0.9rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn btn-primary btn-sm" onclick="saveGMBriefing()">Save</button>
           ${desc ? '<button class="btn btn-secondary btn-sm" onclick="cancelGMBriefingEdit()">Cancel</button>' : ''}
@@ -1061,7 +1061,7 @@ function gmMapHTML() {
     <div id="gm-map-body" class="briefing-body">
       ${selected ? `<img src="${selected.url}" alt="${escapeHtml(selected.name)}" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;display:block;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map attached to this case.</p>'}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="case-map-select" style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;background:var(--ink-dark);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
+        <select id="case-map-select" style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
           <option value="">— No map —</option>
           ${options}
         </select>
@@ -1274,12 +1274,13 @@ function escapeHtml(str) {
 
 function toggleBriefing(bodyId) {
   const body = document.getElementById(bodyId);
-  const toggle = bodyId === 'gm-briefing-body'
-    ? document.getElementById('gm-briefing-toggle')
-    : document.getElementById('player-briefing-toggle');
+  const toggleId = bodyId === 'gm-briefing-body' ? 'gm-briefing-toggle'
+    : bodyId === 'gm-map-body' ? 'gm-map-toggle'
+    : 'player-briefing-toggle';
+  const toggle = document.getElementById(toggleId);
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : '';
-  toggle.textContent = open ? '▸' : '▾';
+  if (toggle) toggle.textContent = open ? '▸' : '▾';
 }
 
 function showGMBriefingEdit() {
