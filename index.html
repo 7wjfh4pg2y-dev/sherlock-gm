@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Consulting Detective — Evidence Board</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -28,7 +25,7 @@
   body {
     background: #0e0b06;
     color: var(--ink);
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     min-height: 100vh;
     background-image:
       radial-gradient(ellipse at 15% 40%, #241a07 0%, transparent 55%),
@@ -65,7 +62,7 @@
   }
 
   .masthead-title {
-    font-family: 'Special Elite', cursive;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 1.25rem;
     font-weight: 400;
     letter-spacing: 0.04em;
@@ -73,7 +70,7 @@
   }
 
   .masthead-sub {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.65rem;
     color: var(--fog);
     letter-spacing: 0.18em;
@@ -82,7 +79,7 @@
   }
 
   .mode-badge {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.68rem;
     padding: 4px 12px;
     border: 1px solid currentColor;
@@ -140,7 +137,7 @@
   }
 
   .landing-eyebrow {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.72rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -150,7 +147,7 @@
   }
 
   .landing-title {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 2rem;
     font-weight: 700;
     text-align: center;
@@ -182,7 +179,7 @@
   }
 
   .btn {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.78rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -250,7 +247,7 @@
   }
 
   .modal-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
     font-size: 1.45rem;
     font-weight: 700;
     color: var(--ink);
@@ -260,7 +257,7 @@
   .field { margin-bottom: 16px; }
   .field label {
     display: block;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.68rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -273,7 +270,7 @@
     padding: 10px 12px;
     border: 1px solid var(--parchment-darker);
     background: var(--paper);
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-size: 0.95rem;
     color: var(--ink);
     outline: none;
@@ -293,7 +290,7 @@
   .modal-close:hover { color: var(--ink); }
 
   .error-msg {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.75rem;
     color: var(--red);
     margin-top: 8px;
@@ -323,7 +320,7 @@
     padding: 10px 14px;
     border: 1px solid var(--parchment-darker);
     background: var(--parchment);
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-size: 0.95rem;
     color: var(--ink);
     cursor: pointer;
@@ -342,7 +339,7 @@
   }
 
   .share-link-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.68rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -351,7 +348,7 @@
   }
 
   .share-link-url {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.8rem;
     color: var(--parchment);
     flex: 1;
@@ -361,7 +358,7 @@
 
   /* ── CLUE GRID ── */
   .clues-section-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
     font-size: 1.05rem;
     font-style: italic;
     color: var(--parchment-dark);
@@ -405,7 +402,7 @@
     content: '✓ REVEALED';
     position: absolute;
     top: 6px; right: 6px;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.52rem;
     letter-spacing: 0.12em;
     background: var(--green);
@@ -421,7 +418,7 @@
 
   .clue-label {
     padding: 8px 10px;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.70rem;
     letter-spacing: 0.06em;
     color: var(--ink);
@@ -431,7 +428,7 @@
   .clue-thumb-text {
     width: 100%; height: 110px;
     padding: 10px 12px;
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-size: 0.8rem; line-height: 1.5;
     color: var(--ink); background: var(--paper);
     overflow: hidden;
@@ -441,7 +438,7 @@
 
   .revealed-card-text {
     padding: 16px;
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-size: 0.95rem; line-height: 1.7;
     color: var(--ink); background: var(--paper);
     min-height: 120px;
@@ -456,7 +453,7 @@
   .clue-action-btn {
     flex: 1; padding: 6px 4px;
     border: none; background: transparent;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.63rem; letter-spacing: 0.05em;
     cursor: pointer; transition: background 0.15s;
   }
@@ -476,7 +473,7 @@
     min-height: 150px; cursor: pointer;
     color: var(--fog);
     transition: all 0.2s;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.73rem; letter-spacing: 0.1em; gap: 8px;
   }
   .clue-add-card:hover { border-color: rgba(184,160,120,0.8); color: var(--parchment-dark); }
@@ -496,7 +493,7 @@
 
 
   .player-case-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
     font-size: 1.7rem;
     font-weight: 700;
     color: var(--parchment);
@@ -505,7 +502,7 @@
   }
 
   .player-meta {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.70rem;
     color: var(--fog);
     letter-spacing: 0.12em;
@@ -536,7 +533,7 @@
 
   .revealed-card-label {
     padding: 10px 12px;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.73rem;
     letter-spacing: 0.08em;
     border-top: 1px solid var(--parchment-darker);
@@ -545,7 +542,7 @@
 
   .empty-state {
     color: var(--fog);
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-style: italic;
     font-size: 1.15rem;
     text-align: center;
@@ -577,7 +574,7 @@
     border: 1px dashed var(--parchment-darker);
     background: var(--paper);
     padding: 18px; text-align: center; cursor: pointer;
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.73rem; color: var(--fog);
     letter-spacing: 0.08em; transition: all 0.2s; margin-bottom: 4px;
   }
@@ -588,7 +585,7 @@
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: #1a1208; color: var(--parchment);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.78rem; letter-spacing: 0.1em;
     padding: 11px 22px;
     border: 1px solid var(--sepia);
@@ -605,7 +602,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .counter-badge {
-    font-family: 'Courier Prime', monospace; font-size: 0.68rem;
+    font-family: 'Courier New', Courier, monospace; font-size: 0.68rem;
     background: var(--sepia); color: var(--parchment);
     padding: 2px 8px; letter-spacing: 0.06em;
   }
@@ -618,7 +615,7 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 18px;
     background: rgba(255,255,255,0.03);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--parchment-dark); cursor: pointer; user-select: none;
     border-bottom: 1px solid rgba(201,169,110,0.2);
@@ -627,7 +624,7 @@
   .briefing-toggle { font-size: 0.85rem; opacity: 0.5; }
   .briefing-body { padding: 18px 20px; }
   .briefing-text {
-    font-family: 'IM Fell English', serif;
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
     font-size: 0.95rem; color: var(--parchment-dark);
     line-height: 1.8; white-space: pre-wrap; margin: 0;
   }
@@ -662,7 +659,7 @@
     margin-top: 40px;
   }
   .notebook-header {
-    font-family: 'Special Elite', cursive;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 1.3rem;
     color: var(--parchment);
     margin-bottom: 16px;
@@ -687,7 +684,7 @@
     padding: 10px 12px;
     background: var(--paper);
     border: 1px solid var(--parchment-darker);
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.88rem;
     color: var(--ink);
     resize: none;
@@ -705,14 +702,14 @@
     position: relative;
   }
   .notebook-note-meta {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     opacity: 0.7;
     margin-bottom: 4px;
   }
   .notebook-note-text {
-    font-family: 'Courier Prime', monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.88rem;
     line-height: 1.6;
     white-space: pre-wrap;
@@ -736,7 +733,7 @@
       <div class="landing-eyebrow">Sherlock Holmes: Consulting Detective</div>
       <div class="landing-title">The Case Room</div>
       <div class="landing-divider"><span class="landing-divider-icon">🔍</span></div>
-      <p style="font-family:'Courier Prime',monospace; text-align:center; color: var(--sepia); font-size:0.85rem; line-height:1.7; margin-bottom:24px; white-space:nowrap;">
+      <p style="font-family:'Courier New',Courier,monospace; text-align:center; color: var(--sepia); font-size:0.85rem; line-height:1.7; margin-bottom:24px; white-space:nowrap;">
         A private chamber for the Game Master to present evidence,<br>and for investigators to review the clues gathered thus far.
       </p>
       <div class="btn-row">
@@ -805,7 +802,7 @@
       <input type="password" id="gm-password-input" placeholder="Enter GM password" onkeydown="if(event.key==='Enter')doGMLogin()">
     </div>
     <div id="gm-login-error" class="error-msg"></div>
-    <p style="font-family:'Courier Prime',monospace;font-size:0.7rem;color:var(--fog);text-align:center;letter-spacing:0.05em;margin-bottom:14px;">
+    <p style="font-family:'Courier New',Courier,monospace;font-size:0.7rem;color:var(--fog);text-align:center;letter-spacing:0.05em;margin-bottom:14px;">
       First visit? Your password will be set on first entry. If locked out, <a href="#" onclick="resetGMPassword()" style="color:var(--sepia)">reset password</a>.
     </p>
     <button class="btn btn-primary btn-full" onclick="doGMLogin()">Enter</button>
@@ -822,7 +819,7 @@
     </div>
     <div class="field">
       <label>Case Introduction / Briefing</label>
-      <textarea id="new-case-description" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'IM Fell English',serif;font-size:0.95rem;background:var(--paper);color:var(--ink);border:1px solid var(--parchment-darker);padding:10px 12px;outline:none;box-sizing:border-box;"></textarea>
+      <textarea id="new-case-description" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:0.95rem;background:var(--paper);color:var(--ink);border:1px solid var(--parchment-darker);padding:10px 12px;outline:none;box-sizing:border-box;"></textarea>
     </div>
     <div id="new-case-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="createCase()">Open Case File</button>
@@ -853,7 +850,7 @@
     </div>
     <div id="clue-text-field" class="field" style="display:none">
       <label>Clue Text</label>
-      <textarea id="clue-text-input" placeholder="Type the clue content here…" style="width:100%;padding:10px 12px;border:1px solid var(--parchment-darker);background:var(--paper);font-family:'IM Fell English',serif;font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;min-height:120px;line-height:1.6;"></textarea>
+      <textarea id="clue-text-input" placeholder="Type the clue content here…" style="width:100%;padding:10px 12px;border:1px solid var(--parchment-darker);background:var(--paper);font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;min-height:120px;line-height:1.6;"></textarea>
     </div>
     <div id="add-clue-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" id="add-clue-btn" onclick="uploadClue()">Add to Case File</button>
@@ -885,7 +882,7 @@
 <div class="modal-overlay" id="modal-player-identity">
   <div class="modal">
     <div class="modal-title">Identify Yourself</div>
-    <p style="font-family:'Courier Prime',monospace;font-size:0.78rem;color:var(--fog);margin-bottom:16px;letter-spacing:0.04em;">Before you enter the case room, tell us who you are.</p>
+    <p style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--fog);margin-bottom:16px;letter-spacing:0.04em;">Before you enter the case room, tell us who you are.</p>
     <div class="field">
       <label>Your Name</label>
       <input type="text" id="identity-name-input" placeholder="e.g. Dr. Watson" maxlength="32">
@@ -916,7 +913,7 @@
     </div>
     <div class="field">
       <label>Image File</label>
-      <input type="file" id="new-map-file" accept="image/*" style="color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.85rem;">
+      <input type="file" id="new-map-file" accept="image/*" style="color:var(--parchment);font-family:'Courier New',Courier,monospace;font-size:0.85rem;">
     </div>
     <div id="maps-library-error" class="error-msg"></div>
     <button class="btn btn-primary btn-sm" onclick="uploadLibraryMap()" style="margin-bottom:20px;">↑ Upload Map</button>
@@ -930,7 +927,7 @@
   <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
   <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:6px;background:rgba(20,15,10,0.85);border:1px solid var(--sepia);border-radius:4px;padding:6px 10px;backdrop-filter:blur(4px);">
     <button onclick="mapZoom(1.3)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">＋</button>
-    <button onclick="mapZoomReset()" style="height:36px;padding:0 12px;background:transparent;color:var(--parchment);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Courier Prime',monospace;font-size:0.75rem;letter-spacing:0.08em;cursor:pointer;">RESET</button>
+    <button onclick="mapZoomReset()" style="height:36px;padding:0 12px;background:transparent;color:var(--parchment);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Courier New',Courier,monospace;font-size:0.75rem;letter-spacing:0.08em;cursor:pointer;">RESET</button>
     <button onclick="mapZoom(0.77)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">－</button>
   </div>
   <div id="map-pan-container" style="transform-origin:center center;will-change:transform;position:absolute;">
@@ -942,7 +939,7 @@
 <div class="modal-overlay" id="modal-clue-expand" style="align-items:center;justify-content:center;" onclick="if(event.target===this)closeModal('modal-clue-expand')">
   <div id="clue-expand-inner" style="background:var(--parchment);border:2px solid var(--sepia);max-width:700px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:8px 8px 0 rgba(0,0,0,0.5);">
     <button class="modal-close" onclick="closeModal('modal-clue-expand')" style="position:sticky;top:8px;right:8px;float:right;z-index:10;">×</button>
-    <div id="clue-expand-title" style="font-family:'Playfair Display',serif;font-size:1.3rem;padding:20px 24px 0;border-bottom:1px solid var(--parchment-darker);padding-bottom:14px;margin-bottom:0;"></div>
+    <div id="clue-expand-title" style="font-family:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;font-size:1.3rem;padding:20px 24px 0;border-bottom:1px solid var(--parchment-darker);padding-bottom:14px;margin-bottom:0;"></div>
     <div id="clue-expand-body" style="padding:0;"></div>
   </div>
 </div>
@@ -967,7 +964,7 @@
     </div>
     <div id="edit-text-field" class="field" style="display:none">
       <label>Clue Text</label>
-      <textarea id="edit-clue-text" style="width:100%;padding:10px 12px;border:1px solid var(--parchment-darker);background:var(--paper);font-family:'IM Fell English',serif;font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;min-height:120px;line-height:1.6;"></textarea>
+      <textarea id="edit-clue-text" style="width:100%;padding:10px 12px;border:1px solid var(--parchment-darker);background:var(--paper);font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;min-height:120px;line-height:1.6;"></textarea>
     </div>
     <div id="edit-clue-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" id="edit-clue-btn" onclick="saveEditClue()">Save Changes</button>
@@ -1127,7 +1124,7 @@ function gmBriefingHTML() {
         <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="showGMBriefingEdit()">✏️ Edit Briefing</button>
       </div>
       <div id="gm-briefing-edit" style="${desc ? 'display:none' : ''}">
-        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier Prime',monospace;font-size:0.9rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
+        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier New',Courier,monospace;font-size:0.9rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn btn-primary btn-sm" onclick="saveGMBriefing()">Save</button>
           ${desc ? '<button class="btn btn-secondary btn-sm" onclick="cancelGMBriefingEdit()">Cancel</button>' : ''}
@@ -1147,9 +1144,9 @@ function gmMapHTML() {
       <span>Case Map</span><span id="gm-map-toggle" class="briefing-toggle">▾</span>
     </div>
     <div id="gm-map-body" class="briefing-body">
-      ${selected ? `<img src="${selected.url}" alt="${escapeHtml(selected.name)}" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;display:block;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map attached to this case.</p>'}
+      ${selected ? `<img src="${selected.url}" alt="${escapeHtml(selected.name)}" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;display:block;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map attached to this case.</p>'}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="case-map-select" style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
+        <select id="case-map-select" style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
           <option value="">— No map —</option>
           ${options}
         </select>
@@ -1182,14 +1179,14 @@ async function showMapsLibrary() {
 function renderMapsLibraryModal() {
   const grid = document.getElementById('maps-library-grid');
   if (!mapsLibrary.length) {
-    grid.innerHTML = '<p style="font-family:\'Courier Prime\',monospace;font-size:0.85rem;color:var(--fog);">No maps uploaded yet.</p>';
+    grid.innerHTML = '<p style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;color:var(--fog);">No maps uploaded yet.</p>';
     return;
   }
   grid.innerHTML = mapsLibrary.map(m => `
     <div style="border:1px solid var(--parchment-darker);overflow:hidden;border-radius:2px;">
       <img src="${m.url}" alt="${escapeHtml(m.name)}" style="width:100%;height:140px;object-fit:cover;display:block;cursor:pointer;" onclick="openMapPreview('${m.url}')">
       <div style="padding:8px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
-        <span style="font-family:'Courier Prime',monospace;font-size:0.8rem;color:var(--parchment);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.name)}</span>
+        <span style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--parchment);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.name)}</span>
         <button class="btn btn-danger btn-sm" onclick="deleteMap('${m.id}')">🗑</button>
       </div>
     </div>`).join('');
@@ -1640,7 +1637,7 @@ function openClueExpand(clue) {
   document.getElementById('clue-expand-title').textContent = clue.location_name;
   const body = document.getElementById('clue-expand-body');
   if (clue.clue_text) {
-    body.innerHTML = `<div style="padding:24px 28px;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.9;color:var(--ink);background:var(--paper);background-image:repeating-linear-gradient(transparent,transparent 30px,rgba(139,105,20,0.12) 30px,rgba(139,105,20,0.12) 31px);min-height:200px;">${clue.clue_text}</div>`;
+    body.innerHTML = `<div style="padding:24px 28px;font-family:Georgia,'Palatino Linotype',Palatino,serif;font-size:1.1rem;line-height:1.9;color:var(--ink);background:var(--paper);background-image:repeating-linear-gradient(transparent,transparent 30px,rgba(139,105,20,0.12) 30px,rgba(139,105,20,0.12) 31px);min-height:200px;">${clue.clue_text}</div>`;
   } else {
     body.innerHTML = `<img src="${clue.image_url}" style="width:100%;display:block;max-height:70vh;object-fit:contain;background:#1a1208;" alt="${clue.location_name}">`;
   }
@@ -1773,7 +1770,7 @@ async function loadNotes() {
 function renderNotes(notes) {
   const container = document.getElementById('notebook-notes');
   if (!notes.length) {
-    container.innerHTML = '<div style="font-family:\'Courier Prime\',monospace;font-size:0.8rem;color:var(--fog);font-style:italic;">No notes yet. Be the first to record a deduction.</div>';
+    container.innerHTML = '<div style="font-family:\'Courier New\',Courier,monospace;font-size:0.8rem;color:var(--fog);font-style:italic;">No notes yet. Be the first to record a deduction.</div>';
     return;
   }
   container.innerHTML = notes.map(n => {
