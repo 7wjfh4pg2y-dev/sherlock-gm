@@ -1198,9 +1198,10 @@ function renderNotes(notes) {
     const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const isOwn = n.player_name === playerName && n.player_color === playerColor;
     const isMinimized = minimizedNotes.has(n.id);
+    const minimizeBtn = `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
     const actionBtn = isOwn
-      ? `<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')">✕</button>`
-      : `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
+      ? `${minimizeBtn}<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')" style="color:var(--red)">✕</button>`
+      : minimizeBtn;
     return `<div class="notebook-note" style="color:${n.player_color}">
       <div class="notebook-note-meta">
         <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
