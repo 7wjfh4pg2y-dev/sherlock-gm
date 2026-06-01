@@ -29,7 +29,7 @@
   <div id="landing" class="screen active">
     <div class="landing-card">
       <div class="landing-eyebrow">Sherlock Holmes: Consulting Detective</div>
-      <div class="landing-title">The Case Room</div>
+      <div class="landing-title">The Incident Room</div>
       <div class="landing-divider"><span class="landing-divider-ornament">— ✦ —</span></div>
       <p class="landing-desc">
         A private chamber for the Game Master to present evidence,<br>and for the Irregulars to record their deductions.
@@ -106,7 +106,7 @@
       <div id="gm-right-panel" style="display:none;">
         <!-- GM Tools section -->
         <div class="gm-right-panel-header">Case Tools</div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
           <button class="sidebar-item" style="width:100%;justify-content:flex-start;" onclick="toggleGMBriefing()">
             <span class="sidebar-item-icon">📋</span>
             <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Case Briefing</span>
@@ -114,6 +114,14 @@
           <button class="sidebar-item" style="width:100%;justify-content:flex-start;" onclick="showMapsLibrary()">
             <span class="sidebar-item-icon">🗺</span>
             <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Map Library</span>
+          </button>
+        </div>
+        <!-- Invite code -->
+        <div id="gm-invite-block" style="display:none;margin-bottom:14px;">
+          <div class="gm-invite-label">Investigator Code</div>
+          <button class="gm-invite-code" id="gm-invite-code" onclick="copyShareLink()" title="Click to copy invite link">
+            <span id="gm-invite-code-text">—</span>
+            <span class="gm-invite-copy-hint">copy link</span>
           </button>
         </div>
         <hr class="gm-right-panel-divider">
@@ -245,7 +253,7 @@
     <div class="modal-title">Join a Case</div>
     <div class="field">
       <label>Case Code</label>
-      <input type="text" id="player-case-code" placeholder="Paste code from GM">
+      <input type="text" id="player-case-code" placeholder="8-character code from GM" maxlength="36" style="text-transform:uppercase;letter-spacing:0.1em;font-family:'Courier Prime','Courier New',monospace;">
     </div>
     <div class="field">
       <label>Your Name</label>

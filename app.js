@@ -366,10 +366,16 @@ async function onCaseChange() {
   if (gmWrap) gmWrap.style.display = currentMapUrl ? '' : 'none';
   const gmDirWrap = document.getElementById('gm-directory-btn-wrap');
   if (gmDirWrap) gmDirWrap.style.display = '';
-  // Share link
+  // Share link + invite code block
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
   document.getElementById('share-box').style.display = 'inline-flex';
+  // Show first 8 chars of UUID as the display code; full UUID used for join
+  const codeText = currentCaseId.split('-')[0].toUpperCase();
+  const codeEl = document.getElementById('gm-invite-code-text');
+  if (codeEl) codeEl.textContent = codeText;
+  const inviteBlock = document.getElementById('gm-invite-block');
+  if (inviteBlock) inviteBlock.style.display = '';
   await loadDirectoryFromServer(currentCaseId);
   await loadGMClues();
   subscribeGMUpdates(currentCaseId);
@@ -1138,11 +1144,19 @@ function showPlayerJoin() {
 }
 
 async function doPlayerJoin() {
-  const code = document.getElementById('player-case-code').value.trim();
+  let code = document.getElementById('player-case-code').value.trim();
   const name = document.getElementById('player-name-input').value.trim();
   const errEl = document.getElementById('player-join-error');
   if (!code) { errEl.textContent = 'Enter a case code.'; return; }
   if (!name) { errEl.textContent = 'Enter your name.'; return; }
+  // Accept short 8-char prefix code (uppercase first UUID segment)
+  if (/^[0-9A-Fa-f]{8}$/.test(code)) {
+    const prefix = code.toLowerCase();
+    const { data: cases } = await sb.from('cases').select('id');
+    const match = (cases || []).find(c => c.id.startsWith(prefix));
+    if (!match) { errEl.textContent = 'Case not found. Check the code and try again.'; return; }
+    code = match.id;
+  }
   playerName = name;
   playerColor = nameToColor(name);
   await enterPlayer(code);
@@ -1370,6 +1384,7 @@ async function deleteCase() {
   setMastheadCase("");
   document.getElementById('delete-case-btn').style.display = 'none';
   document.getElementById('share-box').style.display = 'none';
+  const ib = document.getElementById('gm-invite-block'); if (ib) ib.style.display = 'none';
   document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
   const rp = document.getElementById('gm-right-panel');
   if (rp) rp.style.display = 'none';
