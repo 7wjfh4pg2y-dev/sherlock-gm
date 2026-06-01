@@ -282,6 +282,108 @@
   }
   .modal-close:hover { color: var(--ink); }
 
+  /* ── LONDON DIRECTORY MODAL ── */
+  .directory-modal {
+    max-width: 580px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 28px 20px;
+  }
+
+  .directory-search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .directory-search-input {
+    flex: 1;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.88rem;
+    padding: 7px 10px;
+    border: 1px solid var(--sepia);
+    background: rgba(255,252,242,0.9);
+    color: var(--ink);
+    outline: none;
+  }
+  .directory-search-input:focus { border-color: var(--ink); }
+
+  .directory-category-select {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.82rem;
+    padding: 7px 8px;
+    border: 1px solid var(--sepia);
+    background: rgba(255,252,242,0.9);
+    color: var(--ink);
+    cursor: pointer;
+    max-width: 180px;
+  }
+
+  .directory-results-info {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--fog);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    min-height: 16px;
+  }
+
+  .directory-results {
+    overflow-y: auto;
+    flex: 1;
+    border: 1px solid rgba(180,140,60,0.25);
+    background: rgba(253,248,235,0.5);
+  }
+
+  .directory-empty {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.82rem;
+    color: var(--fog);
+    padding: 24px 16px;
+    text-align: center;
+  }
+
+  .directory-entry {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(180,140,60,0.15);
+    gap: 8px;
+  }
+  .directory-entry:last-child { border-bottom: none; }
+  .directory-entry:hover { background: rgba(180,140,60,0.08); }
+
+  .directory-entry-name {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .directory-entry-category {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    flex-shrink: 0;
+  }
+
+  .directory-entry-location {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--fog);
+    flex-shrink: 0;
+    min-width: 42px;
+    text-align: right;
+  }
+
   .error-msg {
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.75rem;

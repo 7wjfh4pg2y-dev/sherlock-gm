@@ -73,6 +73,12 @@
             <span class="sidebar-item-label">Map of London</span>
           </button>
         </div>
+        <div id="gm-directory-btn-wrap" style="display:none;">
+          <button class="sidebar-item" onclick="openDirectory()">
+            <span class="sidebar-item-icon">📖</span>
+            <span class="sidebar-item-label">Directory</span>
+          </button>
+        </div>
         <hr class="gm-sidebar-divider">
         <div id="gm-sidebar-case-label">Notes</div>
         <button class="sidebar-item" id="gm-notebook-collapsed-btn" onclick="gmNotebookBtnClick()" title="Player Notes">
@@ -133,6 +139,12 @@
         <button class="sidebar-item" onclick="openMapFullscreen()">
           <span class="sidebar-item-icon">🗺</span>
           <span class="sidebar-item-label">Map of London</span>
+        </button>
+      </div>
+      <div id="player-directory-btn-wrap" style="display:none;">
+        <button class="sidebar-item" onclick="openDirectory()">
+          <span class="sidebar-item-icon">📖</span>
+          <span class="sidebar-item-label">Directory</span>
         </button>
       </div>
     </div>
@@ -358,6 +370,24 @@
   <div style="width:60px;height:1px;background:var(--sepia);margin:4px 0;"></div>
   <div style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--fog);">Close this window or return to the landing page.</div>
   <button class="btn btn-secondary" style="margin-top:8px;" onclick="location.href=location.pathname">Return to Landing</button>
+</div>
+
+<!-- LONDON DIRECTORY MODAL -->
+<div class="modal-overlay" id="modal-directory" onclick="if(event.target===this)closeModal('modal-directory')">
+  <div class="modal directory-modal">
+    <button class="modal-close" onclick="closeModal('modal-directory')">×</button>
+    <div class="modal-title">London Directory</div>
+    <div class="directory-search-row">
+      <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()">
+      <select id="directory-category" class="directory-category-select" onchange="filterDirectory()">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div class="directory-results-info" id="directory-results-info"></div>
+    <div class="directory-results" id="directory-results">
+      <div class="directory-empty">Enter a name to search the directory.</div>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
