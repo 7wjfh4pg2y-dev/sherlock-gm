@@ -1639,12 +1639,17 @@ async function onCaseChange() {
   if (!currentCaseId) {
     document.getElementById('share-box').style.display = 'none';
     document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
+    const rp = document.getElementById('gm-right-panel');
+    if (rp) rp.style.display = 'none';
     return;
   }
   const { data: caseData } = await sb.from('cases').select('*').eq('id', currentCaseId).single();
   currentCaseDescription = caseData?.description || '';
   currentMapId = caseData?.map_id || null;
   currentMapUrl = currentMapId ? (mapsLibrary.find(m => m.id === currentMapId)?.url || '') : '';
+  // Update GM sidebar map button
+  const gmWrap = document.getElementById('gm-map-btn-wrap');
+  if (gmWrap) gmWrap.style.display = currentMapUrl ? '' : 'none';
   // Share link
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
@@ -2003,6 +2008,7 @@ function calcMapFitScale(img) {
 })();
 
 let sidebarOpen = false;
+let gmSidebarOpen = false;
 
 function togglePlayerSidebar() {
   sidebarOpen = !sidebarOpen;
@@ -2012,6 +2018,27 @@ function togglePlayerSidebar() {
   } else {
     sidebar.classList.remove('sidebar-open');
   }
+}
+
+function toggleGMSidebar() {
+  gmSidebarOpen = !gmSidebarOpen;
+  const sidebar = document.getElementById('gm-sidebar');
+  if (gmSidebarOpen) {
+    sidebar.classList.add('sidebar-open');
+  } else {
+    sidebar.classList.remove('sidebar-open');
+  }
+}
+
+function toggleGMBriefing() {
+  const panel = document.getElementById('gm-briefing-panel');
+  if (!panel) return;
+  const body = document.getElementById('gm-briefing-body');
+  const toggle = document.getElementById('gm-briefing-toggle');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (toggle) toggle.textContent = open ? '▸' : '▾';
 }
 
 function openMapFullscreen() {
@@ -2034,7 +2061,9 @@ function openMapFullscreen() {
 
 function renderPlayerMap() {
   const wrap = document.getElementById('player-map-btn-wrap');
-  wrap.style.display = currentMapUrl ? '' : 'none';
+  if (wrap) wrap.style.display = currentMapUrl ? '' : 'none';
+  const gmWrap = document.getElementById('gm-map-btn-wrap');
+  if (gmWrap) gmWrap.style.display = currentMapUrl ? '' : 'none';
 }
 
 function escapeHtml(str) {
@@ -2099,7 +2128,9 @@ async function loadGMClues() {
 function renderGMClues() {
   const revealed = allClues.filter(c => c.revealed);
   const unrevealed = allClues.filter(c => !c.revealed);
-  let html = gmBriefingHTML() + gmMapHTML() + gmPlayersHTML() + gmNotesHTML();
+
+  // Briefing panel + clue grids go into #gm-content
+  let html = gmBriefingHTML();
 
   // Unrevealed
   html += `<div class="clues-section-title" style="color:var(--parchment)">Unrevealed <span class="counter-badge">${unrevealed.length}</span></div>`;
@@ -2146,6 +2177,64 @@ function renderGMClues() {
   }
 
   document.getElementById('gm-content').innerHTML = html;
+
+  // Update GM sidebar map button visibility
+  const gmWrap = document.getElementById('gm-map-btn-wrap');
+  if (gmWrap) gmWrap.style.display = currentMapUrl ? '' : 'none';
+
+  // Show right panel and render players + notes there
+  const rightPanel = document.getElementById('gm-right-panel');
+  if (rightPanel) rightPanel.style.display = '';
+  renderGMRightPanel();
+}
+
+function renderGMRightPanel() {
+  // Players section
+  const active = allPlayers.filter(p => !p.is_kicked);
+  const kicked = allPlayers.filter(p => p.is_kicked);
+  const rowStyle = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
+  const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
+
+  const playerRow = (p, isKicked) => `
+    <div style="${rowStyle}">
+      <div style="width:9px;height:9px;border-radius:50%;background:${p.player_color};flex-shrink:0;border:1px solid rgba(255,255,255,0.2);"></div>
+      <span style="${nameStyle}${isKicked ? 'opacity:0.45;text-decoration:line-through;' : ''}">${escapeHtml(p.player_name)}</span>
+      ${isKicked
+        ? `<button class="btn btn-secondary btn-sm" onclick="unkickPlayer('${p.id}')" style="font-size:0.6rem;padding:3px 6px;">Reinstate</button>
+           <button class="btn btn-danger btn-sm" onclick="deletePlayerData('${p.id}','${escapeHtml(p.player_name)}','${p.player_color}')" style="font-size:0.6rem;padding:3px 6px;">Del</button>`
+        : `<button class="btn btn-danger btn-sm" onclick="kickPlayer('${p.id}')" style="font-size:0.6rem;padding:3px 6px;">Kick</button>`}
+    </div>`;
+
+  const playersBody = !allPlayers.length
+    ? `<p style="font-family:'Courier New',Courier,monospace;font-size:0.75rem;color:var(--fog);margin:0;font-style:italic;">No players yet.</p>`
+    : `${active.map(p => playerRow(p, false)).join('')}
+       ${kicked.length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(201,169,110,0.2);">
+         <div style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--fog);margin-bottom:4px;">Removed</div>
+         ${kicked.map(p => playerRow(p, true)).join('')}
+       </div>` : ''}`;
+
+  const playersBadge = document.getElementById('gm-players-badge');
+  if (playersBadge) playersBadge.textContent = active.length;
+  const playersEl = document.getElementById('gm-right-players');
+  if (playersEl) playersEl.innerHTML = playersBody;
+
+  // Notes section
+  const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.75rem;color:var(--fog);margin:0;font-style:italic;">No notes yet.</p>`;
+  const notesBody = allNotes.length ? allNotes.map(n => {
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="notebook-note" style="color:${n.player_color};margin-bottom:10px;font-size:0.82rem;">
+      <div class="notebook-note-meta">
+        <span>${escapeHtml(n.player_name)} · ${time}</span>
+        <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.7rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
+      </div>
+      <div class="notebook-note-text" style="color:var(--ink);font-size:0.85rem;">${escapeHtml(n.content)}</div>
+    </div>`;
+  }).join('') : noNotes;
+
+  const notesBadge = document.getElementById('gm-notes-badge');
+  if (notesBadge) notesBadge.textContent = allNotes.length;
+  const notesEl = document.getElementById('gm-right-notes');
+  if (notesEl) notesEl.innerHTML = notesBody;
 }
 
 async function revealClue(id) {
@@ -2449,6 +2538,8 @@ async function deleteCase() {
   document.getElementById('delete-case-btn').style.display = 'none';
   document.getElementById('share-box').style.display = 'none';
   document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
+  const rp = document.getElementById('gm-right-panel');
+  if (rp) rp.style.display = 'none';
   await loadCases();
   toast('Case deleted.');
 }
