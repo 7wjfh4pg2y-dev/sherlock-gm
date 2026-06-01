@@ -463,14 +463,8 @@
   #gm-sidebar.sidebar-open #gm-sidebar-case-label {
     opacity: 1;
   }
-  #gm-sidebar.sidebar-open #gm-sidebar-case-label:hover {
-    color: rgba(205,170,90,0.9);
-    background: rgba(139,105,20,0.1);
-  }
 
-  /* Notebook icon: visible when collapsed, hidden when expanded */
   #gm-notebook-collapsed-btn { display: flex; }
-  #gm-sidebar.sidebar-open #gm-notebook-collapsed-btn { display: none; }
   #gm-sidebar-notes-section { display: none; }
   #gm-sidebar.sidebar-open #gm-sidebar-notes-section { display: block; }
 
