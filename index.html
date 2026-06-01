@@ -101,6 +101,7 @@
   .screen.active { display: block !important; }
   #landing.active { display: flex !important; }
   #player-screen.active { display: flex !important; }
+  #gm-screen.active { display: flex !important; }
 
   /* ── LANDING ── */
   #landing {
@@ -306,9 +307,18 @@
 
   /* ── GM SCREEN ── */
   #gm-screen {
-    padding: 28px 24px;
-    max-width: 1200px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  #gm-toolbar-row {
+    flex-shrink: 0;
+    padding: 16px 20px 0;
   }
 
   .gm-toolbar {
@@ -316,9 +326,175 @@
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 24px;
-    padding-bottom: 18px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
     border-bottom: 1px solid rgba(245,234,214,0.12);
+  }
+
+  #gm-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #gm-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    min-width: 0;
+  }
+
+  #gm-right-panel {
+    width: 270px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 16px 14px;
+    background: rgba(15,10,5,0.6);
+    border-left: 1px solid rgba(139,105,20,0.25);
+  }
+
+  .gm-right-panel-header {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(139,105,20,0.2);
+    font-variant: small-caps;
+  }
+
+  .gm-right-panel-divider {
+    border: none;
+    border-top: 1px solid rgba(139,105,20,0.25);
+    margin: 14px 0;
+  }
+
+  /* GM Sidebar — mirrors player-sidebar */
+  #gm-sidebar {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    background: rgba(30,18,8,0.97);
+    border-right: 2px solid rgba(139,105,20,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+    transition: width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s cubic-bezier(0.4,0,0.2,1), max-width 0.28s cubic-bezier(0.4,0,0.2,1);
+    flex-shrink: 0;
+    height: 100%;
+    z-index: 10;
+  }
+
+  #gm-sidebar.sidebar-open {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  #gm-sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(139,105,20,0.3);
+    cursor: pointer;
+    color: rgba(205,170,90,0.85);
+    font-size: 1.3rem;
+    padding: 10px 0;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  #gm-sidebar-toggle-btn:hover {
+    background: rgba(139,105,20,0.15);
+  }
+
+  #gm-sidebar-toggle-label {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    color: rgba(205,170,90,0.6);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+
+  #gm-sidebar.sidebar-open #gm-sidebar-toggle-label {
+    display: none;
+  }
+
+  #gm-sidebar-toggle-arrow {
+    display: none;
+    font-size: 0.9rem;
+  }
+
+  #gm-sidebar.sidebar-open #gm-sidebar-toggle-arrow {
+    display: inline;
+  }
+
+  #gm-sidebar-tools-label {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: rgba(205,170,90,0.55);
+    text-transform: uppercase;
+    padding: 12px 14px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.18s;
+    border-bottom: 1px solid rgba(139,105,20,0.2);
+    margin-bottom: 4px;
+  }
+
+  #gm-sidebar.sidebar-open #gm-sidebar-tools-label {
+    opacity: 1;
+  }
+
+  #gm-sidebar-case-label {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: rgba(205,170,90,0.55);
+    text-transform: uppercase;
+    padding: 12px 14px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.18s;
+    border-bottom: 1px solid rgba(139,105,20,0.2);
+    margin-bottom: 4px;
+  }
+
+  #gm-sidebar.sidebar-open #gm-sidebar-case-label {
+    opacity: 1;
+  }
+
+  #gm-sidebar .sidebar-item-label {
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.18s;
+    white-space: nowrap;
+  }
+
+  #gm-sidebar.sidebar-open .sidebar-item-label {
+    opacity: 1;
+  }
+
+  .gm-sidebar-divider {
+    border: none;
+    border-top: 1px solid rgba(139,105,20,0.3);
+    margin: 8px 0;
   }
 
   .case-select-wrap { flex: 1; min-width: 200px; }
@@ -969,26 +1145,72 @@
 
   <!-- GM SCREEN -->
   <div id="gm-screen" class="screen">
-    <div class="gm-toolbar">
-      <div class="case-select-wrap">
-        <select id="case-select" onchange="onCaseChange()">
-          <option value="">— Select a Case —</option>
-        </select>
+    <div id="gm-toolbar-row">
+      <div class="gm-toolbar">
+        <div class="case-select-wrap">
+          <select id="case-select" onchange="onCaseChange()">
+            <option value="">— Select a Case —</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="showNewCase()">+ New Case</button>
+        <button class="btn btn-danger btn-sm" id="delete-case-btn" onclick="deleteCase()" style="display:none">Delete Case</button>
+        <button class="btn btn-secondary btn-sm" onclick="gmLogout()">Logout</button>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="showNewCase()">+ New Case</button>
-      <button class="btn btn-secondary btn-sm" onclick="showMapsLibrary()">🗺 Maps</button>
-      <button class="btn btn-danger btn-sm" id="delete-case-btn" onclick="deleteCase()" style="display:none">Delete Case</button>
-      <button class="btn btn-secondary btn-sm" onclick="gmLogout()">Logout</button>
+      <div id="share-box" class="share-link-box" style="display:none; margin-bottom:12px;">
+        <span class="share-link-label">Player Link →</span>
+        <span class="share-link-url" id="share-url"></span>
+        <button class="btn btn-secondary btn-sm" onclick="copyShareLink()">Copy</button>
+      </div>
     </div>
 
-    <div id="share-box" class="share-link-box" style="display:none">
-      <span class="share-link-label">Player Link →</span>
-      <span class="share-link-url" id="share-url"></span>
-      <button class="btn btn-secondary btn-sm" onclick="copyShareLink()">Copy</button>
-    </div>
+    <div id="gm-body">
+      <!-- GM Sidebar -->
+      <div id="gm-sidebar">
+        <button id="gm-sidebar-toggle-btn" onclick="toggleGMSidebar()" title="Toggle GM tools">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <span>❧</span>
+            <span id="gm-sidebar-toggle-label">GM Files</span>
+            <span id="gm-sidebar-toggle-arrow">◀</span>
+          </div>
+        </button>
+        <div id="gm-sidebar-tools-label">Tools</div>
+        <div id="gm-map-btn-wrap" style="display:none;">
+          <button class="sidebar-item" onclick="openMapFullscreen()">
+            <span class="sidebar-item-icon">🗺</span>
+            <span class="sidebar-item-label">Map of London</span>
+          </button>
+        </div>
+        <button class="sidebar-item" onclick="openDirectoryFlipbook()">
+          <span class="sidebar-item-icon">📖</span>
+          <span class="sidebar-item-label">London Directory</span>
+        </button>
+        <hr class="gm-sidebar-divider">
+        <div id="gm-sidebar-case-label">Case</div>
+        <button class="sidebar-item" onclick="toggleGMBriefing()">
+          <span class="sidebar-item-icon">📋</span>
+          <span class="sidebar-item-label">Briefing</span>
+        </button>
+        <button class="sidebar-item" onclick="showMapsLibrary()">
+          <span class="sidebar-item-icon">🗺</span>
+          <span class="sidebar-item-label">Map Settings</span>
+        </button>
+      </div>
 
-    <div id="gm-content">
-      <div class="empty-state">Select or create a case to begin.</div>
+      <!-- GM Main content -->
+      <div id="gm-main">
+        <div id="gm-content">
+          <div class="empty-state">Select or create a case to begin.</div>
+        </div>
+      </div>
+
+      <!-- GM Right panel -->
+      <div id="gm-right-panel" style="display:none;">
+        <div class="gm-right-panel-header">Players <span class="counter-badge" id="gm-players-badge">0</span></div>
+        <div id="gm-right-players"></div>
+        <hr class="gm-right-panel-divider">
+        <div class="gm-right-panel-header">Investigators' Notes <span class="counter-badge" id="gm-notes-badge">0</span></div>
+        <div id="gm-right-notes"></div>
+      </div>
     </div>
   </div>
 
