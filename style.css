@@ -1039,8 +1039,8 @@
     padding: 10px 14px;
     background: transparent;
     border: none;
-    font-family: 'IM Fell English', Georgia, serif;
-    font-size: 0.92rem;
+    font-family: 'Cutive Mono', 'Courier New', monospace;
+    font-size: 0.88rem;
     color: var(--parchment);
     resize: none;
     line-height: 1.65;
@@ -1102,7 +1102,7 @@
   /* push action button to far right */
   .notebook-note-meta .note-action-btn { margin-left: auto; }
   .notebook-note-text {
-    font-family: 'IM Fell English', Georgia, serif;
+    font-family: 'Cutive Mono', 'Courier New', monospace;
     font-size: 0.92rem;
     line-height: 1.65;
     white-space: pre-wrap;
