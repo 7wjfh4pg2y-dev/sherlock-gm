@@ -26,8 +26,9 @@ const DIRECTORY_CATEGORIES = [...new Set(LONDON_DIRECTORY.filter(e=>e.category).
 
 const DIR_CUSTOM_KEY = 'sherlockgm_dir_custom';
 const DIR_HIDDEN_KEY = 'sherlockgm_dir_hidden';
-let dirCustom = [];    // {id, name, location, category}
-let dirHidden = new Set(); // names of built-in entries hidden by GM
+let dirCustom = [];
+let dirHidden = new Set();
+let dirEditingId = null; // id of custom entry currently being edited
 
 function loadDirectoryEdits() {
   try { dirCustom = JSON.parse(store.get(DIR_CUSTOM_KEY) || '[]'); } catch(e) { dirCustom = []; }
@@ -39,21 +40,42 @@ function saveDirectoryEdits() {
   store.set(DIR_HIDDEN_KEY, JSON.stringify([...dirHidden]));
 }
 
+async function syncDirectoryToServer() {
+  if (!currentCaseId) return;
+  const payload = JSON.stringify({ custom: dirCustom, hidden: [...dirHidden] });
+  const path = `dir-overrides/${currentCaseId}.json`;
+  const blob = new Blob([payload], { type: 'application/json' });
+  // upsert: upload with overwrite
+  const { error } = await sb.storage.from('clues').upload(path, blob, { upsert: true, contentType: 'application/json' });
+  if (error) console.warn('dir sync upload error:', error.message);
+}
+
+async function loadDirectoryFromServer(caseId) {
+  if (!caseId) return;
+  try {
+    const { data } = sb.storage.from('clues').getPublicUrl(`dir-overrides/${caseId}.json`);
+    const res = await fetch(data.publicUrl + '?t=' + Date.now());
+    if (!res.ok) return;
+    const json = await res.json();
+    if (Array.isArray(json.custom)) dirCustom = json.custom;
+    if (Array.isArray(json.hidden)) dirHidden = new Set(json.hidden);
+    // Also persist locally for offline use
+    saveDirectoryEdits();
+  } catch(e) { /* no overrides file yet — that's fine */ }
+}
+
 function allDirectoryCategories() {
   const custom = dirCustom.map(e=>e.category).filter(Boolean);
   return [...new Set([...DIRECTORY_CATEGORIES, ...custom])].sort();
 }
 
 function buildDirectoryView() {
-  // Custom entries first (they override/supplement), then built-in minus hidden
   const builtIn = LONDON_DIRECTORY.filter(e => !dirHidden.has(e.name));
-  // Custom entries override built-in by name (case-insensitive)
   const customNames = new Set(dirCustom.map(e=>e.name.toLowerCase()));
-  const merged = [
+  return [
     ...dirCustom,
     ...builtIn.filter(e => !customNames.has(e.name.toLowerCase()))
   ];
-  return merged;
 }
 
 function populateDirectoryCategoryDropdown() {
@@ -89,6 +111,7 @@ function openDirectory() {
   if (addBtn) addBtn.style.display = isGM ? '' : 'none';
   const addForm = document.getElementById('directory-add-form');
   if (addForm) addForm.style.display = 'none';
+  dirEditingId = null;
   openModal('modal-directory');
   setTimeout(() => document.getElementById('directory-search').focus(), 80);
 }
@@ -97,24 +120,61 @@ function toggleDirectoryAddForm() {
   const form = document.getElementById('directory-add-form');
   if (!form) return;
   const open = form.style.display !== 'none';
+  if (open && dirEditingId) {
+    // cancel edit
+    dirEditingId = null;
+    clearAddForm();
+    document.getElementById('directory-add-btn').textContent = '+ Add Entry';
+  }
   form.style.display = open ? 'none' : '';
   if (!open) setTimeout(() => document.getElementById('dir-add-name').focus(), 60);
+}
+
+function clearAddForm() {
+  document.getElementById('dir-add-name').value = '';
+  document.getElementById('dir-add-location').value = '';
+  document.getElementById('dir-add-category').value = '';
+}
+
+function editDirectoryEntry(id) {
+  const entry = dirCustom.find(e => e.id === id);
+  if (!entry) return;
+  dirEditingId = id;
+  const form = document.getElementById('directory-add-form');
+  form.style.display = '';
+  document.getElementById('dir-add-name').value = entry.name;
+  document.getElementById('dir-add-location').value = entry.location;
+  document.getElementById('dir-add-category').value = entry.category || '';
+  document.getElementById('directory-add-btn').textContent = '✕ Cancel Edit';
+  setTimeout(() => document.getElementById('dir-add-name').focus(), 60);
 }
 
 function submitDirectoryEntry() {
   const name = document.getElementById('dir-add-name').value.trim();
   const location = document.getElementById('dir-add-location').value.trim();
   const category = document.getElementById('dir-add-category').value.trim() || null;
-  if (!name) { document.getElementById('dir-add-name').focus(); return; }
-  if (!location) { document.getElementById('dir-add-location').focus(); return; }
-  dirCustom.push({ id: 'c_' + Date.now(), name, location, category });
+
+  const nameEl = document.getElementById('dir-add-name');
+  const locEl = document.getElementById('dir-add-location');
+  if (!name) { nameEl.classList.add('input-shake'); setTimeout(() => nameEl.classList.remove('input-shake'), 400); nameEl.focus(); return; }
+  if (!location) { locEl.classList.add('input-shake'); setTimeout(() => locEl.classList.remove('input-shake'), 400); locEl.focus(); return; }
+
+  if (dirEditingId) {
+    const idx = dirCustom.findIndex(e => e.id === dirEditingId);
+    if (idx !== -1) dirCustom[idx] = { ...dirCustom[idx], name, location, category };
+    dirEditingId = null;
+    document.getElementById('directory-add-btn').textContent = '+ Add Entry';
+  } else {
+    dirCustom.push({ id: 'c_' + Date.now(), name, location, category });
+  }
+
   saveDirectoryEdits();
-  document.getElementById('dir-add-name').value = '';
-  document.getElementById('dir-add-location').value = '';
-  document.getElementById('dir-add-category').value = '';
+  syncDirectoryToServer();
+  clearAddForm();
+  document.getElementById('directory-add-form').style.display = 'none';
   populateDirectoryCategoryDropdown();
   filterDirectory();
-  toast(`Added: ${name}`);
+  toast(`Saved: ${name}`);
 }
 
 function confirmRemoveDirectoryEntry(name, customId) {
@@ -128,6 +188,7 @@ function removeDirectoryEntry(name, customId) {
     dirHidden.add(name);
   }
   saveDirectoryEdits();
+  syncDirectoryToServer();
   populateDirectoryCategoryDropdown();
   filterDirectory();
 }
@@ -150,26 +211,29 @@ function filterDirectory() {
     e.name.toLowerCase().includes(query) || e.location.toLowerCase().includes(query)
   );
 
-  infoEl.textContent = results.length === 0 ? 'No results' : `${results.length} result${results.length===1?'':'s'}`;
-
-  if (results.length === 0) {
-    resultsEl.innerHTML = '<div class="directory-empty">No entries found.</div>';
+  const total = results.length;
+  if (total === 0) {
+    const hint = cat && query ? ` in "${cat}"` : cat ? ` in "${cat}"` : '';
+    infoEl.textContent = '';
+    resultsEl.innerHTML = `<div class="directory-empty">No entries found${hint}.</div>`;
     return;
   }
 
   const MAX = 200;
+  infoEl.textContent = `${total} result${total===1?'':'s'}${total > MAX ? ` — showing first ${MAX}` : ''}`;
+
   let html = results.slice(0, MAX).map(e => {
     const name = escapeHtml(e.name);
     const loc = escapeHtml(e.location);
     const isCustom = !!e.id;
     const catLabel = e.category ? `<span class="directory-entry-category">${escapeHtml(e.category)}</span>` : '';
     const customBadge = isCustom ? `<span class="directory-custom-badge" title="Custom entry">★</span>` : '';
-    const deleteBtn = isGM
-      ? `<button class="directory-delete-btn" onclick="confirmRemoveDirectoryEntry(${JSON.stringify(e.name)},${e.id ? JSON.stringify(e.id) : 'null'})" title="Remove entry">✕</button>`
-      : '';
-    return `<div class="directory-entry">${customBadge}<span class="directory-entry-name">${name}</span>${catLabel}<span class="directory-entry-location">${loc}</span>${deleteBtn}</div>`;
+    const ename = escapeHtml(JSON.stringify(e.name));
+    const gmBtns = isGM ? `<span class="directory-entry-actions">${
+      isCustom ? `<button class="directory-action-btn" onclick="editDirectoryEntry(${escapeHtml(JSON.stringify(e.id))})" title="Edit">✎</button>` : ''
+    }<button class="directory-action-btn directory-delete-btn" onclick="confirmRemoveDirectoryEntry(${ename},${isCustom ? escapeHtml(JSON.stringify(e.id)) : 'null'})" title="Remove">✕</button></span>` : '';
+    return `<div class="directory-entry">${customBadge}<span class="directory-entry-name">${name}</span>${catLabel}<span class="directory-entry-location">${loc}</span>${gmBtns}</div>`;
   }).join('');
-  if (results.length > MAX) html += `<div class="directory-empty" style="font-size:0.75rem;">Showing first ${MAX} of ${results.length}. Refine your search.</div>`;
   resultsEl.innerHTML = html;
 }
 
@@ -301,6 +365,7 @@ async function onCaseChange() {
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
   document.getElementById('share-box').style.display = 'inline-flex';
+  await loadDirectoryFromServer(currentCaseId);
   await loadGMClues();
   subscribeGMUpdates(currentCaseId);
 }
@@ -1118,6 +1183,7 @@ async function enterPlayer(caseId) {
   renderPlayerMap();
   showScreen('player-screen');
   document.getElementById('player-notebook-section').style.display = '';
+  await loadDirectoryFromServer(caseId);
   await loadPlayerClues();
   await loadNotes();
   subscribePlayer();

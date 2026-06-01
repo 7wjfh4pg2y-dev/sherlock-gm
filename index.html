@@ -382,16 +382,16 @@
     </div>
     <div id="directory-add-form" style="display:none;">
       <div class="directory-add-row">
-        <input type="text" id="dir-add-name" class="directory-search-input" placeholder="Name" style="flex:2;">
-        <input type="text" id="dir-add-location" class="directory-search-input" placeholder="e.g. 42 EC" style="flex:0 0 90px;">
-        <input type="text" id="dir-add-category" class="directory-search-input" placeholder="Category (optional)" list="dir-categories-list" style="flex:1;">
+        <input type="text" id="dir-add-name" class="directory-search-input" placeholder="Name" style="flex:2;" onkeydown="if(event.key==='Enter')submitDirectoryEntry();if(event.key==='Escape')toggleDirectoryAddForm();">
+        <input type="text" id="dir-add-location" class="directory-search-input" placeholder="e.g. 42 EC" style="flex:0 0 90px;" onkeydown="if(event.key==='Enter')submitDirectoryEntry();if(event.key==='Escape')toggleDirectoryAddForm();">
+        <input type="text" id="dir-add-category" class="directory-search-input" placeholder="Category (optional)" list="dir-categories-list" style="flex:1;" onkeydown="if(event.key==='Enter')submitDirectoryEntry();if(event.key==='Escape')toggleDirectoryAddForm();">
         <datalist id="dir-categories-list"></datalist>
-        <button class="directory-add-submit-btn" onclick="submitDirectoryEntry()">Add</button>
+        <button class="directory-add-submit-btn" onclick="submitDirectoryEntry()">Save</button>
       </div>
     </div>
     <div class="directory-search-row">
-      <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()">
-      <select id="directory-category" class="directory-category-select" onchange="filterDirectory()">
+      <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()" onkeydown="if(event.key==='Escape')closeModal('modal-directory')">
+      <select id="directory-category" class="directory-category-select" onchange="filterDirectory()" onkeydown="if(event.key==='Escape')closeModal('modal-directory')">
         <option value="">All Categories</option>
       </select>
     </div>
