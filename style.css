@@ -133,8 +133,8 @@
     /* Atmospheric layered background */
     background:
       radial-gradient(ellipse 70% 55% at 50% 40%, rgba(60,35,8,0.0) 0%, rgba(8,5,1,0.92) 100%),
-      radial-gradient(ellipse 120% 80% at 20% 110%, rgba(90,55,10,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 100% 60% at 80% -10%,  rgba(80,50,10,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse 120% 80% at 20% 110%, rgba(90,55,10,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 60% at 80% -10%,  rgba(80,50,10,0.07) 0%, transparent 55%),
       linear-gradient(180deg, #0a0602 0%, #100a03 60%, #0d0801 100%);
   }
 
@@ -156,8 +156,8 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 60% 30% at 15% 70%, rgba(120,90,30,0.06) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 25% at 85% 30%, rgba(100,70,20,0.05) 0%, transparent 65%);
+      radial-gradient(ellipse 60% 30% at 15% 70%, rgba(120,90,30,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 25% at 85% 30%, rgba(100,70,20,0.03) 0%, transparent 65%);
   }
 
   .landing-card {
@@ -658,6 +658,48 @@
     border-top: 1px solid rgba(139,105,20,0.25);
     margin: 14px 0;
   }
+
+  .gm-invite-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fog);
+    margin-bottom: 6px;
+  }
+
+  .gm-invite-code {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(139,105,20,0.3);
+    padding: 8px 10px;
+    cursor: pointer;
+    gap: 8px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .gm-invite-code:hover { border-color: rgba(139,105,20,0.6); background: rgba(0,0,0,0.5); }
+
+  #gm-invite-code-text {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--parchment);
+  }
+
+  .gm-invite-copy-hint {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fog);
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+  .gm-invite-code:hover .gm-invite-copy-hint { opacity: 1; color: var(--sepia); }
 
   /* GM Sidebar — mirrors player-sidebar */
   #gm-sidebar {
