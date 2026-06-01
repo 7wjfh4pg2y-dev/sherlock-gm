@@ -894,7 +894,6 @@ async function uploadClue() {
 
 // ── PLAYER ──
 function showPlayerJoin() {
-  renderSwatches('join-color-swatches', playerColor);
   openModal('modal-player-join');
 }
 
@@ -905,6 +904,7 @@ async function doPlayerJoin() {
   if (!code) { errEl.textContent = 'Enter a case code.'; return; }
   if (!name) { errEl.textContent = 'Enter your name.'; return; }
   playerName = name;
+  playerColor = nameToColor(name);
   await enterPlayer(code);
 }
 
@@ -1154,27 +1154,15 @@ const PLAYER_COLORS = [
   { label: 'Coral',    value: '#ee7755' },
 ];
 
+function nameToColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return PLAYER_COLORS[hash % PLAYER_COLORS.length].value;
+}
+
 let playerName = '';
 let playerColor = PLAYER_COLORS[0].value;
 let pendingCaseId = null;
-
-function renderSwatches(containerId, selectedColor, onChange) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  PLAYER_COLORS.forEach(c => {
-    const s = document.createElement('div');
-    s.className = 'color-swatch' + (c.value === selectedColor ? ' selected' : '');
-    s.style.background = c.value;
-    s.title = c.label;
-    s.onclick = () => {
-      playerColor = c.value;
-      container.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
-      s.classList.add('selected');
-      if (onChange) onChange(c.value);
-    };
-    container.appendChild(s);
-  });
-}
 
 // ── NOTES ──
 let notesSubscription = null;
@@ -1267,7 +1255,6 @@ let _identityResolveFn = null;
 function promptIdentity() {
   return new Promise(resolve => {
     _identityResolveFn = resolve;
-    renderSwatches('identity-color-swatches', playerColor);
     document.getElementById('identity-name-input').value = playerName;
     document.getElementById('identity-error').textContent = '';
     openModal('modal-player-identity');
@@ -1278,15 +1265,13 @@ function confirmIdentity() {
   const name = document.getElementById('identity-name-input').value.trim();
   if (!name) { document.getElementById('identity-error').textContent = 'Enter your name.'; return; }
   playerName = name;
+  playerColor = nameToColor(name);
   closeModal('modal-player-identity');
   if (_identityResolveFn) { _identityResolveFn(); _identityResolveFn = null; }
 }
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', async () => {
-  // Render join modal swatches
-  renderSwatches('join-color-swatches', playerColor);
-
   // Check for player link
   const params = new URLSearchParams(location.search);
   const caseParam = params.get('case');
