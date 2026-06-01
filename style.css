@@ -464,6 +464,12 @@
     opacity: 1;
   }
 
+  /* Notebook icon: visible when collapsed, hidden when expanded */
+  #gm-notebook-collapsed-btn { display: flex; }
+  #gm-sidebar.sidebar-open #gm-notebook-collapsed-btn { display: none; }
+  #gm-sidebar-notes-section { display: none; }
+  #gm-sidebar.sidebar-open #gm-sidebar-notes-section { display: block; }
+
   #gm-sidebar .sidebar-item-label {
     overflow: hidden;
     opacity: 0;

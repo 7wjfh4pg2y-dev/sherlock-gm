@@ -62,7 +62,7 @@
       <div id="gm-sidebar">
         <button id="gm-sidebar-toggle-btn" onclick="toggleGMSidebar()" title="Toggle GM tools">
           <div style="display:flex;flex-direction:column;align-items:center;">
-            <span>❧</span>
+            <span style="font-size:1.3rem;filter:sepia(1) saturate(3) brightness(0.85);">🔍</span>
             <span id="gm-sidebar-toggle-label">GM Files</span>
             <span id="gm-sidebar-toggle-arrow">◀</span>
           </div>
@@ -80,6 +80,11 @@
         </button>
         <hr class="gm-sidebar-divider">
         <div id="gm-sidebar-case-label">Notes</div>
+        <!-- Notebook icon — only visible when sidebar is collapsed -->
+        <button class="sidebar-item" id="gm-notebook-collapsed-btn" onclick="toggleGMSidebar()" title="Irregulars' Notebook" style="display:flex;">
+          <span class="sidebar-item-icon">📓</span>
+          <span class="sidebar-item-label">Irregulars' Notebook</span>
+        </button>
         <div id="gm-sidebar-notes-section">
           <div id="gm-sidebar-notes-badge" style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--sepia);padding:4px 0 4px 8px;display:none;">0 notes</div>
           <div id="gm-sidebar-notes-list"></div>
@@ -124,7 +129,7 @@
     <div id="player-sidebar">
       <button id="sidebar-toggle-btn" onclick="togglePlayerSidebar()" title="Toggle tools">
         <div style="display:flex;flex-direction:column;align-items:center;">
-          <span>❧</span>
+          <span style="font-size:1.3rem;filter:sepia(1) saturate(3) brightness(0.85);">🔍</span>
           <span id="sidebar-toggle-label">Case Files</span>
           <span id="sidebar-toggle-arrow">◀</span>
         </div>
