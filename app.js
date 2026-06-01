@@ -253,8 +253,12 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 function setMastheadCase(name) {
-  const el = document.getElementById('masthead-case-name');
-  if (el) el.textContent = name || '';
+  // kept for call-site compatibility; masthead now shows static app title
+}
+function copyInviteCode() {
+  const code = document.getElementById('gm-invite-code-text').textContent;
+  if (!code || code === '—') return;
+  navigator.clipboard.writeText(code).then(() => toast('Code copied: ' + code));
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -376,6 +380,8 @@ async function onCaseChange() {
   if (codeEl) codeEl.textContent = codeText;
   const inviteBlock = document.getElementById('gm-invite-block');
   if (inviteBlock) inviteBlock.style.display = '';
+  const inviteDivider = document.getElementById('gm-invite-divider');
+  if (inviteDivider) inviteDivider.style.display = '';
   await loadDirectoryFromServer(currentCaseId);
   await loadGMClues();
   subscribeGMUpdates(currentCaseId);
@@ -1385,6 +1391,7 @@ async function deleteCase() {
   document.getElementById('delete-case-btn').style.display = 'none';
   document.getElementById('share-box').style.display = 'none';
   const ib = document.getElementById('gm-invite-block'); if (ib) ib.style.display = 'none';
+  const id2 = document.getElementById('gm-invite-divider'); if (id2) id2.style.display = 'none';
   document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
   const rp = document.getElementById('gm-right-panel');
   if (rp) rp.style.display = 'none';
