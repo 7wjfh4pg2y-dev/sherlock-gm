@@ -364,104 +364,152 @@
   .input-shake { animation: dir-shake 0.3s ease; border-color: var(--red) !important; }
 
   .directory-modal {
-    max-width: 580px;
+    max-width: 660px;
     width: 100%;
-    max-height: 80vh;
+    max-height: 82vh;
     display: flex;
     flex-direction: column;
-    padding: 28px 28px 20px;
+    padding: 30px 32px 22px;
   }
 
   .directory-search-row {
     display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 0;
+    margin-bottom: 12px;
+    border: 1px solid var(--sepia);
+    background: rgba(255,252,242,0.95);
+  }
+
+  .directory-search-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 7px;
+    border-right: 1px solid rgba(180,140,60,0.3);
+  }
+
+  .directory-search-icon {
+    font-size: 0.85rem;
+    color: var(--sepia);
+    flex-shrink: 0;
+    line-height: 1;
+    opacity: 0.7;
   }
 
   .directory-search-input {
     flex: 1;
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.88rem;
-    padding: 7px 10px;
-    border: 1px solid var(--sepia);
-    background: rgba(255,252,242,0.9);
+    padding: 8px 0;
+    border: none;
+    background: transparent;
     color: var(--ink);
     outline: none;
+    min-width: 0;
   }
-  .directory-search-input:focus { border-color: var(--ink); }
+  .directory-search-input::placeholder { color: var(--fog); }
 
   .directory-category-select {
     font-family: 'Courier Prime', 'Courier New', monospace;
     font-size: 0.82rem;
-    padding: 7px 8px;
-    border: 1px solid var(--sepia);
-    background: rgba(255,252,242,0.9);
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
     color: var(--ink);
     cursor: pointer;
-    max-width: 180px;
+    max-width: 170px;
+    outline: none;
+  }
+
+  .directory-search-row:focus-within {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 1px var(--ink);
   }
 
   .directory-results-info {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
     color: var(--fog);
     text-transform: uppercase;
-    margin-bottom: 8px;
-    min-height: 16px;
+    margin-bottom: 6px;
+    min-height: 15px;
   }
 
   .directory-results {
     overflow-y: auto;
     flex: 1;
-    border: 1px solid rgba(180,140,60,0.25);
-    background: rgba(253,248,235,0.5);
+    border-top: 1px solid rgba(180,140,60,0.35);
   }
 
   .directory-empty {
-    font-family: 'Courier Prime', 'Courier New', monospace;
-    font-size: 0.82rem;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 0.88rem;
+    font-style: italic;
     color: var(--fog);
-    padding: 24px 16px;
+    padding: 28px 16px;
     text-align: center;
   }
 
   .directory-entry {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    padding: 6px 12px;
-    border-bottom: 1px solid rgba(180,140,60,0.15);
-    gap: 8px;
+    padding: 5px 4px 5px 2px;
+    border-bottom: 1px solid rgba(180,140,60,0.1);
+    gap: 0;
   }
   .directory-entry:last-child { border-bottom: none; }
-  .directory-entry:hover { background: rgba(180,140,60,0.08); }
+  .directory-entry:hover { background: rgba(180,140,60,0.07); }
 
   .directory-entry-name {
     font-family: 'IM Fell English', Georgia, serif;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     color: var(--ink);
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 52%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .directory-dots {
     flex: 1;
-    min-width: 0;
+    min-width: 12px;
+    overflow: hidden;
+    color: rgba(160,120,50,0.3);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    align-self: flex-end;
+    padding: 0 3px 2px;
+    white-space: nowrap;
+  }
+  .directory-dots::after {
+    content: '···············································································';
   }
 
   .directory-entry-category {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 0.75rem;
+    font-style: italic;
     color: var(--sepia);
     flex-shrink: 0;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
   }
 
   .directory-entry-location {
     font-family: 'Courier Prime', 'Courier New', monospace;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    color: var(--fog);
+    color: var(--ink);
     flex-shrink: 0;
-    min-width: 42px;
+    min-width: 44px;
     text-align: right;
+    opacity: 0.75;
   }
 
   .error-msg {
