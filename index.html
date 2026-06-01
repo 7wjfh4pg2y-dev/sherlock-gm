@@ -100,6 +100,7 @@
   .screen { display: none !important; }
   .screen.active { display: block !important; }
   #landing.active { display: flex !important; }
+  #player-screen.active { display: flex !important; }
 
   /* ── LANDING ── */
   #landing {
@@ -501,9 +502,156 @@
 
   /* ── PLAYER SCREEN ── */
   #player-screen {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* Victorian Sidebar */
+  #player-sidebar {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    background: rgba(30,18,8,0.97);
+    border-right: 2px solid rgba(139,105,20,0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+    transition: width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s cubic-bezier(0.4,0,0.2,1), max-width 0.28s cubic-bezier(0.4,0,0.2,1);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 60px);
+    z-index: 10;
+  }
+
+  #player-sidebar.sidebar-open {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+  }
+
+  #sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(139,105,20,0.3);
+    cursor: pointer;
+    color: rgba(205,170,90,0.85);
+    font-size: 1.3rem;
+    padding: 10px 0;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  #sidebar-toggle-btn:hover {
+    background: rgba(139,105,20,0.15);
+  }
+
+  #sidebar-toggle-label {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    color: rgba(205,170,90,0.6);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.2s;
+  }
+
+  #player-sidebar.sidebar-open #sidebar-toggle-label {
+    display: none;
+  }
+
+  #sidebar-toggle-arrow {
+    display: none;
+    font-size: 0.9rem;
+  }
+
+  #player-sidebar.sidebar-open #sidebar-toggle-arrow {
+    display: inline;
+  }
+
+  #sidebar-tools-label {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: rgba(205,170,90,0.55);
+    text-transform: uppercase;
+    padding: 12px 14px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.18s;
+    border-bottom: 1px solid rgba(139,105,20,0.2);
+    margin-bottom: 4px;
+  }
+
+  #player-sidebar.sidebar-open #sidebar-tools-label {
+    opacity: 1;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(139,105,20,0.18);
+    cursor: pointer;
+    color: rgba(230,210,160,0.85);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.85rem;
+    padding: 11px 0;
+    text-align: left;
+    transition: background 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .sidebar-item:hover {
+    background: rgba(139,105,20,0.15);
+  }
+
+  .sidebar-item-icon {
+    font-size: 1.15rem;
+    min-width: 44px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar-item-label {
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.18s;
+    white-space: nowrap;
+  }
+
+  #player-sidebar.sidebar-open .sidebar-item-label {
+    opacity: 1;
+  }
+
+  /* Player main content area */
+  #player-main {
+    flex: 1;
+    min-width: 0;
     padding: 28px 24px;
     max-width: 1100px;
-    margin: 0 auto;
+    overflow-y: auto;
   }
 
 
@@ -846,28 +994,44 @@
 
   <!-- PLAYER SCREEN -->
   <div id="player-screen" class="screen">
-    <div class="player-case-title" id="player-case-title">Loading case…</div>
-    <div class="player-meta" id="player-meta"></div>
-    <div id="player-briefing" style="display:none"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <!-- Victorian Sidebar -->
+    <div id="player-sidebar">
+      <button id="sidebar-toggle-btn" onclick="togglePlayerSidebar()" title="Toggle tools">
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <span>❧</span>
+          <span id="sidebar-toggle-label">Case Files</span>
+          <span id="sidebar-toggle-arrow">◀</span>
+        </div>
+      </button>
+      <div id="sidebar-tools-label">Tools</div>
       <div id="player-map-btn-wrap" style="display:none;">
-        <button class="btn btn-secondary" onclick="openMapFullscreen()">🗺 View Map of London</button>
+        <button class="sidebar-item" onclick="openMapFullscreen()">
+          <span class="sidebar-item-icon">🗺</span>
+          <span class="sidebar-item-label">Map of London</span>
+        </button>
       </div>
-      <div>
-        <button class="btn btn-secondary" onclick="openDirectoryFlipbook()">📖 London Directory</button>
-      </div>
+      <button class="sidebar-item" onclick="openDirectoryFlipbook()">
+        <span class="sidebar-item-icon">📖</span>
+        <span class="sidebar-item-label">London Directory</span>
+      </button>
     </div>
-    <div id="player-content">
-      <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
-    </div>
-    <div id="player-notebook-section" class="notebook-section" style="display:none">
-      <hr class="ornamental">
-      <div class="notebook-header">The Irregulars' Notebook</div>
-      <div class="notebook-input-row">
-        <textarea class="notebook-textarea" id="notebook-input" placeholder="Record your deductions…" rows="3"></textarea>
-        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;margin-top:2px;" onclick="addNote()">Add Note</button>
+    <!-- Main content area -->
+    <div id="player-main">
+      <div class="player-case-title" id="player-case-title">Loading case…</div>
+      <div class="player-meta" id="player-meta"></div>
+      <div id="player-briefing" style="display:none"></div>
+      <div id="player-content">
+        <div class="empty-state" style="color:var(--fog)">Awaiting the Game Master to reveal clues…</div>
       </div>
-      <div class="notebook-notes" id="notebook-notes"></div>
+      <div id="player-notebook-section" class="notebook-section" style="display:none">
+        <hr class="ornamental">
+        <div class="notebook-header">The Irregulars' Notebook</div>
+        <div class="notebook-input-row">
+          <textarea class="notebook-textarea" id="notebook-input" placeholder="Record your deductions…" rows="3"></textarea>
+          <button class="btn btn-secondary btn-sm" style="white-space:nowrap;margin-top:2px;" onclick="addNote()">Add Note</button>
+        </div>
+        <div class="notebook-notes" id="notebook-notes"></div>
+      </div>
     </div>
   </div>
 
@@ -1579,6 +1743,18 @@ function calcMapFitScale(img) {
     });
   });
 })();
+
+let sidebarOpen = false;
+
+function togglePlayerSidebar() {
+  sidebarOpen = !sidebarOpen;
+  const sidebar = document.getElementById('player-sidebar');
+  if (sidebarOpen) {
+    sidebar.classList.add('sidebar-open');
+  } else {
+    sidebar.classList.remove('sidebar-open');
+  }
+}
 
 function openMapFullscreen() {
   if (!currentMapUrl) return;
