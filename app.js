@@ -1188,7 +1188,7 @@ function renderNotes(notes) {
     const isMinimized = minimizedNotes.has(n.id);
     const minimizeBtn = `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
     const actionBtn = isOwn
-      ? `${minimizeBtn}<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')" style="color:var(--red)">✕</button>`
+      ? `<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')" style="color:var(--red)">✕</button>${minimizeBtn}`
       : minimizeBtn;
     return `<div class="notebook-note" style="color:${n.player_color}">
       <div class="notebook-note-meta">
