@@ -998,24 +998,25 @@
 
   /* ── NOTEBOOK ── */
   .notebook-section {
-    margin-top: 48px;
-    padding-top: 32px;
-    border-top: 1px solid rgba(245,234,214,0.1);
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(245,234,214,0.08);
   }
   .notebook-header {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-style: italic;
     color: var(--parchment);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    opacity: 0.85;
   }
   .notebook-header::before {
     content: '✦';
     font-style: normal;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--sepia);
     opacity: 0.7;
   }
@@ -1023,73 +1024,90 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(to right, rgba(139,105,20,0.4), transparent);
+    background: linear-gradient(to right, rgba(139,105,20,0.3), transparent);
   }
   .notebook-input-row {
     display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 20px;
+    border: 1px solid rgba(139,105,20,0.3);
+    background: rgba(255,255,255,0.02);
   }
   .notebook-textarea {
     flex: 1;
-    padding: 10px 12px;
-    background: var(--paper);
-    border: 1px solid var(--parchment-darker);
-    font-family: 'Courier Prime', 'Courier New', monospace;
-    font-size: 0.88rem;
-    color: var(--ink);
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 0.92rem;
+    color: var(--parchment);
     resize: none;
-    line-height: 1.6;
-    min-height: 70px;
+    line-height: 1.65;
+    min-height: 60px;
     outline: none;
-    background-image: repeating-linear-gradient(transparent, transparent 22px, rgba(139,105,20,0.12) 22px, rgba(139,105,20,0.12) 23px);
   }
-  .notebook-textarea:focus { border-color: var(--sepia); }
-  .notebook-notes { display: flex; flex-direction: column; gap: 16px; }
-  .notebook-note {
-    background: var(--parchment);
-    background-image: 
-      repeating-linear-gradient(transparent, transparent 27px, rgba(139,105,20,0.13) 27px, rgba(139,105,20,0.13) 28px);
-    border: 1px solid var(--parchment-darker);
-    border-left: 4px solid currentColor;
-    padding: 14px 18px 12px;
-    position: relative;
-    box-shadow: 2px 3px 8px rgba(0,0,0,0.25), inset 0 0 20px rgba(139,105,20,0.04);
-    overflow: hidden;
-    max-width: 100%;
-  }
-  .notebook-note::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 32px;
-    width: 1px; height: 100%;
-    background: rgba(180,100,100,0.15);
-  }
-  .notebook-note-meta {
-    font-family: 'Courier Prime', 'Courier New', Courier, monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
+  .notebook-textarea::placeholder { color: var(--fog); font-style: italic; }
+  .notebook-textarea:focus { background: rgba(139,105,20,0.04); }
+  .notebook-add-btn {
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(139,105,20,0.3);
+    color: var(--sepia);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.75;
-    margin-bottom: 8px;
+    padding: 0 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    align-self: stretch;
+  }
+  .notebook-add-btn:hover { background: rgba(139,105,20,0.12); color: var(--parchment); }
+  .notebook-notes { display: flex; flex-direction: column; gap: 0; }
+  .notebook-note {
+    background: transparent;
+    border-left: 3px solid currentColor;
+    border-bottom: 1px solid rgba(139,105,20,0.1);
+    padding: 10px 14px 10px 16px;
+    position: relative;
+    max-width: 100%;
+    transition: background 0.12s;
+  }
+  .notebook-note:hover { background: rgba(255,255,255,0.02); }
+  .notebook-note::before { display: none; }
+  .notebook-note-meta {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
-    padding-bottom: 6px;
-    border-bottom: 1px dashed rgba(139,105,20,0.25);
+    margin-bottom: 5px;
+    gap: 8px;
+  }
+  .notebook-note-name {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .notebook-note-time {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: var(--fog);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
   }
   .notebook-note-text {
     font-family: 'IM Fell English', Georgia, serif;
-    font-size: 0.95rem;
-    line-height: 1.75;
+    font-size: 0.92rem;
+    line-height: 1.65;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
     max-width: 100%;
-    color: var(--ink);
-    padding-left: 8px;
+    color: var(--parchment-dark);
   }
   .note-action-btn {
     background: none;
