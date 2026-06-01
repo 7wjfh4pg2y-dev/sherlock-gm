@@ -494,7 +494,7 @@ function calcMapFitScale(img) {
     });
 
     window.addEventListener('mouseup', e => {
-      if (mapDragging && !mapDidMove && e.target === overlay) closeModal('modal-map');
+      if (mapDragging && !mapDidMove && !e.target.closest('button')) closeModal('modal-map');
       mapDragging = false;
       overlay.style.cursor = 'grab';
     });
