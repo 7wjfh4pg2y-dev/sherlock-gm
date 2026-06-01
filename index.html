@@ -13,12 +13,16 @@
 <body>
 <div id="app">
 
-  <!-- MASTHEAD -->
-  <div class="masthead">
-    <div>
-      <div class="masthead-title">Baker Street Irregulars — Evidence Board</div>
+  <!-- MASTHEAD (GM + Player screens only) -->
+  <div class="masthead" id="masthead">
+    <div class="masthead-left">
+      <span class="masthead-rule-icon">⚙</span>
+      <span class="masthead-title">Baker Street Irregulars</span>
     </div>
-    <div id="mode-indicator"></div>
+    <div class="masthead-centre" id="masthead-case-name"></div>
+    <div class="masthead-right">
+      <div id="mode-indicator"></div>
+    </div>
   </div>
 
   <!-- LANDING SCREEN -->
@@ -26,13 +30,13 @@
     <div class="landing-card">
       <div class="landing-eyebrow">Sherlock Holmes: Consulting Detective</div>
       <div class="landing-title">The Case Room</div>
-      <div class="landing-divider"><span class="landing-divider-icon">🔍</span></div>
-      <p style="font-family:'Courier Prime','Courier New',monospace; text-align:center; color: var(--sepia); font-size:0.82rem; line-height:1.8; margin-bottom:24px; padding:0 12px;">
-        A private chamber for the Game Master to present evidence, and for investigators to review the clues gathered thus far.
+      <div class="landing-divider"><span class="landing-divider-ornament">— ✦ —</span></div>
+      <p class="landing-desc">
+        A private chamber for the Game Master to present evidence,<br>and for the Irregulars to record their deductions.
       </p>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="showGMLogin()">Enter as GM</button>
-        <button class="btn btn-secondary" onclick="showPlayerJoin()">Join as Player</button>
+        <button class="btn btn-secondary" onclick="showPlayerJoin()">Join as Investigator</button>
       </div>
     </div>
   </div>
