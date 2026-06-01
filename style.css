@@ -283,6 +283,71 @@
   .modal-close:hover { color: var(--ink); }
 
   /* ── LONDON DIRECTORY MODAL ── */
+  .directory-modal-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .directory-add-toggle-btn {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--sepia);
+    color: var(--sepia);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .directory-add-toggle-btn:hover { background: var(--sepia); color: var(--parchment); }
+
+  .directory-add-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .directory-add-submit-btn {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    padding: 7px 14px;
+    background: var(--ink);
+    color: var(--parchment);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .directory-add-submit-btn:hover { background: #222; }
+
+  .directory-delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--fog);
+    font-size: 0.75rem;
+    padding: 0 0 0 6px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .directory-entry:hover .directory-delete-btn { opacity: 1; }
+  .directory-delete-btn:hover { color: var(--red); }
+
+  .directory-custom-badge {
+    font-size: 0.65rem;
+    color: var(--sepia);
+    margin-right: 5px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
   .directory-modal {
     max-width: 580px;
     width: 100%;
