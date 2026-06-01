@@ -554,16 +554,11 @@ function toggleGMSidebarNote(id) {
   else gmMinimizedNotes.add(id);
   renderGMRightPanel();
 }
-function gmNotebookBtnClick() {
-  if (gmSidebarOpen) {
-    // Sidebar is open — toggle all notes expand/collapse
-    const anyExpanded = allNotes.some(n => !gmMinimizedNotes.has(n.id));
-    if (anyExpanded) allNotes.forEach(n => gmMinimizedNotes.add(n.id));
-    else allNotes.forEach(n => gmMinimizedNotes.delete(n.id));
-    renderGMRightPanel();
-  } else {
-    toggleGMSidebar();
-  }
+function toggleAllGMNotes() {
+  const anyExpanded = allNotes.some(n => !gmMinimizedNotes.has(n.id));
+  if (anyExpanded) allNotes.forEach(n => gmMinimizedNotes.add(n.id));
+  else allNotes.forEach(n => gmMinimizedNotes.delete(n.id));
+  renderGMRightPanel();
 }
 
 function togglePlayerSidebar() {
