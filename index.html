@@ -1238,7 +1238,7 @@
     <button onclick="mapZoom(0.77)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">－</button>
   </div>
   <div id="map-pan-container" style="transform-origin:center center;will-change:transform;position:absolute;">
-    <img id="map-fullscreen-img" src="" alt="Map of London" style="display:block;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);user-select:none;-webkit-user-drag:none;">
+    <img id="map-fullscreen-img" src="" alt="Map of London" style="display:block;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);user-select:none;-webkit-user-drag:none;will-change:transform;transform:translateZ(0);backface-visibility:hidden;image-rendering:-webkit-optimize-contrast;">
   </div>
 </div>
 
@@ -1667,6 +1667,10 @@ function mapZoom(factor) {
 function mapZoomReset() {
   mapScale = mapFitScale; mapX = 0; mapY = 0;
   applyMapTransform();
+  // Force GPU layer refresh to clear any stuck dark tiles
+  const img = document.getElementById('map-fullscreen-img');
+  img.style.willChange = 'auto';
+  requestAnimationFrame(() => { img.style.willChange = 'transform'; });
 }
 
 function calcMapFitScale(img) {
