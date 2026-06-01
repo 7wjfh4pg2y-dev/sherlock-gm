@@ -252,6 +252,10 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+function setMastheadCase(name) {
+  const el = document.getElementById('masthead-case-name');
+  if (el) el.textContent = name || '';
+}
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function toast(msg) {
@@ -344,6 +348,7 @@ async function onCaseChange() {
   const sel = document.getElementById('case-select');
   currentCaseId = sel.value;
   currentCaseName = sel.options[sel.selectedIndex]?.text;
+  setMastheadCase(currentCaseId ? currentCaseName : "");
   document.getElementById('delete-case-btn').style.display = currentCaseId ? '' : 'none';
   if (!currentCaseId) {
     document.getElementById('share-box').style.display = 'none';
@@ -1170,6 +1175,7 @@ async function enterPlayer(caseId) {
   closeModal('modal-player-join');
   currentCaseId = caseId;
   currentCaseName = caseData.name;
+  setMastheadCase(currentCaseName);
   currentCaseDescription = caseData.description || '';
   currentMapId = caseData.map_id || null;
   currentMapUrl = '';
@@ -1361,6 +1367,7 @@ async function deleteCase() {
   await sb.from('cases').delete().eq('id', currentCaseId);
   currentCaseId = null;
   currentCaseName = null;
+  setMastheadCase("");
   document.getElementById('delete-case-btn').style.display = 'none';
   document.getElementById('share-box').style.display = 'none';
   document.getElementById('gm-content').innerHTML = '<div class="empty-state">Select or create a case to begin.</div>';
