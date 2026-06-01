@@ -325,20 +325,28 @@
   }
   .directory-add-submit-btn:hover { background: #222; }
 
-  .directory-delete-btn {
+  .directory-entry-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .directory-entry:hover .directory-entry-actions { opacity: 1; }
+
+  .directory-action-btn {
     background: none;
     border: none;
     cursor: pointer;
     color: var(--fog);
-    font-size: 0.75rem;
-    padding: 0 0 0 6px;
+    font-size: 0.78rem;
+    padding: 2px 4px;
     line-height: 1;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s;
-    flex-shrink: 0;
+    transition: color 0.15s;
   }
-  .directory-entry:hover .directory-delete-btn { opacity: 1; }
-  .directory-delete-btn:hover { color: var(--red); }
+  .directory-action-btn:hover { color: var(--ink); }
+  .directory-delete-btn:hover { color: var(--red) !important; }
 
   .directory-custom-badge {
     font-size: 0.65rem;
@@ -347,6 +355,13 @@
     flex-shrink: 0;
     line-height: 1;
   }
+
+  @keyframes dir-shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  .input-shake { animation: dir-shake 0.3s ease; border-color: var(--red) !important; }
 
   .directory-modal {
     max-width: 580px;
