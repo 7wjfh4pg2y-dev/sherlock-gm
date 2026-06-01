@@ -24,6 +24,9 @@ let allPlayers = [];
 let allNotes = [];
 let playerSubscription = null;
 let gmSubscription = null;
+let gmPresenceChannel = null;
+let playerPresenceChannel = null;
+let presenceOnline = new Set(); // "name|color" keys of currently-online players
 let isGM = false;
 
 // ── UTILS ──
@@ -78,6 +81,7 @@ function doGMLogin() {
 
 function gmLogout() {
   if (gmSubscription) sb.removeChannel(gmSubscription);
+  if (gmPresenceChannel) sb.removeChannel(gmPresenceChannel);
   store.remove(GM_SESSION_KEY);
   location.reload();
 }
@@ -283,6 +287,18 @@ function subscribeGMUpdates(caseId) {
       () => loadGMClues())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `case_id=eq.${caseId}` },
       () => loadGMClues())
+    .subscribe();
+
+  if (gmPresenceChannel) sb.removeChannel(gmPresenceChannel);
+  gmPresenceChannel = sb.channel('presence-' + caseId);
+  gmPresenceChannel
+    .on('presence', { event: 'sync' }, () => {
+      const state = gmPresenceChannel.presenceState();
+      presenceOnline = new Set(
+        Object.values(state).flat().map(p => p.player_name + '|' + p.player_color)
+      );
+      renderGMRightPanel();
+    })
     .subscribe();
 }
 
@@ -735,17 +751,11 @@ function renderGMRightPanel() {
   // Players section — with online presence dot
   const active = allPlayers.filter(p => !p.is_kicked);
   const kicked = allPlayers.filter(p => p.is_kicked);
-  const now = Date.now();
   const rowStyle = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
   const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
 
   const onlineDot = (p) => {
-    // Show green if player joined within last 3 minutes or has sent a note recently
-    const joinedMs = new Date(p.joined_at).getTime();
-    const lastNote = allNotes.filter(n => n.player_name === p.player_name && n.player_color === p.player_color)
-      .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
-    const lastNoteMs = lastNote ? new Date(lastNote.created_at).getTime() : 0;
-    const online = (now - joinedMs < 3 * 60 * 1000) || (now - lastNoteMs < 10 * 60 * 1000);
+    const online = presenceOnline.has(p.player_name + '|' + p.player_color);
     return `<div style="width:6px;height:6px;border-radius:50%;background:${online ? '#4caf50' : 'rgba(255,255,255,0.15)'};flex-shrink:0;box-shadow:${online ? '0 0 4px #4caf50' : 'none'};" title="${online ? 'Online' : 'Offline'}"></div>`;
   };
 
@@ -943,6 +953,17 @@ async function enterPlayer(caseId) {
   subscribePlayer();
   subscribeNotes();
   subscribeKick(caseId);
+  trackPlayerPresence(caseId);
+}
+
+function trackPlayerPresence(caseId) {
+  if (playerPresenceChannel) sb.removeChannel(playerPresenceChannel);
+  playerPresenceChannel = sb.channel('presence-' + caseId);
+  playerPresenceChannel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await playerPresenceChannel.track({ player_name: playerName, player_color: playerColor });
+    }
+  });
 }
 
 function subscribeKick(caseId) {
@@ -959,6 +980,7 @@ function showKickedScreen() {
   if (playerSubscription) sb.removeChannel(playerSubscription);
   if (notesSubscription) sb.removeChannel(notesSubscription);
   if (kickSubscription) sb.removeChannel(kickSubscription);
+  if (playerPresenceChannel) sb.removeChannel(playerPresenceChannel);
   const el = document.getElementById('kicked-overlay');
   el.style.display = 'flex';
 }
