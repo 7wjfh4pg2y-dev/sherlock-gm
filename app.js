@@ -701,7 +701,7 @@ function renderGMClues() {
         ${thumb}
         <div class="clue-label">${c.location_name}</div>
         <div class="clue-actions">
-          <button class="clue-action-btn hide" onclick="event.stopPropagation();unreveالClue('${c.id}')">🚫 Hide</button>
+          <button class="clue-action-btn hide" onclick="event.stopPropagation();unrevealClue('${c.id}')">🚫 Hide</button>
           <button class="clue-action-btn edit" onclick="event.stopPropagation();showEditClue('${c.id}')">✏️ Edit</button>
           <button class="clue-action-btn del" onclick="event.stopPropagation();deleteClue('${c.id}')">🗑 Delete</button>
         </div>
@@ -791,22 +791,14 @@ function renderGMRightPanel() {
       notesListEl.innerHTML = allNotes.map(n => {
         const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const isMin = gmMinimizedNotes.has(n.id);
-        return `<div style="
-            border-left:3px solid ${n.player_color};
-            margin:0 6px 8px;
-            background:rgba(244,232,206,0.04);
-            background-image:repeating-linear-gradient(transparent,transparent 21px,rgba(122,92,18,0.08) 21px,rgba(122,92,18,0.08) 22px);
-            box-shadow:inset 0 0 12px rgba(139,105,20,0.04);
-            overflow:hidden;
-          ">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-bottom:1px dashed rgba(139,105,20,0.2);">
-            <span style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;color:${n.player_color};opacity:0.9;letter-spacing:0.06em;">${escapeHtml(n.player_name)} · ${time}</span>
-            <div style="display:flex;gap:3px;">
-              <button onclick="toggleGMSidebarNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.6rem;padding:0 2px;line-height:1;" title="${isMin ? 'Expand' : 'Minimise'}">${isMin ? '▸' : '▾'}</button>
-              <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.55;font-size:0.6rem;padding:0 2px;line-height:1;" title="Delete">✕</button>
-            </div>
+        return `<div class="notebook-note" style="color:${n.player_color}">
+          <div class="notebook-note-meta">
+            <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
+            <span class="notebook-note-time">${time}</span>
+            <button onclick="toggleGMSidebarNote('${n.id}')" class="note-action-btn" title="${isMin ? 'Expand' : 'Minimise'}">${isMin ? '▸' : '▾'}</button>
+            <button onclick="gmDeleteNote('${n.id}')" class="note-action-btn" title="Delete" style="color:var(--red)">✕</button>
           </div>
-          ${isMin ? '' : `<div style="font-family:'IM Fell English',Georgia,serif;font-size:0.78rem;color:var(--parchment-dark);line-height:1.5;padding:5px 8px;word-break:break-word;">${escapeHtml(n.content)}</div>`}
+          ${isMin ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
         </div>`;
       }).join('');
     }
@@ -819,7 +811,7 @@ async function revealClue(id) {
   toast('Clue revealed to players!');
 }
 
-async function unreveالClue(id) {
+async function unrevealClue(id) {
   await sb.from('clues').update({ revealed: false }).eq('id', id);
   await loadGMClues();
   toast('Clue hidden from players.');
