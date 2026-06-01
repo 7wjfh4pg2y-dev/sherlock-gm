@@ -232,7 +232,7 @@ function filterDirectory() {
     const gmBtns = isGM ? `<span class="directory-entry-actions">${
       isCustom ? `<button class="directory-action-btn" onclick="editDirectoryEntry(${escapeHtml(JSON.stringify(e.id))})" title="Edit">✎</button>` : ''
     }<button class="directory-action-btn directory-delete-btn" onclick="confirmRemoveDirectoryEntry(${ename},${isCustom ? escapeHtml(JSON.stringify(e.id)) : 'null'})" title="Remove">✕</button></span>` : '';
-    return `<div class="directory-entry">${customBadge}<span class="directory-entry-name">${name}</span>${catLabel}<span class="directory-entry-location">${loc}</span>${gmBtns}</div>`;
+    return `<div class="directory-entry">${customBadge}<span class="directory-entry-name">${name}</span><span class="directory-dots" aria-hidden="true"></span>${catLabel}<span class="directory-entry-location">${loc}</span>${gmBtns}</div>`;
   }).join('');
   resultsEl.innerHTML = html;
 }

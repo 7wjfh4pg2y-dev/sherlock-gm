@@ -390,7 +390,10 @@
       </div>
     </div>
     <div class="directory-search-row">
-      <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()" onkeydown="if(event.key==='Escape')closeModal('modal-directory')">
+      <span class="directory-search-wrap">
+        <span class="directory-search-icon">⌕</span>
+        <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()" onkeydown="if(event.key==='Escape')closeModal('modal-directory')">
+      </span>
       <select id="directory-category" class="directory-category-select" onchange="filterDirectory()" onkeydown="if(event.key==='Escape')closeModal('modal-directory')">
         <option value="">All Categories</option>
       </select>
