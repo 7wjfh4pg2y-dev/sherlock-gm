@@ -117,6 +117,10 @@ function submitDirectoryEntry() {
   toast(`Added: ${name}`);
 }
 
+function confirmRemoveDirectoryEntry(name, customId) {
+  showConfirmDelete(`Remove "${name}" from the directory?`, () => removeDirectoryEntry(name, customId));
+}
+
 function removeDirectoryEntry(name, customId) {
   if (customId) {
     dirCustom = dirCustom.filter(e => e.id !== customId);
@@ -161,7 +165,7 @@ function filterDirectory() {
     const catLabel = e.category ? `<span class="directory-entry-category">${escapeHtml(e.category)}</span>` : '';
     const customBadge = isCustom ? `<span class="directory-custom-badge" title="Custom entry">★</span>` : '';
     const deleteBtn = isGM
-      ? `<button class="directory-delete-btn" onclick="removeDirectoryEntry(${JSON.stringify(e.name)},${e.id ? JSON.stringify(e.id) : 'null'})" title="Remove entry">✕</button>`
+      ? `<button class="directory-delete-btn" onclick="confirmRemoveDirectoryEntry(${JSON.stringify(e.name)},${e.id ? JSON.stringify(e.id) : 'null'})" title="Remove entry">✕</button>`
       : '';
     return `<div class="directory-entry">${customBadge}<span class="directory-entry-name">${name}</span>${catLabel}<span class="directory-entry-location">${loc}</span>${deleteBtn}</div>`;
   }).join('');
