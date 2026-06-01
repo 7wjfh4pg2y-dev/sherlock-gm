@@ -53,19 +53,14 @@
 
   /* ── MASTHEAD ── */
   .masthead {
-    will-change: transform;
-    transform: translateZ(0);
-    background: rgba(20, 10, 3, 0.75);
-    border-top: 3px solid var(--sepia);
-    border-bottom: 3px double rgba(139,105,20,0.6);
-    padding: 14px 28px;
+    background: rgba(20, 10, 3, 0.97);
+    border-bottom: 2px solid rgba(139,105,20,0.5);
+    padding: 12px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 3px 16px rgba(0,0,0,0.5);
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(122,92,18,0.07) 24px, rgba(122,92,18,0.07) 25px),
-      linear-gradient(180deg, #fdf5e0 0%, var(--parchment) 50%, var(--parchment-dark) 100%);
+    flex-shrink: 0;
   }
 
   .masthead-title {
@@ -74,6 +69,7 @@
     font-weight: 400;
     letter-spacing: 0.06em;
     color: var(--parchment);
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
   }
 
   .masthead-sub {
@@ -497,7 +493,7 @@
     margin: 8px 0;
   }
 
-  .case-select-wrap { flex: 1; min-width: 200px; }
+  .case-select-wrap { flex: 0 1 320px; min-width: 160px; max-width: 320px; }
 
   .case-select-wrap select {
     width: 100%;
@@ -1153,13 +1149,12 @@
           </select>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="showNewCase()">+ New Case</button>
-        <button class="btn btn-danger btn-sm" id="delete-case-btn" onclick="deleteCase()" style="display:none">Delete Case</button>
+        <button id="share-box" class="btn btn-secondary btn-sm" style="display:none;" onclick="copyShareLink()" title="Copy player link to clipboard">
+          🔗 Copy Player Link
+        </button>
+        <span id="share-url" style="display:none;"></span>
+        <button class="btn btn-danger btn-sm" id="delete-case-btn" onclick="deleteCase()" style="display:none">🗑 Delete</button>
         <button class="btn btn-secondary btn-sm" onclick="gmLogout()">Logout</button>
-      </div>
-      <div id="share-box" class="share-link-box" style="display:none; margin-bottom:12px;">
-        <span class="share-link-label">Player Link →</span>
-        <span class="share-link-url" id="share-url"></span>
-        <button class="btn btn-secondary btn-sm" onclick="copyShareLink()">Copy</button>
       </div>
     </div>
 
@@ -1173,7 +1168,7 @@
             <span id="gm-sidebar-toggle-arrow">◀</span>
           </div>
         </button>
-        <div id="gm-sidebar-tools-label">Tools</div>
+        <div id="gm-sidebar-tools-label">Investigator's Toolkit</div>
         <div id="gm-map-btn-wrap" style="display:none;">
           <button class="sidebar-item" onclick="openMapFullscreen()">
             <span class="sidebar-item-icon">🗺</span>
@@ -1185,15 +1180,11 @@
           <span class="sidebar-item-label">London Directory</span>
         </button>
         <hr class="gm-sidebar-divider">
-        <div id="gm-sidebar-case-label">Case</div>
-        <button class="sidebar-item" onclick="toggleGMBriefing()">
-          <span class="sidebar-item-icon">📋</span>
-          <span class="sidebar-item-label">Briefing</span>
-        </button>
-        <button class="sidebar-item" onclick="showMapsLibrary()">
-          <span class="sidebar-item-icon">🗺</span>
-          <span class="sidebar-item-label">Map Settings</span>
-        </button>
+        <div id="gm-sidebar-case-label">Notes</div>
+        <div id="gm-sidebar-notes-section">
+          <div id="gm-sidebar-notes-badge" style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--sepia);padding:4px 0 4px 8px;display:none;">0 notes</div>
+          <div id="gm-sidebar-notes-list"></div>
+        </div>
       </div>
 
       <!-- GM Main content -->
@@ -1205,11 +1196,25 @@
 
       <!-- GM Right panel -->
       <div id="gm-right-panel" style="display:none;">
-        <div class="gm-right-panel-header">Players <span class="counter-badge" id="gm-players-badge">0</span></div>
-        <div id="gm-right-players"></div>
+        <!-- GM Tools section -->
+        <div class="gm-right-panel-header">Case Tools</div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+          <button class="sidebar-item" style="width:100%;justify-content:flex-start;" onclick="toggleGMBriefing()">
+            <span class="sidebar-item-icon">📋</span>
+            <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Case Briefing</span>
+          </button>
+          <button class="sidebar-item" style="width:100%;justify-content:flex-start;" onclick="showMapsLibrary()">
+            <span class="sidebar-item-icon">🗺</span>
+            <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Map Library</span>
+          </button>
+        </div>
         <hr class="gm-right-panel-divider">
-        <div class="gm-right-panel-header">Investigators' Notes <span class="counter-badge" id="gm-notes-badge">0</span></div>
-        <div id="gm-right-notes"></div>
+        <!-- Players section -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="gm-right-panel-header" style="margin-bottom:0;">Players <span class="counter-badge" id="gm-players-badge">0</span></div>
+          <button id="gm-players-minimize-btn" onclick="toggleGMPlayersPanel()" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.75rem;padding:0 2px;line-height:1;" title="Minimise">▾</button>
+        </div>
+        <div id="gm-right-players"></div>
       </div>
     </div>
   </div>
@@ -1225,7 +1230,7 @@
           <span id="sidebar-toggle-arrow">◀</span>
         </div>
       </button>
-      <div id="sidebar-tools-label">Tools</div>
+      <div id="sidebar-tools-label">Investigator's Toolkit</div>
       <div id="player-map-btn-wrap" style="display:none;">
         <button class="sidebar-item" onclick="openMapFullscreen()">
           <span class="sidebar-item-icon">🗺</span>
@@ -1653,7 +1658,7 @@ async function onCaseChange() {
   // Share link
   const shareUrl = `${location.href.split('?')[0]}?case=${currentCaseId}`;
   document.getElementById('share-url').textContent = shareUrl;
-  document.getElementById('share-box').style.display = 'flex';
+  document.getElementById('share-box').style.display = 'inline-flex';
   await loadGMClues();
   subscribeGMUpdates(currentCaseId);
 }
@@ -1825,9 +1830,16 @@ function renderMapsLibraryModal() {
   grid.innerHTML = mapsLibrary.map(m => `
     <div style="border:1px solid var(--parchment-darker);overflow:hidden;border-radius:2px;">
       <img src="${m.url}" alt="${escapeHtml(m.name)}" style="width:100%;height:140px;object-fit:cover;display:block;cursor:pointer;" onclick="openMapPreview('${m.url}')">
-      <div style="padding:8px;display:flex;justify-content:space-between;align-items:center;gap:6px;">
-        <span style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--parchment);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.name)}</span>
-        <button class="btn btn-danger btn-sm" onclick="deleteMap('${m.id}')">🗑</button>
+      <div style="padding:8px;display:flex;flex-direction:column;gap:6px;">
+        <input id="map-name-${m.id}" type="text" value="${escapeHtml(m.name)}" style="width:100%;font-family:'Courier New',Courier,monospace;font-size:0.78rem;background:rgba(244,232,206,0.08);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);padding:4px 6px;box-sizing:border-box;border-radius:2px;">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <label style="font-family:'Courier New',Courier,monospace;font-size:0.68rem;color:var(--fog);cursor:pointer;flex:1;border:1px solid rgba(139,105,20,0.3);padding:3px 6px;text-align:center;border-radius:2px;" title="Replace image file">
+            ↑ Replace img
+            <input type="file" accept="image/*" style="display:none;" onchange="replaceMapImage('${m.id}', this)">
+          </label>
+          <button class="btn btn-secondary btn-sm" style="font-size:0.65rem;padding:3px 7px;" onclick="renameMap('${m.id}')">Rename</button>
+          <button class="btn btn-danger btn-sm" style="font-size:0.65rem;padding:3px 7px;" onclick="deleteMap('${m.id}')">🗑</button>
+        </div>
       </div>
     </div>`).join('');
 }
@@ -1862,6 +1874,32 @@ async function deleteMap(id) {
   await loadMapsLibrary();
   renderMapsLibraryModal();
   toast('Map removed.');
+}
+
+async function renameMap(id) {
+  const input = document.getElementById('map-name-' + id);
+  const name = input?.value.trim();
+  if (!name) { toast('Enter a name first.'); return; }
+  const { error } = await sb.from('maps').update({ name }).eq('id', id);
+  if (error) { toast('Error renaming map.'); return; }
+  await loadMapsLibrary();
+  renderMapsLibraryModal();
+  toast('Map renamed.');
+}
+
+async function replaceMapImage(id, fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop();
+  const path = `maps/${Date.now()}.${ext}`;
+  const { error: upErr } = await sb.storage.from('clues').upload(path, file);
+  if (upErr) { toast('Upload failed: ' + upErr.message); return; }
+  const { data: urlData } = sb.storage.from('clues').getPublicUrl(path);
+  const { error: dbErr } = await sb.from('maps').update({ url: urlData.publicUrl }).eq('id', id);
+  if (dbErr) { toast('Error updating map.'); return; }
+  await loadMapsLibrary();
+  renderMapsLibraryModal();
+  toast('Map image replaced.');
 }
 
 function openMapPreview(url) {
@@ -2023,11 +2061,9 @@ function togglePlayerSidebar() {
 function toggleGMSidebar() {
   gmSidebarOpen = !gmSidebarOpen;
   const sidebar = document.getElementById('gm-sidebar');
-  if (gmSidebarOpen) {
-    sidebar.classList.add('sidebar-open');
-  } else {
-    sidebar.classList.remove('sidebar-open');
-  }
+  sidebar.classList.toggle('sidebar-open', gmSidebarOpen);
+  // Re-render notes so they show/hide with sidebar width
+  renderGMRightPanel();
 }
 
 function toggleGMBriefing() {
@@ -2188,16 +2224,37 @@ function renderGMClues() {
   renderGMRightPanel();
 }
 
+let gmPlayersPanelOpen = true;
+function toggleGMPlayersPanel() {
+  gmPlayersPanelOpen = !gmPlayersPanelOpen;
+  const el = document.getElementById('gm-right-players');
+  const btn = document.getElementById('gm-players-minimize-btn');
+  if (el) el.style.display = gmPlayersPanelOpen ? '' : 'none';
+  if (btn) btn.textContent = gmPlayersPanelOpen ? '▾' : '▸';
+}
+
 function renderGMRightPanel() {
-  // Players section
+  // Players section — with online presence dot
   const active = allPlayers.filter(p => !p.is_kicked);
   const kicked = allPlayers.filter(p => p.is_kicked);
+  const now = Date.now();
   const rowStyle = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
   const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
 
+  const onlineDot = (p) => {
+    // Show green if player joined within last 3 minutes or has sent a note recently
+    const joinedMs = new Date(p.joined_at).getTime();
+    const lastNote = allNotes.filter(n => n.player_name === p.player_name && n.player_color === p.player_color)
+      .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const lastNoteMs = lastNote ? new Date(lastNote.created_at).getTime() : 0;
+    const online = (now - joinedMs < 3 * 60 * 1000) || (now - lastNoteMs < 10 * 60 * 1000);
+    return `<div style="width:6px;height:6px;border-radius:50%;background:${online ? '#4caf50' : 'rgba(255,255,255,0.15)'};flex-shrink:0;box-shadow:${online ? '0 0 4px #4caf50' : 'none'};" title="${online ? 'Online' : 'Offline'}"></div>`;
+  };
+
   const playerRow = (p, isKicked) => `
     <div style="${rowStyle}">
-      <div style="width:9px;height:9px;border-radius:50%;background:${p.player_color};flex-shrink:0;border:1px solid rgba(255,255,255,0.2);"></div>
+      ${isKicked ? '' : onlineDot(p)}
+      <div style="width:8px;height:8px;border-radius:50%;background:${p.player_color};flex-shrink:0;border:1px solid rgba(255,255,255,0.2);"></div>
       <span style="${nameStyle}${isKicked ? 'opacity:0.45;text-decoration:line-through;' : ''}">${escapeHtml(p.player_name)}</span>
       ${isKicked
         ? `<button class="btn btn-secondary btn-sm" onclick="unkickPlayer('${p.id}')" style="font-size:0.6rem;padding:3px 6px;">Reinstate</button>
@@ -2216,25 +2273,35 @@ function renderGMRightPanel() {
   const playersBadge = document.getElementById('gm-players-badge');
   if (playersBadge) playersBadge.textContent = active.length;
   const playersEl = document.getElementById('gm-right-players');
-  if (playersEl) playersEl.innerHTML = playersBody;
+  if (playersEl) {
+    playersEl.innerHTML = playersBody;
+    playersEl.style.display = gmPlayersPanelOpen ? '' : 'none';
+  }
 
-  // Notes section
-  const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.75rem;color:var(--fog);margin:0;font-style:italic;">No notes yet.</p>`;
-  const notesBody = allNotes.length ? allNotes.map(n => {
-    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `<div class="notebook-note" style="color:${n.player_color};margin-bottom:10px;font-size:0.82rem;">
-      <div class="notebook-note-meta">
-        <span>${escapeHtml(n.player_name)} · ${time}</span>
-        <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.7rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
-      </div>
-      <div class="notebook-note-text" style="color:var(--ink);font-size:0.85rem;">${escapeHtml(n.content)}</div>
-    </div>`;
-  }).join('') : noNotes;
-
-  const notesBadge = document.getElementById('gm-notes-badge');
-  if (notesBadge) notesBadge.textContent = allNotes.length;
-  const notesEl = document.getElementById('gm-right-notes');
-  if (notesEl) notesEl.innerHTML = notesBody;
+  // Notes — rendered compactly into the GM sidebar
+  const notesBadgeEl = document.getElementById('gm-sidebar-notes-badge');
+  const notesListEl = document.getElementById('gm-sidebar-notes-list');
+  if (notesBadgeEl) {
+    notesBadgeEl.style.display = gmSidebarOpen ? '' : 'none';
+    notesBadgeEl.textContent = allNotes.length + (allNotes.length === 1 ? ' note' : ' notes');
+  }
+  if (notesListEl) {
+    if (!allNotes.length) {
+      notesListEl.innerHTML = gmSidebarOpen
+        ? `<p style="font-family:'Courier New',Courier,monospace;font-size:0.72rem;color:var(--fog);margin:4px 8px;font-style:italic;">No notes yet.</p>` : '';
+    } else {
+      notesListEl.innerHTML = allNotes.map(n => {
+        const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<div style="border-left:2px solid ${n.player_color};padding:4px 8px;margin-bottom:6px;${gmSidebarOpen ? '' : 'display:none;'}">
+          <div style="font-family:'Courier New',Courier,monospace;font-size:0.62rem;color:${n.player_color};opacity:0.85;display:flex;justify-content:space-between;align-items:center;">
+            <span>${escapeHtml(n.player_name)} · ${time}</span>
+            <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.6;font-size:0.65rem;padding:0 1px;line-height:1;" title="Delete">✕</button>
+          </div>
+          <div style="font-family:'Courier New',Courier,monospace;font-size:0.75rem;color:var(--parchment-dark);line-height:1.45;margin-top:2px;word-break:break-word;">${escapeHtml(n.content)}</div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 async function revealClue(id) {
