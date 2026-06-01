@@ -19,7 +19,7 @@
       <span class="masthead-rule-icon">⚙</span>
       <span class="masthead-title">Baker Street Irregulars</span>
     </div>
-    <div class="masthead-centre" id="masthead-case-name"></div>
+    <div class="masthead-centre">The Study</div>
     <div class="masthead-right">
       <div id="mode-indicator"></div>
     </div>
@@ -29,10 +29,10 @@
   <div id="landing" class="screen active">
     <div class="landing-card">
       <div class="landing-eyebrow">Sherlock Holmes: Consulting Detective</div>
-      <div class="landing-title">The Incident Room</div>
+      <div class="landing-title">The Study</div>
       <div class="landing-divider"><span class="landing-divider-ornament">— ✦ —</span></div>
       <p class="landing-desc">
-        A private chamber for the Game Master to present evidence,<br>and for the Irregulars to record their deductions.
+        221B Baker Street. The Game Master opens the case;<br>the Irregulars bring the evidence home.
       </p>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="showGMLogin()">Enter as GM</button>
@@ -104,9 +104,25 @@
 
       <!-- GM Right panel -->
       <div id="gm-right-panel" style="display:none;">
-        <!-- GM Tools section -->
+        <!-- Invite code — top -->
+        <div id="gm-invite-block" style="display:none;margin-bottom:14px;">
+          <div class="gm-invite-label">Investigator Code</div>
+          <button class="gm-invite-code" id="gm-invite-code" onclick="copyInviteCode()" title="Click to copy code">
+            <span id="gm-invite-code-text">—</span>
+            <span class="gm-invite-copy-hint">copy code</span>
+          </button>
+        </div>
+        <hr class="gm-right-panel-divider" id="gm-invite-divider" style="display:none;">
+        <!-- Players section -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="gm-right-panel-header" style="margin-bottom:0;">Players <span class="counter-badge" id="gm-players-badge">0</span></div>
+          <button id="gm-players-minimize-btn" onclick="toggleGMPlayersPanel()" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.75rem;padding:0 2px;line-height:1;" title="Minimise">▾</button>
+        </div>
+        <div id="gm-right-players"></div>
+        <hr class="gm-right-panel-divider">
+        <!-- GM Tools section — bottom -->
         <div class="gm-right-panel-header">Case Tools</div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
           <button class="sidebar-item" style="width:100%;justify-content:flex-start;" onclick="toggleGMBriefing()">
             <span class="sidebar-item-icon">📋</span>
             <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Case Briefing</span>
@@ -116,21 +132,6 @@
             <span style="font-family:'Courier New',Courier,monospace;font-size:0.78rem;color:var(--parchment);">Map Library</span>
           </button>
         </div>
-        <!-- Invite code -->
-        <div id="gm-invite-block" style="display:none;margin-bottom:14px;">
-          <div class="gm-invite-label">Investigator Code</div>
-          <button class="gm-invite-code" id="gm-invite-code" onclick="copyShareLink()" title="Click to copy invite link">
-            <span id="gm-invite-code-text">—</span>
-            <span class="gm-invite-copy-hint">copy link</span>
-          </button>
-        </div>
-        <hr class="gm-right-panel-divider">
-        <!-- Players section -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div class="gm-right-panel-header" style="margin-bottom:0;">Players <span class="counter-badge" id="gm-players-badge">0</span></div>
-          <button id="gm-players-minimize-btn" onclick="toggleGMPlayersPanel()" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.75rem;padding:0 2px;line-height:1;" title="Minimise">▾</button>
-        </div>
-        <div id="gm-right-players"></div>
       </div>
     </div>
   </div>
@@ -253,7 +254,7 @@
     <div class="modal-title">Join a Case</div>
     <div class="field">
       <label>Case Code</label>
-      <input type="text" id="player-case-code" placeholder="8-character code from GM" maxlength="36" style="text-transform:uppercase;letter-spacing:0.1em;font-family:'Courier Prime','Courier New',monospace;">
+      <input type="text" id="player-case-code" placeholder="e.g. A3F8C21B" maxlength="36" style="text-transform:uppercase;letter-spacing:0.1em;font-family:'IM Fell English',Georgia,serif;font-style:italic;">
     </div>
     <div class="field">
       <label>Your Name</label>
