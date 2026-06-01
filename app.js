@@ -248,12 +248,13 @@ function gmNotesHTML() {
   const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.8rem;color:var(--fog);margin:0;font-style:italic;">No notes have been written yet.</p>`;
   const rows = allNotes.length ? allNotes.map(n => {
     const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `<div class="notebook-note" style="color:${n.player_color};margin-bottom:12px;">
+    return `<div class="notebook-note" style="color:${n.player_color}">
       <div class="notebook-note-meta">
-        <span>${escapeHtml(n.player_name)} · ${time}</span>
+        <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
+        <span class="notebook-note-time">${time}</span>
         <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
       </div>
-      <div class="notebook-note-text" style="color:var(--ink);">${escapeHtml(n.content)}</div>
+      <div class="notebook-note-text">${escapeHtml(n.content)}</div>
     </div>`;
   }).join('') : noNotes;
 
@@ -1188,7 +1189,8 @@ function renderNotes(notes) {
       : `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
     return `<div class="notebook-note" style="color:${n.player_color}">
       <div class="notebook-note-meta">
-        <span>${escapeHtml(n.player_name)} · ${time}</span>
+        <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
+        <span class="notebook-note-time">${time}</span>
         ${actionBtn}
       </div>
       ${isMinimized ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
