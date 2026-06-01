@@ -554,6 +554,14 @@ function toggleGMSidebarNote(id) {
   else gmMinimizedNotes.add(id);
   renderGMRightPanel();
 }
+function toggleAllGMNotes() {
+  const anyExpanded = allNotes.some(n => !gmMinimizedNotes.has(n.id));
+  if (anyExpanded) allNotes.forEach(n => gmMinimizedNotes.add(n.id));
+  else allNotes.forEach(n => gmMinimizedNotes.delete(n.id));
+  const arrow = document.getElementById('gm-notes-collapse-arrow');
+  if (arrow) arrow.textContent = anyExpanded ? '▸' : '▾';
+  renderGMRightPanel();
+}
 
 function togglePlayerSidebar() {
   sidebarOpen = !sidebarOpen;
@@ -793,6 +801,8 @@ function renderGMRightPanel() {
     notesBadgeEl.style.display = gmSidebarOpen ? '' : 'none';
     notesBadgeEl.textContent = allNotes.length + (allNotes.length === 1 ? ' note' : ' notes');
   }
+  const collapseArrow = document.getElementById('gm-notes-collapse-arrow');
+  if (collapseArrow) collapseArrow.textContent = allNotes.some(n => !gmMinimizedNotes.has(n.id)) ? '▾' : '▸';
   if (notesListEl) {
     if (!gmSidebarOpen) { notesListEl.innerHTML = ''; return; }
     if (!allNotes.length) {
