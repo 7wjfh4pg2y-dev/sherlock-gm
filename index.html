@@ -1230,16 +1230,14 @@
 </div>
 
 <!-- MAP FULLSCREEN MODAL -->
-<div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:rgba(0,0,0,0.92);overflow:hidden;cursor:grab;">
+<div class="modal-overlay" id="modal-map" style="align-items:center;justify-content:center;background:#000;overflow:hidden;cursor:grab;">
   <button class="modal-close" onclick="closeModal('modal-map')" style="position:fixed;top:16px;right:20px;z-index:10;font-size:1.4rem;">×</button>
   <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:6px;background:rgba(20,15,10,0.85);border:1px solid var(--sepia);border-radius:4px;padding:6px 10px;backdrop-filter:blur(4px);">
     <button onclick="mapZoom(1.3)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">＋</button>
     <button onclick="mapZoomReset()" style="height:36px;padding:0 12px;background:transparent;color:var(--parchment);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Courier New',Courier,monospace;font-size:0.75rem;letter-spacing:0.08em;cursor:pointer;">RESET</button>
     <button onclick="mapZoom(0.77)" style="width:36px;height:36px;background:var(--sepia);color:var(--parchment);border:none;border-radius:3px;font-size:1.2rem;cursor:pointer;line-height:1;">－</button>
   </div>
-  <div id="map-pan-container" style="transform-origin:center center;will-change:transform;position:absolute;">
-    <img id="map-fullscreen-img" src="" alt="Map of London" style="display:block;border:2px solid var(--sepia);box-shadow:0 0 40px rgba(0,0,0,0.8);user-select:none;-webkit-user-drag:none;will-change:transform;transform:translateZ(0);backface-visibility:hidden;image-rendering:-webkit-optimize-contrast;">
-  </div>
+  <canvas id="map-canvas" style="position:absolute;top:0;left:0;display:block;"></canvas>
 </div>
 
 <!-- CLUE EXPAND MODAL -->
@@ -1640,59 +1638,99 @@ async function deleteMap(id) {
 }
 
 function openMapPreview(url) {
-  const img = document.getElementById('map-fullscreen-img');
-  mapX = 0; mapY = 0;
-  img.onload = () => {
-    mapFitScale = calcMapFitScale(img);
-    mapScale = mapFitScale;
-    applyMapTransform();
-  };
-  img.src = url;
+  sizeMapCanvas();
   openModal('modal-map');
+  mapImg = new Image();
+  mapImg.onload = () => {
+    mapFitScale = calcMapFitScale(mapImg);
+    mapScale = mapFitScale; mapX = 0; mapY = 0;
+    drawMapCanvas();
+  };
+  mapImg.src = url;
 }
 
-// ── MAP PAN / ZOOM ──
-let mapScale = 1, mapFitScale = 1, mapX = 0, mapY = 0, mapDragging = false, mapDragStart = null, mapDidMove = false;
+// ── MAP CANVAS RENDERER ──
+// Uses canvas + ctx.drawImage with source clipping instead of CSS transform.
+// This avoids GPU texture size limits that cause black tiles on high zoom.
+let mapScale = 1, mapFitScale = 1, mapX = 0, mapY = 0;
+let mapDragging = false, mapDragStart = null, mapDidMove = false;
+let mapImg = null;
 
-function applyMapTransform() {
-  document.getElementById('map-pan-container').style.transform =
-    `translate(${mapX}px, ${mapY}px) scale(${mapScale})`;
+function drawMapCanvas() {
+  const canvas = document.getElementById('map-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!mapImg || !mapImg.complete || !mapImg.naturalWidth) return;
+
+  const iw = mapImg.naturalWidth, ih = mapImg.naturalHeight;
+  const drawW = iw * mapScale, drawH = ih * mapScale;
+  // Top-left corner of the image in canvas coordinates
+  const drawX = (canvas.width  - drawW) / 2 + mapX;
+  const drawY = (canvas.height - drawH) / 2 + mapY;
+
+  // Clamp source rect to only the visible portion — never rasterises off-screen pixels
+  const srcX = Math.max(0, -drawX / mapScale);
+  const srcY = Math.max(0, -drawY / mapScale);
+  const srcW = Math.min(iw - srcX, canvas.width  / mapScale);
+  const srcH = Math.min(ih - srcY, canvas.height / mapScale);
+  if (srcW <= 0 || srcH <= 0) return;
+
+  const dstX = Math.max(0, drawX);
+  const dstY = Math.max(0, drawY);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(mapImg, srcX, srcY, srcW, srcH, dstX, dstY, srcW * mapScale, srcH * mapScale);
 }
 
-function mapZoom(factor) {
-  mapScale = Math.min(mapFitScale * 16, Math.max(mapFitScale * 0.9, mapScale * factor));
-  applyMapTransform();
+function sizeMapCanvas() {
+  const canvas = document.getElementById('map-canvas');
+  if (!canvas) return;
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function mapZoom(factor, pivotX = 0, pivotY = 0) {
+  const newScale = Math.min(mapFitScale * 20, Math.max(mapFitScale * 0.9, mapScale * factor));
+  const ratio = newScale / mapScale;
+  mapX = pivotX + (mapX - pivotX) * ratio;
+  mapY = pivotY + (mapY - pivotY) * ratio;
+  mapScale = newScale;
+  drawMapCanvas();
 }
 
 function mapZoomReset() {
   mapScale = mapFitScale; mapX = 0; mapY = 0;
-  applyMapTransform();
-  // Force GPU layer refresh to clear any stuck dark tiles
-  const img = document.getElementById('map-fullscreen-img');
-  img.style.willChange = 'auto';
-  requestAnimationFrame(() => { img.style.willChange = 'transform'; });
+  drawMapCanvas();
 }
 
 function calcMapFitScale(img) {
-  const vw = window.innerWidth * 0.95;
-  const vh = window.innerHeight * 0.92;
-  return Math.min(vw / img.naturalWidth, vh / img.naturalHeight, 1);
+  return Math.min(window.innerWidth / img.naturalWidth, window.innerHeight / img.naturalHeight, 1);
 }
 
 (function initMapInteraction() {
   document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('modal-map');
 
+    window.addEventListener('resize', () => {
+      if (overlay.classList.contains('open')) { sizeMapCanvas(); drawMapCanvas(); }
+    });
+
     overlay.addEventListener('wheel', e => {
       if (!overlay.classList.contains('open')) return;
       e.preventDefault();
-      mapZoom(e.deltaY < 0 ? 1.15 : 0.87);
+      const canvas = document.getElementById('map-canvas');
+      const rect = canvas.getBoundingClientRect();
+      // Zoom towards cursor position
+      const px = e.clientX - rect.left - canvas.width  / 2;
+      const py = e.clientY - rect.top  - canvas.height / 2;
+      mapZoom(e.deltaY < 0 ? 1.15 : 0.87, px, py);
     }, { passive: false });
 
     overlay.addEventListener('mousedown', e => {
       if (e.target.closest('button')) return;
-      mapDragging = true;
-      mapDidMove = false;
+      mapDragging = true; mapDidMove = false;
       mapDragStart = { x: e.clientX - mapX, y: e.clientY - mapY };
       overlay.style.cursor = 'grabbing';
     });
@@ -1702,22 +1740,21 @@ function calcMapFitScale(img) {
       mapDidMove = true;
       mapX = e.clientX - mapDragStart.x;
       mapY = e.clientY - mapDragStart.y;
-      applyMapTransform();
+      drawMapCanvas();
     });
 
     window.addEventListener('mouseup', e => {
       if (mapDragging && !mapDidMove && e.target === overlay) closeModal('modal-map');
       mapDragging = false;
-      document.getElementById('modal-map').style.cursor = 'grab';
+      overlay.style.cursor = 'grab';
     });
 
     // Touch pinch-to-zoom
-    let lastTouchDist = null;
+    let lastTouchDist = null, lastTouchMid = null;
     overlay.addEventListener('touchstart', e => {
       if (e.touches.length === 2) {
-        lastTouchDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY);
+        lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        lastTouchMid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
       } else if (e.touches.length === 1) {
         mapDragging = true;
         mapDragStart = { x: e.touches[0].clientX - mapX, y: e.touches[0].clientY - mapY };
@@ -1725,26 +1762,21 @@ function calcMapFitScale(img) {
     }, { passive: true });
 
     overlay.addEventListener('touchmove', e => {
-      if (e.touches.length === 2) {
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY);
-        if (lastTouchDist) {
-          mapScale = Math.min(8, Math.max(0.5, mapScale * (dist / lastTouchDist)));
-          applyMapTransform();
-        }
-        lastTouchDist = dist;
+      if (e.touches.length === 2 && lastTouchDist) {
+        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        const mid = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
+        const canvas = document.getElementById('map-canvas');
+        const px = mid.x - canvas.width / 2, py = mid.y - canvas.height / 2;
+        mapZoom(dist / lastTouchDist, px, py);
+        lastTouchDist = dist; lastTouchMid = mid;
       } else if (e.touches.length === 1 && mapDragging) {
         mapX = e.touches[0].clientX - mapDragStart.x;
         mapY = e.touches[0].clientY - mapDragStart.y;
-        applyMapTransform();
+        drawMapCanvas();
       }
     }, { passive: true });
 
-    overlay.addEventListener('touchend', () => {
-      mapDragging = false;
-      lastTouchDist = null;
-    });
+    overlay.addEventListener('touchend', () => { mapDragging = false; lastTouchDist = null; });
   });
 })();
 
@@ -1762,21 +1794,20 @@ function togglePlayerSidebar() {
 
 function openMapFullscreen() {
   if (!currentMapUrl) return;
-  const img = document.getElementById('map-fullscreen-img');
-  mapX = 0; mapY = 0;
-  if (img.src !== currentMapUrl || !img.naturalWidth) {
-    img.onload = () => {
-      mapFitScale = calcMapFitScale(img);
-      mapScale = mapFitScale;
-      applyMapTransform();
-    };
-    img.src = currentMapUrl;
-  } else {
-    mapFitScale = calcMapFitScale(img);
-    mapScale = mapFitScale;
-    applyMapTransform();
-  }
+  sizeMapCanvas();
   openModal('modal-map');
+  const ready = () => {
+    mapFitScale = calcMapFitScale(mapImg);
+    mapScale = mapFitScale; mapX = 0; mapY = 0;
+    drawMapCanvas();
+  };
+  if (mapImg && mapImg.src === currentMapUrl && mapImg.complete && mapImg.naturalWidth) {
+    ready();
+  } else {
+    mapImg = new Image();
+    mapImg.onload = ready;
+    mapImg.src = currentMapUrl;
+  }
 }
 
 function renderPlayerMap() {
