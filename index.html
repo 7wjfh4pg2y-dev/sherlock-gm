@@ -1503,6 +1503,30 @@
   </div>
 </div>
 
+<!-- NOTE DELETE CONFIRM -->
+<div id="modal-confirm-delete" style="display:none;position:fixed;inset:0;background:rgba(4,3,1,0.82);z-index:950;align-items:center;justify-content:center;">
+  <div id="confirm-delete-box" style="
+    background: #1a1208;
+    border: 1px solid rgba(139,105,20,0.45);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7), inset 0 0 60px rgba(139,105,20,0.04);
+    max-width: 340px; width: 90%; padding: 0; overflow: hidden; position: relative;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(122,92,18,0.05) 22px, rgba(122,92,18,0.05) 23px);
+  ">
+    <!-- Telegram-style header strip -->
+    <div style="background:rgba(139,105,20,0.18);border-bottom:1px solid rgba(139,105,20,0.3);padding:10px 16px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:1rem;">⚠</span>
+      <span style="font-family:'Courier Prime','Courier New',monospace;font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--sepia);">Confirm Deletion</span>
+    </div>
+    <div style="padding:18px 20px 14px;">
+      <p id="confirm-delete-msg" style="font-family:'IM Fell English',Georgia,serif;font-size:0.95rem;color:var(--parchment);line-height:1.6;margin:0 0 18px;"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-secondary btn-sm" onclick="closeConfirmDelete()">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="confirm-delete-ok" onclick="">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- KICKED OVERLAY -->
 <div id="kicked-overlay" style="display:none;position:fixed;inset:0;background:rgba(8,6,3,0.97);z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
   <div style="font-family:'Courier New',Courier,monospace;font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Access Revoked</div>
@@ -1667,15 +1691,15 @@ function gmBriefingHTML() {
   const desc = currentCaseDescription;
   return `<div class="case-briefing-panel" id="gm-briefing-panel">
     <div class="briefing-header" onclick="toggleBriefing('gm-briefing-body')">
-      <span>Case Briefing</span><span id="gm-briefing-toggle" class="briefing-toggle">▾</span>
+      <span>Case Briefing</span><span id="gm-briefing-toggle" class="briefing-toggle">▸</span>
     </div>
-    <div id="gm-briefing-body" class="briefing-body">
+    <div id="gm-briefing-body" class="briefing-body" style="display:none">
       <div id="gm-briefing-display" style="${desc ? '' : 'display:none'}">
         <p class="briefing-text" id="gm-briefing-text">${desc ? escapeHtml(desc) : ''}</p>
         <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="showGMBriefingEdit()">✏️ Edit Briefing</button>
       </div>
       <div id="gm-briefing-edit" style="${desc ? 'display:none' : ''}">
-        <textarea id="gm-briefing-input" rows="5" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;font-family:'Courier New',Courier,monospace;font-size:0.9rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:8px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
+        <textarea id="gm-briefing-input" rows="12" placeholder="Set the scene — the crime, the setting, what the investigators know at the outset…" style="width:100%;resize:vertical;min-height:200px;font-family:'IM Fell English',Georgia,serif;font-size:0.95rem;line-height:1.7;background:var(--paper);color:var(--ink);border:1px solid var(--parchment-darker);padding:12px 14px;border-radius:2px;box-sizing:border-box;">${desc ? escapeHtml(desc) : ''}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn btn-primary btn-sm" onclick="saveGMBriefing()">Save</button>
           ${desc ? '<button class="btn btn-secondary btn-sm" onclick="cancelGMBriefingEdit()">Cancel</button>' : ''}
@@ -1786,9 +1810,11 @@ function gmNotesHTML() {
   </div>`;
 }
 
-async function gmDeleteNote(id) {
-  await sb.from('notes').delete().eq('id', id);
-  await loadGMClues();
+function gmDeleteNote(id) {
+  showConfirmDelete('Delete this note from the Irregulars\' Notebook?', async () => {
+    await sb.from('notes').delete().eq('id', id);
+    await loadGMClues();
+  });
 }
 
 function subscribeGMUpdates(caseId) {
@@ -2047,6 +2073,12 @@ function calcMapFitScale(img) {
 
 let sidebarOpen = false;
 let gmSidebarOpen = false;
+const gmMinimizedNotes = new Set();
+function toggleGMSidebarNote(id) {
+  if (gmMinimizedNotes.has(id)) gmMinimizedNotes.delete(id);
+  else gmMinimizedNotes.add(id);
+  renderGMRightPanel();
+}
 
 function togglePlayerSidebar() {
   sidebarOpen = !sidebarOpen;
@@ -2075,6 +2107,13 @@ function toggleGMBriefing() {
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : '';
   if (toggle) toggle.textContent = open ? '▸' : '▾';
+  // If opening and no briefing text yet, go straight to edit mode
+  if (!open && !currentCaseDescription) {
+    document.getElementById('gm-briefing-display').style.display = 'none';
+    document.getElementById('gm-briefing-edit').style.display = '';
+  }
+  // Scroll into view
+  if (!open) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function openMapFullscreen() {
@@ -2286,18 +2325,29 @@ function renderGMRightPanel() {
     notesBadgeEl.textContent = allNotes.length + (allNotes.length === 1 ? ' note' : ' notes');
   }
   if (notesListEl) {
+    if (!gmSidebarOpen) { notesListEl.innerHTML = ''; return; }
     if (!allNotes.length) {
-      notesListEl.innerHTML = gmSidebarOpen
-        ? `<p style="font-family:'Courier New',Courier,monospace;font-size:0.72rem;color:var(--fog);margin:4px 8px;font-style:italic;">No notes yet.</p>` : '';
+      notesListEl.innerHTML = `<p style="font-family:'Courier New',Courier,monospace;font-size:0.72rem;color:var(--fog);margin:4px 8px;font-style:italic;">No notes yet.</p>`;
     } else {
       notesListEl.innerHTML = allNotes.map(n => {
         const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return `<div style="border-left:2px solid ${n.player_color};padding:4px 8px;margin-bottom:6px;${gmSidebarOpen ? '' : 'display:none;'}">
-          <div style="font-family:'Courier New',Courier,monospace;font-size:0.62rem;color:${n.player_color};opacity:0.85;display:flex;justify-content:space-between;align-items:center;">
-            <span>${escapeHtml(n.player_name)} · ${time}</span>
-            <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.6;font-size:0.65rem;padding:0 1px;line-height:1;" title="Delete">✕</button>
+        const isMin = gmMinimizedNotes.has(n.id);
+        return `<div style="
+            border-left:3px solid ${n.player_color};
+            margin:0 6px 8px;
+            background:rgba(244,232,206,0.04);
+            background-image:repeating-linear-gradient(transparent,transparent 21px,rgba(122,92,18,0.08) 21px,rgba(122,92,18,0.08) 22px);
+            box-shadow:inset 0 0 12px rgba(139,105,20,0.04);
+            overflow:hidden;
+          ">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-bottom:1px dashed rgba(139,105,20,0.2);">
+            <span style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;color:${n.player_color};opacity:0.9;letter-spacing:0.06em;">${escapeHtml(n.player_name)} · ${time}</span>
+            <div style="display:flex;gap:3px;">
+              <button onclick="toggleGMSidebarNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--fog);font-size:0.6rem;padding:0 2px;line-height:1;" title="${isMin ? 'Expand' : 'Minimise'}">${isMin ? '▸' : '▾'}</button>
+              <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.55;font-size:0.6rem;padding:0 2px;line-height:1;" title="Delete">✕</button>
+            </div>
           </div>
-          <div style="font-family:'Courier New',Courier,monospace;font-size:0.75rem;color:var(--parchment-dark);line-height:1.45;margin-top:2px;word-break:break-word;">${escapeHtml(n.content)}</div>
+          ${isMin ? '' : `<div style="font-family:'IM Fell English',Georgia,serif;font-size:0.78rem;color:var(--parchment-dark);line-height:1.5;padding:5px 8px;word-break:break-word;">${escapeHtml(n.content)}</div>`}
         </div>`;
       }).join('');
     }
@@ -2688,10 +2738,23 @@ function renderNotes(notes) {
   }).join('');
 }
 
+function showConfirmDelete(message, onConfirm) {
+  document.getElementById('confirm-delete-msg').textContent = message;
+  const btn = document.getElementById('confirm-delete-ok');
+  btn.onclick = () => { closeConfirmDelete(); onConfirm(); };
+  const modal = document.getElementById('modal-confirm-delete');
+  modal.style.display = 'flex';
+}
+function closeConfirmDelete() {
+  document.getElementById('modal-confirm-delete').style.display = 'none';
+}
+
 async function deleteNote(id) {
-  const { error } = await sb.from('notes').delete().eq('id', id);
-  if (error) { toast('Error deleting note.'); return; }
-  await loadNotes();
+  showConfirmDelete('Delete this note? It will be removed from everyone\'s notebook.', async () => {
+    const { error } = await sb.from('notes').delete().eq('id', id);
+    if (error) { toast('Error deleting note.'); return; }
+    await loadNotes();
+  });
 }
 
 function toggleMinimizeNote(id) {
