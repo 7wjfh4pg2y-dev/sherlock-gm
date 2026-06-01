@@ -1213,7 +1213,7 @@ function closeConfirmDelete() {
 }
 
 async function deleteNote(id) {
-  showConfirmDelete('Delete this note? It will be removed from everyone\'s notebook.', async () => {
+  showConfirmDelete('Delete this note from the Irregulars\' Notebook?', async () => {
     const { error } = await sb.from('notes').delete().eq('id', id);
     if (error) { toast('Error deleting note.'); return; }
     await loadNotes();
