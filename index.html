@@ -376,7 +376,19 @@
 <div class="modal-overlay" id="modal-directory" onclick="if(event.target===this)closeModal('modal-directory')">
   <div class="modal directory-modal">
     <button class="modal-close" onclick="closeModal('modal-directory')">×</button>
-    <div class="modal-title">London Directory</div>
+    <div class="directory-modal-header">
+      <div class="modal-title" style="margin-bottom:0;">London Directory</div>
+      <button id="directory-add-btn" class="directory-add-toggle-btn" onclick="toggleDirectoryAddForm()" style="display:none;" title="Add entry">+ Add Entry</button>
+    </div>
+    <div id="directory-add-form" style="display:none;">
+      <div class="directory-add-row">
+        <input type="text" id="dir-add-name" class="directory-search-input" placeholder="Name" style="flex:2;">
+        <input type="text" id="dir-add-location" class="directory-search-input" placeholder="e.g. 42 EC" style="flex:0 0 90px;">
+        <input type="text" id="dir-add-category" class="directory-search-input" placeholder="Category (optional)" list="dir-categories-list" style="flex:1;">
+        <datalist id="dir-categories-list"></datalist>
+        <button class="directory-add-submit-btn" onclick="submitDirectoryEntry()">Add</button>
+      </div>
+    </div>
     <div class="directory-search-row">
       <input type="text" id="directory-search" class="directory-search-input" placeholder="Search name or location…" oninput="filterDirectory()">
       <select id="directory-category" class="directory-category-select" onchange="filterDirectory()">
