@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -74,10 +73,6 @@
             <span class="sidebar-item-label">Map of London</span>
           </button>
         </div>
-        <button class="sidebar-item" onclick="openDirectoryFlipbook()">
-          <span class="sidebar-item-icon">📖</span>
-          <span class="sidebar-item-label">London Directory</span>
-        </button>
         <hr class="gm-sidebar-divider">
         <div id="gm-sidebar-case-label">Notes</div>
         <!-- Notebook icon — only visible when sidebar is collapsed -->
@@ -141,10 +136,6 @@
           <span class="sidebar-item-label">Map of London</span>
         </button>
       </div>
-      <button class="sidebar-item" onclick="openDirectoryFlipbook()">
-        <span class="sidebar-item-icon">📖</span>
-        <span class="sidebar-item-label">London Directory</span>
-      </button>
     </div>
     <!-- Main content area -->
     <div id="player-main">
@@ -269,68 +260,6 @@
     </div>
     <div id="identity-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="confirmIdentity()">Enter the Case Room</button>
-  </div>
-</div>
-
-<!-- DIRECTORY FLIPBOOK MODAL -->
-<div id="modal-flipbook" style="display:none;position:fixed;inset:0;background:rgba(5,3,1,0.95);z-index:800;flex-direction:column;align-items:center;justify-content:center;">
-  <div style="width:100%;max-width:900px;height:100vh;display:flex;flex-direction:column;padding:12px;">
-    
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;">
-      <div style="font-family:'Special Elite','Courier New',monospace;color:var(--parchment);font-size:1rem;letter-spacing:0.1em;">
-        📖 LONDON DIRECTORY
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-family:'Courier Prime','Courier New',monospace;font-size:0.75rem;color:var(--fog);">
-          Page <span id="flipbook-current">1</span> of <span id="flipbook-total">-</span>
-        </span>
-        <input type="number" id="flipbook-goto" min="1" placeholder="Go to page" 
-          style="width:90px;padding:4px 8px;background:rgba(245,234,214,0.1);border:1px solid rgba(139,105,20,0.4);color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.75rem;outline:none;"
-          onkeydown="if(event.key==='Enter')goToPage()">
-        <button onclick="goToPage()" class="btn btn-secondary btn-sm">Go</button>
-        <button onclick="closeDirectoryFlipbook()" style="background:none;border:none;color:var(--fog);font-size:1.6rem;cursor:pointer;line-height:1;padding:0 4px;">×</button>
-      </div>
-    </div>
-
-    <!-- Flipbook stage -->
-    <div id="flipbook-stage" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-      
-      <!-- Left arrow -->
-      <button onclick="flipbookPrev()" id="flipbook-prev" style="position:absolute;left:0;z-index:30;background:rgba(15,8,2,0.7);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);font-size:1.8rem;padding:12px 10px;cursor:pointer;height:80px;transition:background 0.15s;" onmouseover="this.style.background='rgba(139,105,20,0.4)'" onmouseout="this.style.background='rgba(15,8,2,0.7)'">‹</button>
-
-      <!-- Book container with perspective -->
-      <div id="flipbook-book" style="position:relative;display:inline-flex;align-items:center;justify-content:center;transform-style:preserve-3d;perspective:1200px;">
-        
-        <!-- Left page -->
-        <canvas id="fb-left-base" style="display:none;position:relative;z-index:1;box-shadow:-4px 0 20px rgba(0,0,0,0.5);border:1px solid rgba(139,105,20,0.2);transition:opacity 0.3s ease;"></canvas>
-        <canvas id="fb-left-reveal" style="display:none;position:absolute;left:0;box-shadow:-4px 0 20px rgba(0,0,0,0.5);border:1px solid rgba(139,105,20,0.2);"></canvas>
-
-        <!-- Right page -->
-        <canvas id="fb-right-base" style="position:relative;z-index:1;box-shadow:4px 0 20px rgba(0,0,0,0.5);border:1px solid rgba(139,105,20,0.2);transition:opacity 0.3s ease;"></canvas>
-
-        <!-- The flipping page wrapper - anchored at left edge, sits over right page -->
-        <div id="fb-flip-wrapper" style="position:absolute;right:0;top:0;transform-origin:left center;transform-style:preserve-3d;transform:rotateY(0deg);display:none;">
-          <!-- Front face (current right page) -->
-          <canvas id="fb-flip-front" style="display:block;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:4px 0 20px rgba(0,0,0,0.5);border:1px solid rgba(139,105,20,0.2);"></canvas>
-          <!-- Back face (new left page, mirrored) -->
-          <canvas id="fb-flip-back" style="position:absolute;top:0;left:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);box-shadow:-4px 0 20px rgba(0,0,0,0.5);border:1px solid rgba(139,105,20,0.2);"></canvas>
-        </div>
-      </div>
-
-      <!-- Right arrow -->
-      <button onclick="flipbookNext()" id="flipbook-next" style="position:absolute;right:0;z-index:30;background:rgba(15,8,2,0.7);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);font-size:1.8rem;padding:12px 10px;cursor:pointer;height:80px;transition:background 0.15s;" onmouseover="this.style.background='rgba(139,105,20,0.4)'" onmouseout="this.style.background='rgba(15,8,2,0.7)'">›</button>
-    </div>
-
-        <!-- Progress bar -->
-    <div style="height:3px;background:rgba(139,105,20,0.2);margin-top:10px;flex-shrink:0;border-radius:2px;">
-      <div id="flipbook-progress" style="height:100%;background:var(--sepia);border-radius:2px;transition:width 0.3s;width:0%;"></div>
-    </div>
-
-    <!-- Loading indicator -->
-    <div id="flipbook-loading" style="position:absolute;color:var(--parchment);font-family:'Courier Prime',monospace;font-size:0.85rem;letter-spacing:0.1em;display:none;">
-      <span class="spinner"></span> Loading directory…
-    </div>
   </div>
 </div>
 
