@@ -1047,18 +1047,13 @@ function renderGMRightPanel() {
     playersEl.style.display = gmPlayersPanelOpen ? '' : 'none';
   }
 
-  // Notes — tabbed Victorian notebook in GM sidebar
+  // Notes — badge only, full render happens in modal on demand
   const notesBadgeEl = document.getElementById('gm-sidebar-notes-badge');
-  const notesListEl = document.getElementById('gm-sidebar-notes-list');
   if (notesBadgeEl) {
     notesBadgeEl.style.display = gmSidebarOpen ? '' : 'none';
     notesBadgeEl.textContent = allNotes.length + (allNotes.length === 1 ? ' note' : ' notes');
   }
-  if (notesListEl) {
-    if (gmSidebarOpen) renderGMNotebook();
-    else notesListEl.innerHTML = '';
-  }
-  // Always refresh modal if open
+  // Refresh modal if open
   const modal = document.getElementById('modal-gm-notebook');
   if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
@@ -1124,9 +1119,6 @@ function buildGMNotebookHTML(prefix) {
 }
 
 function renderGMNotebook() {
-  const notesListEl = document.getElementById('gm-sidebar-notes-list');
-  if (notesListEl) notesListEl.innerHTML = buildGMNotebookHTML('gm-nb');
-  // Also refresh modal if open
   const modal = document.getElementById('modal-gm-notebook');
   if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
