@@ -1,250 +1,256 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Caveat:wght@400;600&family=Special+Elite&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background:
-      radial-gradient(ellipse at 50% 50%, #1a1005 0%, #0a0602 100%);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 48px 20px;
-  }
+body {
+  background: #1a1005;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px;
+  font-family: 'Caveat', cursive;
+}
 
-  /* ── LEATHER COVER ── */
-  .notebook {
-    width: 620px;
-    background:
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 48px,
-        rgba(80,50,10,0.07) 48px,
-        rgba(80,50,10,0.07) 50px
-      ),
-      linear-gradient(160deg, #2a1a08 0%, #1e1206 40%, #261808 100%);
-    border: 2px solid #4a2e0a;
-    box-shadow:
-      0 0 0 1px rgba(0,0,0,0.8),
-      0 8px 40px rgba(0,0,0,0.8),
-      inset 0 1px 0 rgba(255,200,100,0.06),
-      inset 4px 0 12px rgba(0,0,0,0.4);
-    position: relative;
-  }
+/* ── NOTEBOOK WRAPPER ── */
+.notebook {
+  width: 580px;
+  position: relative;
+  filter: drop-shadow(0 12px 40px rgba(0,0,0,0.8));
+}
 
-  /* Spine */
-  .notebook::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 18px;
-    background: linear-gradient(90deg, #0e0702 0%, #3a2208 40%, #1e1206 100%);
-    border-right: 1px solid rgba(80,50,10,0.5);
-  }
+/* ── SPIRAL BINDING ── */
+.spiral {
+  position: absolute;
+  top: 52px; left: -14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 10;
+}
+.ring {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 4px solid #5a3e1a;
+  background: radial-gradient(circle at 35% 35%, #8a6530, #3a2510);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+  position: relative;
+}
+.ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #1a0e04;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+}
 
-  /* Worn corner */
-  .notebook::after {
-    content: '';
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 0; height: 0;
-    border-style: solid;
-    border-width: 0 0 22px 22px;
-    border-color: transparent transparent rgba(0,0,0,0.5) transparent;
-  }
+/* ── TABS ── */
+.nb-tabs {
+  display: flex;
+  padding-left: 24px;
+  gap: 3px;
+  position: relative;
+  z-index: 2;
+}
 
-  /* ── TABS ── */
-  .nb-tabs {
-    display: flex;
-    padding: 18px 18px 0 28px;
-    gap: 4px;
-    position: relative;
-    z-index: 2;
-  }
+input[type=radio] { display: none; }
 
-  input[type=radio] { display: none; }
+.nb-tab {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 22px 12px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #8b6830;
+  border-bottom: none;
+  position: relative;
+  top: 1px;
+  transition: all 0.12s;
+  /* inactive = closed page, darker */
+  background: linear-gradient(180deg, #c8a96a 0%, #b8944a 100%);
+  color: #5a3a10;
+  box-shadow: inset 0 1px 0 rgba(255,220,130,0.3);
+}
+.nb-tab:hover { background: linear-gradient(180deg, #d4b878 0%, #c4a458 100%); }
 
-  .nb-tab {
-    font-family: 'Special Elite', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 7px 18px 10px;
-    cursor: pointer;
-    position: relative;
-    color: rgba(160,110,40,0.6);
-    background: linear-gradient(180deg, #1a0f04 0%, #140c03 100%);
-    border: 1px solid rgba(100,65,15,0.4);
-    border-bottom: none;
-    border-radius: 3px 3px 0 0;
-    transition: all 0.15s;
-    top: 2px;
-  }
-  .nb-tab:hover { color: rgba(200,150,60,0.8); }
+/* active tab = open page colour */
+#tab-private:checked ~ .nb-tabs [for="tab-private"],
+#tab-shared:checked  ~ .nb-tabs [for="tab-shared"] {
+  background: linear-gradient(180deg, #fdf6e0 0%, #f5e8c0 100%);
+  color: #3a2008;
+  border-color: #9a7830;
+  top: 0;
+  padding-bottom: 13px;
+  z-index: 3;
+}
 
-  #tab-private:checked ~ .nb-tabs [for="tab-private"],
-  #tab-shared:checked ~ .nb-tabs [for="tab-shared"] {
-    color: #8b6914;
-    background: linear-gradient(180deg, #fdf3d8 0%, #f5e4b8 100%);
-    border-color: rgba(140,100,30,0.6);
-    top: 1px;
-    padding-bottom: 11px;
-  }
+/* ── PAPER PAGE ── */
+.nb-page {
+  position: relative;
+  background: #f5e8c0;
+  border: 1px solid #9a7830;
+  border-radius: 0 4px 4px 4px;
+  overflow: hidden;
+  z-index: 1;
+}
 
-  /* ── PAPER PANEL ── */
-  .nb-panel {
-    margin: 0 14px 14px 22px;
-    background: linear-gradient(170deg, #fdf8ec 0%, #f7e9c8 60%, #f0dca8 100%);
-    border: 1px solid rgba(140,100,30,0.5);
-    border-top: 2px solid rgba(140,100,30,0.4);
-    box-shadow:
-      inset 0 0 60px rgba(160,110,20,0.08),
-      inset 0 2px 8px rgba(0,0,0,0.06),
-      2px 4px 12px rgba(0,0,0,0.4);
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Ruled lines */
-  .nb-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: repeating-linear-gradient(
+/* Paper texture via repeating grain */
+.nb-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    /* Ruled lines */
+    repeating-linear-gradient(
       180deg,
-      transparent,
-      transparent 27px,
-      rgba(160,120,40,0.13) 27px,
-      rgba(160,120,40,0.13) 28px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
+      transparent 0px,
+      transparent 31px,
+      rgba(140,100,40,0.18) 31px,
+      rgba(140,100,40,0.18) 32px
+    ),
+    /* Paper grain */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
 
-  /* Red margin line */
-  .nb-panel::after {
-    content: '';
-    position: absolute;
-    left: 42px; top: 0; bottom: 0;
-    width: 1px;
-    background: rgba(180,60,60,0.25);
-    pointer-events: none;
-    z-index: 1;
-  }
+/* Red margin line */
+.nb-page::after {
+  content: '';
+  position: absolute;
+  left: 52px; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(180,50,50,0.3);
+  pointer-events: none;
+  z-index: 1;
+}
 
-  .nb-inner {
-    position: relative;
-    z-index: 2;
-    padding: 16px 20px 20px 52px;
-  }
+/* Hole punches */
+.holes {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.hole {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #1a1005;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.5);
+  border: 1px solid #2e1e08;
+}
 
-  /* ── INPUT ── */
-  .nb-input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 18px;
-    align-items: flex-end;
-  }
+.nb-inner {
+  position: relative;
+  z-index: 2;
+  padding: 20px 24px 24px 64px;
+  min-height: 420px;
+}
 
-  .nb-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(140,100,30,0.3);
-    color: #2a1a06;
-    font-family: 'Caveat', cursive;
-    font-size: 1.1rem;
-    padding: 4px 0 4px;
-    resize: none;
-    outline: none;
-    line-height: 1.55;
-    letter-spacing: 0.01em;
-  }
-  .nb-input::placeholder { color: rgba(120,85,30,0.35); font-style: italic; }
+/* ── INPUT ── */
+.nb-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
 
-  .nb-btn {
-    font-family: 'Special Elite', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(100,65,15,0.7);
-    background: none;
-    border: 1px solid rgba(140,100,30,0.35);
-    padding: 6px 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s;
-  }
-  .nb-btn:hover { color: #5a3a08; border-color: rgba(140,100,30,0.6); }
+.nb-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(140,100,40,0.4);
+  color: #1e1206;
+  font-family: 'Caveat', cursive;
+  font-size: 1.15rem;
+  padding: 4px 0;
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+}
+.nb-input::placeholder { color: rgba(100,70,20,0.35); font-style: italic; }
 
-  .nb-divider {
-    border: none;
-    border-top: 1px solid rgba(140,100,30,0.18);
-    margin: 0 0 16px -10px;
-  }
+.nb-btn {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(80,50,10,0.8);
+  background: rgba(200,160,70,0.15);
+  border: 1px solid rgba(140,100,30,0.4);
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+.nb-btn:hover { background: rgba(200,160,70,0.3); border-color: rgba(140,100,30,0.7); }
 
-  /* ── NOTES ── */
-  .note {
-    margin-bottom: 18px;
-    padding-left: 10px;
-    border-left: 2px solid;
-  }
+/* Section rule */
+.nb-rule {
+  border: none;
+  border-top: 1px dashed rgba(140,100,40,0.25);
+  margin: 0 0 18px -12px;
+}
 
-  .note-header {
-    display: flex;
-    align-items: baseline;
-    gap: 7px;
-    margin-bottom: 3px;
-  }
+/* ── NOTES ── */
+.note {
+  margin-bottom: 20px;
+  padding-left: 12px;
+  border-left: 3px solid;
+}
+.note-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.note-name {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.note-time {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.6rem;
+  color: rgba(100,70,25,0.5);
+}
+.note-badge {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(120,80,20,0.3);
+  color: rgba(120,80,20,0.6);
+  padding: 1px 4px;
+  border-radius: 1px;
+}
+.note-text {
+  font-family: 'Caveat', cursive;
+  font-size: 1.12rem;
+  color: #1c1006;
+  line-height: 1.65;
+}
 
-  .note-name {
-    font-family: 'Special Elite', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .note-time {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.62rem;
-    color: rgba(100,75,30,0.5);
-  }
-
-  .note-private-badge {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.52rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(120,85,30,0.6);
-    border: 1px solid rgba(120,85,30,0.3);
-    padding: 1px 4px;
-  }
-
-  .note-text {
-    font-family: 'Caveat', cursive;
-    font-size: 1.08rem;
-    color: #1e1208;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
-  }
-
-  .empty {
-    font-family: 'IM Fell English', Georgia, serif;
-    font-style: italic;
-    font-size: 0.88rem;
-    color: rgba(120,85,30,0.4);
-    text-align: center;
-    padding: 24px 0;
-  }
-
-  /* ── TAB PANEL VISIBILITY ── */
-  [data-panel] { display: none; }
-  #tab-private:checked ~ .nb-panel [data-panel="private"] { display: block; }
-  #tab-shared:checked  ~ .nb-panel [data-panel="shared"]  { display: block; }
+/* ── TAB VISIBILITY ── */
+[data-panel] { display: none; }
+#tab-private:checked ~ .nb-page [data-panel="private"] { display: block; }
+#tab-shared:checked  ~ .nb-page [data-panel="shared"]  { display: block; }
 </style>
 </head>
 <body>
@@ -253,12 +259,35 @@
   <input type="radio" name="nb" id="tab-private" checked>
   <input type="radio" name="nb" id="tab-shared">
 
+  <!-- Spiral rings -->
+  <div class="spiral">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+  </div>
+
+  <!-- Tabs -->
   <div class="nb-tabs">
     <label class="nb-tab" for="tab-private">My Notes</label>
     <label class="nb-tab" for="tab-shared">Team Notes</label>
   </div>
 
-  <div class="nb-panel">
+  <!-- Page -->
+  <div class="nb-page">
+    <div class="holes">
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+    </div>
+
     <div class="nb-inner">
 
       <!-- PRIVATE -->
@@ -267,24 +296,22 @@
           <textarea class="nb-input" rows="2" placeholder="Your private deductions…"></textarea>
           <button class="nb-btn">Add Note</button>
         </div>
-        <hr class="nb-divider">
-
+        <hr class="nb-rule">
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
             <span class="note-time">09:42</span>
-            <span class="note-private-badge">Private</span>
+            <span class="note-badge">Private</span>
           </div>
           <div class="note-text">The tobacconist on Fleet St mentioned a tall man in a grey coat — matches the widow's description precisely.</div>
         </div>
-
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
             <span class="note-time">10:15</span>
-            <span class="note-private-badge">Private</span>
+            <span class="note-badge">Private</span>
           </div>
-          <div class="note-text">Visit the docks next. The manifest at location 34 seemed deliberately incomplete.</div>
+          <div class="note-text">Visit the docks next. The shipping manifest at location 34 seemed deliberately incomplete.</div>
         </div>
       </div>
 
@@ -294,8 +321,7 @@
           <textarea class="nb-input" rows="2" placeholder="Share a deduction with the team…"></textarea>
           <button class="nb-btn">Add Note</button>
         </div>
-        <hr class="nb-divider">
-
+        <hr class="nb-rule">
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
@@ -303,21 +329,19 @@
           </div>
           <div class="note-text">We should check location 22 — the banker's office. The letter referenced an account number.</div>
         </div>
-
         <div class="note" style="border-color:#1a6b2a;">
           <div class="note-header">
             <span class="note-name" style="color:#1a6b2a;">Lestrade</span>
             <span class="note-time">10:02</span>
           </div>
-          <div class="note-text">Agreed. The victim's brother also keeps a shop at location 8. Worth a visit before we go to the docks.</div>
+          <div class="note-text">Agreed. The victim's brother keeps a shop at location 8. Worth a visit before the docks.</div>
         </div>
-
         <div class="note" style="border-color:#7a4e10;">
           <div class="note-header">
             <span class="note-name" style="color:#7a4e10;">Hopkins</span>
             <span class="note-time">10:18</span>
           </div>
-          <div class="note-text">I checked 22. The manager was evasive about the date of the withdrawal. Something is being concealed.</div>
+          <div class="note-text">Checked 22. The manager was evasive about the date of the withdrawal. Something is being concealed.</div>
         </div>
       </div>
 
