@@ -1,0 +1,10 @@
+/* v2 styles — populated in Segment 6 (design tokens, base, per-module). */
+:root {
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: #1a1005;
+  color: #e8d9b0;
+  font-family: 'IM Fell English', Georgia, serif;
+}
