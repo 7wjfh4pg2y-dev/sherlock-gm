@@ -33,6 +33,10 @@ export const cases = {
   async list(): Promise<CaseRow[]> {
     return unwrap(await sb.from('cases').select('*').order('created_at')) ?? [];
   },
+  async get(id: string): Promise<CaseRow | null> {
+    const rows = unwrap(await sb.from('cases').select('*').eq('id', id)) as CaseRow[] | null;
+    return rows?.[0] ?? null;
+  },
   async create(payload: CaseInsert): Promise<CaseRow> {
     return unwrap(await sb.from('cases').insert(payload).select().single());
   },
@@ -52,6 +56,13 @@ export const clues = {
   async listForCase(caseId: string): Promise<ClueRow[]> {
     return unwrap(
       await sb.from('clues').select('*').eq('case_id', caseId).order('position'),
+    ) ?? [];
+  },
+  // Players only ever fetch revealed clues — RLS is open, so filtering here
+  // prevents unrevealed clue text reaching the client at all.
+  async listRevealed(caseId: string): Promise<ClueRow[]> {
+    return unwrap(
+      await sb.from('clues').select('*').eq('case_id', caseId).eq('revealed', true).order('position'),
     ) ?? [];
   },
   async create(payload: ClueInsert): Promise<ClueRow> {
@@ -77,6 +88,22 @@ export const players = {
   },
   async create(payload: PlayerInsert): Promise<PlayerRow> {
     return unwrap(await sb.from('players').insert(payload).select().single());
+  },
+  // Rejoin-safe: one row per (case_id, player_name); clears any kick on rejoin.
+  async join(payload: PlayerInsert): Promise<PlayerRow> {
+    return unwrap(
+      await sb
+        .from('players')
+        .upsert({ ...payload, is_kicked: false }, { onConflict: 'case_id,player_name' })
+        .select()
+        .single(),
+    );
+  },
+  async kickedState(caseId: string, playerName: string): Promise<boolean> {
+    const rows = unwrap(
+      await sb.from('players').select('is_kicked').eq('case_id', caseId).eq('player_name', playerName),
+    ) as { is_kicked: boolean }[] | null;
+    return !!rows?.[0]?.is_kicked;
   },
   async setKicked(id: string, isKicked: boolean): Promise<void> {
     unwrap(await sb.from('players').update({ is_kicked: isKicked }).eq('id', id).select());
@@ -111,6 +138,10 @@ export const notes = {
 export const maps = {
   async list(): Promise<MapRow[]> {
     return unwrap(await sb.from('maps').select('*').order('created_at')) ?? [];
+  },
+  async get(id: string): Promise<MapRow | null> {
+    const rows = unwrap(await sb.from('maps').select('*').eq('id', id)) as MapRow[] | null;
+    return rows?.[0] ?? null;
   },
   async create(payload: MapInsert): Promise<MapRow> {
     return unwrap(await sb.from('maps').insert(payload).select().single());
@@ -187,4 +218,38 @@ export function subscribeToCase(
 
 export function removeChannel(channel: RealtimeChannel | null): void {
   if (channel) sb.removeChannel(channel);
+}
+
+// ── Presence ──
+// Players announce themselves on a per-case channel; the GM reads the roster to
+// show who's currently online. Returns the channel so callers can remove it.
+export interface PresenceMeta {
+  player_name: string;
+  player_color: string;
+}
+
+export function trackPresence(caseId: string, meta: PresenceMeta): RealtimeChannel {
+  const channel = sb.channel(`presence-${caseId}`);
+  channel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') void channel.track(meta);
+  });
+  return channel;
+}
+
+export function watchPresence(
+  caseId: string,
+  onSync: (online: Set<string>) => void,
+): RealtimeChannel {
+  const channel = sb.channel(`presence-${caseId}`);
+  channel
+    .on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState<PresenceMeta>();
+      const online = new Set<string>();
+      for (const entries of Object.values(state)) {
+        for (const e of entries) online.add(`${e.player_name}|${e.player_color}`);
+      }
+      onSync(online);
+    })
+    .subscribe();
+  return channel;
 }

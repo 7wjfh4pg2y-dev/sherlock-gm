@@ -73,8 +73,17 @@ NOT bundled into logic.
   `src/vite-env.d.ts` for `import.meta.env` types.
   NOTE: map viewer is a simple zoom/pan image (dropped v1's canvas renderer).
   `loadDirectory(caseId)` must be called when a case opens (wire in S3/S4).
-- [ ] **S3 — Player module** (part 4). join flow + identity, clue feed, notebook
-  wired to store + realtime.
+- [x] **S3 — Player module** (part 4). Done: `src/player/join.ts`
+  (`joinCase(name, caseId)` — resolves case, kick-check, upsert player, seeds
+  store, wires `subscribeToCase` → store + presence; `leaveCase()` tears down),
+  `src/player/screen.ts` (`createPlayerScreen()` — reactive: subscribes to store,
+  renders clue feed + briefing + chrome + the shared notebook; My Notes/Team
+  Notes tabs with composer + inline edit/share/delete; clue expand via modal /
+  map viewer for images). Added repo methods: `cases.get`, `maps.get`,
+  `players.join`/`kickedState`, `clues.listRevealed`, presence
+  (`trackPresence`/`watchPresence`), and `noteEditor` in notebook.
+  Typechecks + builds clean. NOT yet imported by main.ts (wired in S5).
+  Player-screen layout CSS is intentionally deferred to S5.
 - [ ] **S4 — GM module** (part 3). login, case CRUD, clue add/reveal/hide/edit,
   player mgmt, maps library + attach, notebook (all/per-player tabs).
 - [ ] **S5 — Styles + full wiring** (part 6). Port Victorian CSS into structured
@@ -99,11 +108,13 @@ NOT bundled into logic.
 
 ## Current status
 
-**S2 complete** (S2a + S2b). All shared components done: dom helper, toast,
-modal, confirm-delete, notebook, directory (data + modal), map viewer. Build
-+ typecheck clean. Components are pure DOM builders, wired to screens in S3/S4.
-Next: **S3 — player module** (`src/player/`): join + identity flow, clue feed,
-notebook wired to store + realtime. See `legacy/app.js` player join (~line
-1260) and player clue rendering. Remember: `loadDirectory(caseId)` on join;
-`subscribeToCase` drives the store; notebook composer submits → `notes.create`
-→ realtime refreshes feed.
+**S3 complete.** Player module done; builds + typechecks clean. Next:
+**S4 — GM module** (`src/gm/`): GM login (session-only password — not a
+security boundary), case CRUD + select, clue add (text/image upload) /
+reveal / hide / edit / delete, player management (kick/reinstate/delete +
+presence via `watchPresence`), maps library + attach-to-case, GM notebook
+(Shared tab + per-player tabs using `createNotebook` with dynamic tabs and
+`noteCard` delete actions). See `legacy/app.js`: GM auth ~280-345, case
+mgmt ~330-405, clues ~1126+, players ~487+, maps library ~466-560, GM
+notebook builders ~1080-1124. Mutations write to repos; `subscribeToCase`
++ `loadGM*` refresh the store; screen reacts.

@@ -111,6 +111,31 @@ export function fillFeed(node: HTMLElement, cards: HTMLElement[], emptyText: str
   }
 }
 
+/** Inline editor that replaces a note card while editing (Save / Cancel). */
+export function noteEditor(
+  initialText: string,
+  onSave: (text: string) => void,
+  onCancel: () => void,
+): HTMLElement {
+  const textarea = h('textarea', { class: 'nb-note-edit-input', attrs: { rows: '2' } });
+  textarea.value = initialText;
+  const save = () => {
+    const text = textarea.value.trim();
+    if (text) onSave(text);
+  };
+  return h(
+    'div',
+    { class: 'nb-note nb-note-editing' },
+    textarea,
+    h(
+      'div',
+      { class: 'nb-note-edit-row' },
+      h('button', { class: 'nb-note-edit-save', text: 'Save', on: { click: save } }),
+      h('button', { class: 'nb-note-edit-cancel', text: 'Cancel', on: { click: onCancel } }),
+    ),
+  );
+}
+
 export interface ComposerOptions {
   placeholder: string;
   onSubmit: (text: string) => void;
