@@ -6,7 +6,7 @@
 <title>The Consulting Detective — Evidence Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Cutive+Mono&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -92,8 +92,6 @@
         </button>
         <div id="gm-sidebar-notes-section">
           <div id="gm-sidebar-notes-badge" style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--sepia);padding:4px 0 4px 8px;display:none;">0 notes</div>
-          <!-- GM notebook: tab radios rendered by JS into gm-sidebar-notes-list -->
-          <div id="gm-sidebar-notes-list"></div>
         </div>
       </div>
 
@@ -308,12 +306,6 @@
     <div id="identity-error" class="error-msg"></div>
     <button class="btn btn-primary btn-full" onclick="confirmIdentity()">Enter the Case Room</button>
   </div>
-</div>
-
-<!-- LIGHTBOX (image) -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close">×</button>
-  <img id="lightbox-img" src="" alt="">
 </div>
 
 <!-- MAPS LIBRARY MODAL -->

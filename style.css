@@ -1019,11 +1019,6 @@
   .clue-action-btn.del  { color: var(--red); }
   .clue-action-btn.del:hover  { background: #f5e8e8; }
 
-  .clue-action-btn.reveal { color: var(--green); border-right: 1px solid var(--parchment-darker); }
-  .clue-action-btn.reveal:hover { background: #e8f5e8; }
-  .clue-action-btn.hide { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
-  .clue-action-btn.hide:hover { background: var(--parchment-dark); }
-
   .revealed-card { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; overflow: hidden; display: flex; flex-direction: column; height: 210px; border: 2px solid var(--parchment-darker); background: var(--parchment); }
   .revealed-card:hover { transform: translateY(-2px); box-shadow: 5px 5px 0 rgba(0,0,0,0.25); }
   .revealed-card-label { flex-shrink: 0; padding: 8px 10px; font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.05em; color: var(--ink); border-top: 1px solid var(--parchment-darker); background: var(--parchment); }
@@ -1261,25 +1256,6 @@
     opacity: 0.8;
   }
 
-  /* LIGHTBOX */
-  .lightbox {
-    display: none; position: fixed; inset: 0;
-    background: rgba(4,3,1,0.96);
-    z-index: 600; align-items: center; justify-content: center; padding: 20px;
-  }
-  .lightbox.open { display: flex; }
-  .lightbox img {
-    max-width: 90vw; max-height: 88vh;
-    object-fit: contain;
-    border: 2px solid var(--sepia);
-    box-shadow: 0 0 80px rgba(122,92,18,0.35);
-  }
-  .lightbox-close {
-    position: fixed; top: 20px; right: 24px;
-    font-size: 2rem; color: var(--fog);
-    cursor: pointer; background: none; border: none; line-height: 1; z-index: 601;
-  }
-
   /* FILE INPUT */
   .file-drop {
     border: 1px dashed var(--parchment-darker);
@@ -1354,23 +1330,6 @@
     color: var(--parchment-darker);
   }
   hr.ornamental::before { content: '— ✦ —'; font-size: 0.9rem; }
-
-  /* ── COLOR SWATCHES ── */
-  .color-swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .color-swatch {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s;
-  }
-  .color-swatch:hover { transform: scale(1.15); }
-  .color-swatch.selected { border-color: var(--ink); transform: scale(1.15); }
 
 
   /* ── VICTORIAN NOTEBOOK (tabbed) ── */

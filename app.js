@@ -284,14 +284,6 @@ function resetGMPassword() {
   document.getElementById('gm-login-error').textContent = 'Password reset. Enter a new password to set it.';
 }
 
-function setGMPassword() {
-  const pw = document.getElementById('gm-new-password').value.trim();
-  if (!pw) return;
-  store.set(GM_PASSWORD_KEY, pw);
-  toast('Password set!');
-  document.getElementById('gm-new-password').value = '';
-}
-
 function doGMLogin() {
   const pw = document.getElementById('gm-password-input').value.trim();
   if (!pw) { document.getElementById('gm-login-error').textContent = 'Enter a password.'; return; }
@@ -427,63 +419,6 @@ function gmBriefingHTML() {
   </div>`;
 }
 
-function gmMapHTML() {
-  const selected = mapsLibrary.find(m => m.id === currentMapId);
-  const options = mapsLibrary.map(m =>
-    `<option value="${m.id}" ${m.id === currentMapId ? 'selected' : ''}>${escapeHtml(m.name)}</option>`
-  ).join('');
-  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
-    <div class="briefing-header" onclick="toggleBriefing('gm-map-body')">
-      <span>Case Map</span><span id="gm-map-toggle" class="briefing-toggle">▾</span>
-    </div>
-    <div id="gm-map-body" class="briefing-body">
-      ${selected ? `<img src="${selected.url}" alt="${escapeHtml(selected.name)}" style="max-width:100%;border:1px solid var(--parchment-darker);cursor:pointer;margin-bottom:12px;display:block;" onclick="openMapFullscreen()">` : '<p style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;color:var(--fog);margin:0 0 12px;">No map attached to this case.</p>'}
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="case-map-select" style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;background:var(--ink);color:var(--parchment);border:1px solid var(--parchment-darker);padding:6px 8px;border-radius:2px;" onchange="attachMapToCase(this.value)">
-          <option value="">— No map —</option>
-          ${options}
-        </select>
-        ${selected ? `<button class="btn btn-secondary btn-sm" onclick="openMapFullscreen()">⤢ Fullscreen</button>` : ''}
-      </div>
-    </div>
-  </div>`;
-}
-
-function gmPlayersHTML() {
-  const active = allPlayers.filter(p => !p.is_kicked);
-  const kicked = allPlayers.filter(p => p.is_kicked);
-  const rowStyle = 'display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(201,169,110,0.12);';
-  const nameStyle = `font-family:'Courier New',Courier,monospace;font-size:0.82rem;color:var(--parchment);flex:1;`;
-
-  const playerRow = (p, isKicked) => `
-    <div style="${rowStyle}">
-      <div style="width:10px;height:10px;border-radius:50%;background:${p.player_color};flex-shrink:0;border:1px solid rgba(255,255,255,0.2);"></div>
-      <span style="${nameStyle}${isKicked ? 'opacity:0.45;text-decoration:line-through;' : ''}">${escapeHtml(p.player_name)}</span>
-      ${isKicked
-        ? `<button class="btn btn-secondary btn-sm" onclick="unkickPlayer('${p.id}')">Reinstate</button>
-           <button class="btn btn-danger btn-sm" onclick="deletePlayerData('${p.id}','${escapeHtml(p.player_name)}','${p.player_color}')">Delete</button>`
-        : `<button class="btn btn-danger btn-sm" onclick="kickPlayer('${p.id}')">Kick</button>`}
-    </div>`;
-
-  const body = !allPlayers.length
-    ? `<p style="font-family:'Courier New',Courier,monospace;font-size:0.8rem;color:var(--fog);margin:0;">No players have joined yet.</p>`
-    : `${active.map(p => playerRow(p, false)).join('')}
-       ${kicked.length ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(201,169,110,0.2);">
-         <div style="font-family:'Courier New',Courier,monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--fog);margin-bottom:6px;">Removed</div>
-         ${kicked.map(p => playerRow(p, true)).join('')}
-       </div>` : ''}`;
-
-  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
-    <div class="briefing-header" onclick="toggleBriefing('gm-players-body')">
-      <span>Players <span class="counter-badge">${active.length}</span></span>
-      <span id="gm-players-toggle" class="briefing-toggle">▾</span>
-    </div>
-    <div id="gm-players-body" class="briefing-body" style="padding:10px 16px;">
-      ${body}
-    </div>
-  </div>`;
-}
-
 async function kickPlayer(id) {
   await sb.from('players').update({ is_kicked: true }).eq('id', id);
   await loadGMClues();
@@ -526,15 +461,6 @@ function subscribeGMUpdates(caseId) {
       renderGMRightPanel();
     })
     .subscribe();
-}
-
-async function attachMapToCase(mapId) {
-  const { error } = await sb.from('cases').update({ map_id: mapId || null }).eq('id', currentCaseId);
-  if (error) { toast('Error saving map selection.'); return; }
-  currentMapId = mapId || null;
-  currentMapUrl = mapsLibrary.find(m => m.id === mapId)?.url || '';
-  toast('Map updated.');
-  renderGMClues();
 }
 
 async function loadMapsLibrary() {
@@ -774,12 +700,6 @@ function calcMapFitScale(img) {
 
 let sidebarOpen = false;
 let gmSidebarOpen = false;
-const gmMinimizedNotes = new Set();
-function toggleGMSidebarNote(id) {
-  if (gmMinimizedNotes.has(id)) gmMinimizedNotes.delete(id);
-  else gmMinimizedNotes.add(id);
-  renderGMRightPanel();
-}
 function gmNotebookBtnClick() {
   const modal = document.getElementById('modal-gm-notebook');
   modal.style.display = 'flex';
@@ -864,9 +784,6 @@ function escapeHtml(str) {
 function toggleBriefing(bodyId) {
   const body = document.getElementById(bodyId);
   const toggleId = bodyId === 'gm-briefing-body' ? 'gm-briefing-toggle'
-    : bodyId === 'gm-map-body' ? 'gm-map-toggle'
-    : bodyId === 'gm-players-body' ? 'gm-players-toggle'
-    : bodyId === 'gm-notes-body' ? 'gm-notes-toggle'
     : 'player-briefing-toggle';
   const toggle = document.getElementById(toggleId);
   const open = body.style.display !== 'none';
@@ -1377,13 +1294,6 @@ function openGMCluePreview(clue) {
   openClueExpand(clue);
 }
 
-// ── LIGHTBOX ──
-function openLightbox(url) {
-  document.getElementById('lightbox-img').src = url;
-  document.getElementById('lightbox').classList.add('open');
-}
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-
 // ── CLUE EXPAND (PLAYER) ──
 function openClueExpand(clue) {
   document.getElementById('clue-expand-title').textContent = clue.location_name;
@@ -1617,9 +1527,6 @@ async function loadNotes() {
   renderSharedNotes(currentNotes);
 }
 
-// Keep addNote as alias for addSharedNote (called from subscriptions, etc.)
-async function addNote() { return addSharedNote(); }
-
 async function addSharedNote() {
   const input = document.getElementById('nb-shared-input');
   if (!input) return;
@@ -1668,9 +1575,6 @@ async function deleteSharedNote(id) {
     await loadNotes();
   });
 }
-
-// Keep deleteNote as alias for backward compat
-async function deleteNote(id) { return deleteSharedNote(id); }
 
 async function editSharedNote(id) {
   const note = currentNotes.find(n => n.id === id);
