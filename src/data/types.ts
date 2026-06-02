@@ -75,6 +75,8 @@ export interface DirectoryEntry {
   name: string;
   location: string;
   category: string | null;
+  /** Present only on GM-added custom entries; built-in entries have none. */
+  id?: string;
 }
 
 export interface DirectoryOverrides {

@@ -64,11 +64,15 @@ NOT bundled into logic.
   NOTE: tab switching is now a click handler + `.active` class (not the v1 CSS
   `:checked` trick) so the GM's dynamic per-player tabs work and re-renders
   don't lose focus/active-tab.
-- [ ] **S2b — Shared components: directory + map viewer.** Directory modal
-  (search + category filter over `public/directory.json`, GM add/remove/edit,
-  per-case overrides via `storage.{load,save}DirectoryOverrides`), map viewer
-  (fullscreen image modal). See `legacy/app.js` directory fns (~lines 58-260)
-  and the canvas map renderer (~line 750).
+- [x] **S2b — Shared components: directory + map viewer.** Done:
+  `src/data/directory.ts` (fetch+cache `directory.json`, per-case overrides via
+  storage, `loadDirectory`/`categories`/`search`/add/update/remove),
+  `src/components/directory.ts` (search + category filter modal; GM add/edit/
+  remove inline form), `src/components/mapViewer.ts` (fullscreen image overlay,
+  click-to-zoom, Esc/backdrop close). CSS appended to `components.css`. Added
+  `src/vite-env.d.ts` for `import.meta.env` types.
+  NOTE: map viewer is a simple zoom/pan image (dropped v1's canvas renderer).
+  `loadDirectory(caseId)` must be called when a case opens (wire in S3/S4).
 - [ ] **S3 — Player module** (part 4). join flow + identity, clue feed, notebook
   wired to store + realtime.
 - [ ] **S4 — GM module** (part 3). login, case CRUD, clue add/reveal/hide/edit,
@@ -95,7 +99,11 @@ NOT bundled into logic.
 
 ## Current status
 
-**S2a complete.** Core shared components + the reusable notebook build &
-typecheck clean. Next: **S2b — directory modal + map viewer**, then S3
-(player module). Components are pure DOM builders (not yet imported by
-`main.ts`, so the JS bundle is still tiny — they get wired in S3/S4).
+**S2 complete** (S2a + S2b). All shared components done: dom helper, toast,
+modal, confirm-delete, notebook, directory (data + modal), map viewer. Build
++ typecheck clean. Components are pure DOM builders, wired to screens in S3/S4.
+Next: **S3 — player module** (`src/player/`): join + identity flow, clue feed,
+notebook wired to store + realtime. See `legacy/app.js` player join (~line
+1260) and player clue rendering. Remember: `loadDirectory(caseId)` on join;
+`subscribeToCase` drives the store; notebook composer submits → `notes.create`
+→ realtime refreshes feed.
