@@ -200,7 +200,52 @@ input[type=radio] { display: none; }
 }
 .nb-btn:hover { background: rgba(200,160,70,0.3); border-color: rgba(140,100,30,0.7); }
 
-/* Section rule */
+/* ── NOTE ACTIONS ── */
+.note-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.note:hover .note-actions { opacity: 1; }
+.note-action {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.12s;
+}
+.note-action.edit   { color: rgba(100,70,20,0.6); }
+.note-action.share  { color: rgba(40,100,60,0.7); }
+.note-action.delete { color: rgba(140,40,40,0.55); }
+.note-action:hover  { opacity: 1 !important; filter: brightness(1.4); }
+
+/* Editing state */
+.note-edit-area {
+  width: 100%;
+  background: rgba(255,245,220,0.6);
+  border: 1px dashed rgba(140,100,40,0.4);
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  color: #1c1006;
+  padding: 4px 6px;
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+  margin-top: 4px;
+  display: none;
+}
+.note.editing .note-text   { display: none; }
+.note.editing .note-edit-area { display: block; }
+.note.editing .note-action.edit   { display: none; }
+.note.editing .note-action.share  { display: none; }
+.note.editing .note-action.save   { display: inline; }
+.note-action.save { color: rgba(40,100,60,0.8); display: none; }
 .nb-rule {
   border: none;
   border-top: 1px dashed rgba(140,100,40,0.25);
@@ -297,6 +342,7 @@ input[type=radio] { display: none; }
           <button class="nb-btn">Add Note</button>
         </div>
         <hr class="nb-rule">
+
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
@@ -304,7 +350,15 @@ input[type=radio] { display: none; }
             <span class="note-badge">Private</span>
           </div>
           <div class="note-text">The tobacconist on Fleet St mentioned a tall man in a grey coat — matches the widow's description precisely.</div>
+          <textarea class="note-edit-area" rows="2">The tobacconist on Fleet St mentioned a tall man in a grey coat — matches the widow's description precisely.</textarea>
+          <div class="note-actions">
+            <button class="note-action edit"   onclick="toggleEdit(this)">✎ Edit</button>
+            <button class="note-action save"   onclick="toggleEdit(this)">✔ Save</button>
+            <button class="note-action share"  onclick="shareNote(this)">↗ Share with team</button>
+            <button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button>
+          </div>
         </div>
+
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
@@ -312,6 +366,13 @@ input[type=radio] { display: none; }
             <span class="note-badge">Private</span>
           </div>
           <div class="note-text">Visit the docks next. The shipping manifest at location 34 seemed deliberately incomplete.</div>
+          <textarea class="note-edit-area" rows="2">Visit the docks next. The shipping manifest at location 34 seemed deliberately incomplete.</textarea>
+          <div class="note-actions">
+            <button class="note-action edit"   onclick="toggleEdit(this)">✎ Edit</button>
+            <button class="note-action save"   onclick="toggleEdit(this)">✔ Save</button>
+            <button class="note-action share"  onclick="shareNote(this)">↗ Share with team</button>
+            <button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button>
+          </div>
         </div>
       </div>
 
@@ -322,26 +383,37 @@ input[type=radio] { display: none; }
           <button class="nb-btn">Add Note</button>
         </div>
         <hr class="nb-rule">
+
         <div class="note" style="border-color:#8b2020;">
           <div class="note-header">
             <span class="note-name" style="color:#8b2020;">Watson</span>
             <span class="note-time">09:55</span>
           </div>
           <div class="note-text">We should check location 22 — the banker's office. The letter referenced an account number.</div>
+          <textarea class="note-edit-area" rows="2">We should check location 22 — the banker's office. The letter referenced an account number.</textarea>
+          <div class="note-actions">
+            <button class="note-action edit"   onclick="toggleEdit(this)">✎ Edit</button>
+            <button class="note-action save"   onclick="toggleEdit(this)">✔ Save</button>
+            <button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button>
+          </div>
         </div>
+
         <div class="note" style="border-color:#1a6b2a;">
           <div class="note-header">
             <span class="note-name" style="color:#1a6b2a;">Lestrade</span>
             <span class="note-time">10:02</span>
           </div>
           <div class="note-text">Agreed. The victim's brother keeps a shop at location 8. Worth a visit before the docks.</div>
+          <!-- No actions — not your note -->
         </div>
+
         <div class="note" style="border-color:#7a4e10;">
           <div class="note-header">
             <span class="note-name" style="color:#7a4e10;">Hopkins</span>
             <span class="note-time">10:18</span>
           </div>
           <div class="note-text">Checked 22. The manager was evasive about the date of the withdrawal. Something is being concealed.</div>
+          <!-- No actions — not your note -->
         </div>
       </div>
 
@@ -349,5 +421,58 @@ input[type=radio] { display: none; }
   </div>
 </div>
 
+<script>
+function toggleEdit(btn) {
+  const note = btn.closest('.note');
+  note.classList.toggle('editing');
+  if (!note.classList.contains('editing')) {
+    // Save: copy textarea back to text display
+    note.querySelector('.note-text').textContent = note.querySelector('.note-edit-area').value;
+  }
+}
+
+function deleteNote(btn) {
+  const note = btn.closest('.note');
+  note.style.transition = 'opacity 0.2s';
+  note.style.opacity = '0';
+  setTimeout(() => note.remove(), 200);
+}
+
+function shareNote(btn) {
+  const note = btn.closest('.note');
+  const text = note.querySelector('.note-text').textContent;
+
+  // Visual feedback
+  const shareBtn = btn;
+  shareBtn.textContent = '✔ Shared';
+  shareBtn.style.color = 'rgba(40,140,70,0.9)';
+  setTimeout(() => {
+    shareBtn.textContent = '↗ Share with team';
+    shareBtn.style.color = '';
+  }, 1800);
+
+  // Append to shared panel
+  const shared = document.querySelector('[data-panel="shared"]');
+  const newNote = document.createElement('div');
+  newNote.className = 'note';
+  newNote.style.borderColor = '#8b2020';
+  newNote.style.opacity = '0';
+  newNote.style.transition = 'opacity 0.3s';
+  newNote.innerHTML = `
+    <div class="note-header">
+      <span class="note-name" style="color:#8b2020;">Watson</span>
+      <span class="note-time">now</span>
+    </div>
+    <div class="note-text">${text}</div>
+    <textarea class="note-edit-area" rows="2">${text}</textarea>
+    <div class="note-actions">
+      <button class="note-action edit"   onclick="toggleEdit(this)">✎ Edit</button>
+      <button class="note-action save"   onclick="toggleEdit(this)">✔ Save</button>
+      <button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button>
+    </div>`;
+  shared.appendChild(newNote);
+  setTimeout(() => newNote.style.opacity = '1', 10);
+}
+</script>
 </body>
 </html>
