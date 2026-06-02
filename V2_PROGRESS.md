@@ -47,8 +47,12 @@ NOT bundled into logic.
 
 - [x] **S0 — Foundation scaffold.** Branch, Vite+TS config, Pages action, dir
   structure, `public/directory.json` extracted, minimal entry that builds.
-- [ ] **S1 — Data layer + State store** (parts 2 & 1). Typed schema, supabase
-  client wrapper, all table queries + realtime subscribe helpers, observable store.
+- [x] **S1 — Data layer + State store** (parts 2 & 1). Done:
+  `src/data/types.ts` (schema + insert + app types), `src/data/supabase.ts`
+  (typed repos for cases/clues/players/notes/maps + storage + `subscribeToCase`
+  realtime helper; raw client isolated here), `src/data/colors.ts`
+  (PLAYER_COLORS + nameToColor, same algo as v1), `src/state/store.ts`
+  (observable store + selectors). Typechecks clean.
 - [ ] **S2 — Shared components** (part 5). toast, modal shell, confirm-delete,
   notebook (parchment tabbed UI — port CSS from legacy), directory modal, map viewer.
 - [ ] **S3 — Player module** (part 4). join flow + identity, clue feed, notebook
@@ -77,4 +81,9 @@ NOT bundled into logic.
 
 ## Current status
 
-**S0 complete.** Scaffold builds. Next: **S1 — data layer + store.**
+**S1 complete.** Data layer + observable store in place, typechecks clean.
+Next: **S2 — shared components** (toast, modal, confirm-delete, notebook,
+directory, map viewer). Port the Victorian parchment CSS from
+`legacy/style.css` for the notebook. Build render helpers that take data +
+return DOM (typed, class-based — no inline styles, no copy-paste between GM
+and player).
