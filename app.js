@@ -781,14 +781,17 @@ function toggleGMSidebarNote(id) {
   renderGMRightPanel();
 }
 function gmNotebookBtnClick() {
-  if (gmSidebarOpen) {
-    const anyExpanded = allNotes.some(n => !gmMinimizedNotes.has(n.id));
-    if (anyExpanded) allNotes.forEach(n => gmMinimizedNotes.add(n.id));
-    else allNotes.forEach(n => gmMinimizedNotes.delete(n.id));
-    renderGMRightPanel();
-  } else {
-    toggleGMSidebar();
-  }
+  const modal = document.getElementById('modal-gm-notebook');
+  modal.style.display = 'flex';
+  renderGMNotebookModal();
+}
+function closeGMNotebook() {
+  document.getElementById('modal-gm-notebook').style.display = 'none';
+}
+function renderGMNotebookModal() {
+  const inner = document.getElementById('modal-gm-notebook-inner');
+  if (!inner) return;
+  inner.innerHTML = buildGMNotebookHTML('gm-modal-nb');
 }
 
 function togglePlayerSidebar() {
@@ -1052,9 +1055,12 @@ function renderGMRightPanel() {
     notesBadgeEl.textContent = allNotes.length + (allNotes.length === 1 ? ' note' : ' notes');
   }
   if (notesListEl) {
-    if (!gmSidebarOpen) { notesListEl.innerHTML = ''; return; }
-    renderGMNotebook();
+    if (gmSidebarOpen) renderGMNotebook();
+    else notesListEl.innerHTML = '';
   }
+  // Always refresh modal if open
+  const modal = document.getElementById('modal-gm-notebook');
+  if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
 
 function renderGMNotesFeed(notes) {
@@ -1076,23 +1082,18 @@ function renderGMNotesFeed(notes) {
   }).join('');
 }
 
-function renderGMNotebook() {
-  const notesListEl = document.getElementById('gm-sidebar-notes-list');
-  if (!notesListEl) return;
-
-  // Unique player names from notes
+function buildGMNotebookHTML(prefix) {
   const playerNames = [...new Set(allNotes.map(n => n.player_name))];
+  const allTabId = `${prefix}-tab-0`;
+  const playerTabIds = playerNames.map((_, i) => `${prefix}-tab-${i + 1}`);
 
-  // Use numeric indices for tab IDs and panel attrs to avoid CSS selector escaping issues
-  const allTabId = 'gm-nb-tab-0';
-  const playerTabIds = playerNames.map((_, i) => `gm-nb-tab-${i + 1}`);
-
-  let radios = `<input type="radio" name="gm-nb" id="${allTabId}" class="nb-radio" checked>`;
-  playerTabIds.forEach(id => { radios += `<input type="radio" name="gm-nb" id="${id}" class="nb-radio">`; });
+  let radios = `<input type="radio" name="${prefix}" id="${allTabId}" class="nb-radio" checked>`;
+  playerTabIds.forEach(id => { radios += `<input type="radio" name="${prefix}" id="${id}" class="nb-radio">`; });
 
   let tabLabels = `<label class="nb-tab" for="${allTabId}">All</label>`;
   playerNames.forEach((name, i) => {
-    tabLabels += `<label class="nb-tab" for="${playerTabIds[i]}">${escapeHtml(name)}</label>`;
+    const color = allNotes.find(n => n.player_name === name)?.player_color || 'inherit';
+    tabLabels += `<label class="nb-tab" for="${playerTabIds[i]}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle;position:relative;top:-1px;"></span>${escapeHtml(name)}</label>`;
   });
 
   const allPanel = `<div data-gm-panel="0">${renderGMNotesFeed(allNotes)}</div>`;
@@ -1102,27 +1103,32 @@ function renderGMNotebook() {
     playerPanels += `<div data-gm-panel="${i + 1}">${renderGMNotesFeed(playerNotes)}</div>`;
   });
 
-  // Build active-tab CSS dynamically using numeric panel keys
   let activeCSS = `#${allTabId}:checked ~ .nb-tabs label[for="${allTabId}"] { background: linear-gradient(180deg,#efd898 0%,#d4ae58 100%); color:#2a1200; z-index:3; }
 #${allTabId}:checked ~ .nb-paper [data-gm-panel="0"] { display:block; }`;
   playerNames.forEach((_, i) => {
     const tid = playerTabIds[i];
-    const panelIdx = i + 1;
     activeCSS += `
 #${tid}:checked ~ .nb-tabs label[for="${tid}"] { background: linear-gradient(180deg,#efd898 0%,#d4ae58 100%); color:#2a1200; z-index:3; }
-#${tid}:checked ~ .nb-paper [data-gm-panel="${panelIdx}"] { display:block; }`;
+#${tid}:checked ~ .nb-paper [data-gm-panel="${i + 1}"] { display:block; }`;
   });
 
-  notesListEl.innerHTML = `
-    <div class="gm-nb-wrap">
-      <style>.gm-nb-wrap [data-gm-panel]{display:none;} ${activeCSS}</style>
-      ${radios}
-      <div class="nb-tabs" style="flex-wrap:wrap;">${tabLabels}</div>
-      <div class="nb-paper">
-        <div class="nb-ruled"></div>
-        ${allPanel}${playerPanels}
-      </div>
-    </div>`;
+  return `<div class="gm-nb-wrap">
+    <style>.gm-nb-wrap [data-gm-panel]{display:none;} ${activeCSS}</style>
+    ${radios}
+    <div class="nb-tabs" style="flex-wrap:wrap;">${tabLabels}</div>
+    <div class="nb-paper">
+      <div class="nb-ruled"></div>
+      ${allPanel}${playerPanels}
+    </div>
+  </div>`;
+}
+
+function renderGMNotebook() {
+  const notesListEl = document.getElementById('gm-sidebar-notes-list');
+  if (notesListEl) notesListEl.innerHTML = buildGMNotebookHTML('gm-nb');
+  // Also refresh modal if open
+  const modal = document.getElementById('modal-gm-notebook');
+  if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
 
 async function revealClue(id) {
