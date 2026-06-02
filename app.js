@@ -463,6 +463,20 @@ function subscribeGMUpdates(caseId) {
     .subscribe();
 }
 
+async function attachMapToCase(mapId) {
+  if (!currentCaseId) { toast('Select a case first.'); return; }
+  const { error } = await sb.from('cases').update({ map_id: mapId || null }).eq('id', currentCaseId);
+  if (error) { toast('Error saving map selection.'); return; }
+  currentMapId = mapId || null;
+  currentMapUrl = currentMapId ? (mapsLibrary.find(m => m.id === currentMapId)?.url || '') : '';
+  const caseData = casesCache.find(c => c.id === currentCaseId);
+  if (caseData) caseData.map_id = currentMapId;
+  const gmWrap = document.getElementById('gm-map-btn-wrap');
+  if (gmWrap) gmWrap.style.display = currentMapUrl ? '' : 'none';
+  renderMapsLibraryModal();
+  toast(mapId ? 'Map attached to case.' : 'Map detached from case.');
+}
+
 async function loadMapsLibrary() {
   const { data } = await sb.from('maps').select('*').order('created_at');
   mapsLibrary = data || [];
@@ -480,10 +494,18 @@ function renderMapsLibraryModal() {
     grid.innerHTML = '<p style="font-family:\'Courier New\',Courier,monospace;font-size:0.85rem;color:var(--fog);">No maps uploaded yet.</p>';
     return;
   }
-  grid.innerHTML = mapsLibrary.map(m => `
-    <div style="border:1px solid var(--parchment-darker);overflow:hidden;border-radius:2px;">
+  grid.innerHTML = mapsLibrary.map(m => {
+    const isAttached = currentCaseId && m.id === currentMapId;
+    const attachBtn = !currentCaseId
+      ? `<button class="btn btn-secondary btn-sm" style="font-size:0.68rem;" disabled title="Select a case first">Use in this case</button>`
+      : isAttached
+        ? `<button class="btn btn-secondary btn-sm" style="font-size:0.68rem;color:var(--green);border-color:var(--green);" onclick="attachMapToCase(null)" title="Detach from this case">✓ In this case</button>`
+        : `<button class="btn btn-primary btn-sm" style="font-size:0.68rem;" onclick="attachMapToCase('${m.id}')">Use in this case</button>`;
+    return `
+    <div style="border:1px solid ${isAttached ? 'var(--green)' : 'var(--parchment-darker)'};overflow:hidden;border-radius:2px;">
       <img src="${m.url}" alt="${escapeHtml(m.name)}" style="width:100%;height:140px;object-fit:cover;display:block;cursor:pointer;" onclick="openMapPreview('${m.url}')">
       <div style="padding:8px;display:flex;flex-direction:column;gap:6px;">
+        ${attachBtn}
         <input id="map-name-${m.id}" type="text" value="${escapeHtml(m.name)}" style="width:100%;font-family:'Courier New',Courier,monospace;font-size:0.78rem;background:rgba(244,232,206,0.08);border:1px solid rgba(139,105,20,0.3);color:var(--parchment);padding:4px 6px;box-sizing:border-box;border-radius:2px;">
         <div style="display:flex;gap:4px;align-items:center;">
           <label style="font-family:'Courier New',Courier,monospace;font-size:0.68rem;color:var(--fog);cursor:pointer;flex:1;border:1px solid rgba(139,105,20,0.3);padding:3px 6px;text-align:center;border-radius:2px;" title="Replace image file">
@@ -494,7 +516,8 @@ function renderMapsLibraryModal() {
           <button class="btn btn-danger btn-sm" style="font-size:0.65rem;padding:3px 7px;" onclick="deleteMap('${m.id}')">🗑</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function uploadLibraryMap() {
