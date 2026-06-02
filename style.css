@@ -1501,3 +1501,248 @@
     transition: opacity 0.15s;
   }
   .note-action-btn:hover { opacity: 1; }
+
+  /* ── VICTORIAN NOTEBOOK (tabbed) ── */
+
+  /* Hide the radio inputs */
+  .nb-radio { display: none; }
+
+  /* Tab bar */
+  .nb-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .nb-tab {
+    padding: 6px 18px 8px;
+    cursor: pointer;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    border: 1px solid #7a5010;
+    border-bottom: none;
+    background: linear-gradient(180deg, #c8a96a 0%, #b8944a 100%);
+    color: #5a3a10;
+    margin-right: 3px;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    position: relative;
+    top: 1px;
+  }
+  /* Active tab — matches paper */
+  #nb-tab-private:checked ~ .nb-tabs label[for="nb-tab-private"],
+  #nb-tab-shared:checked  ~ .nb-tabs label[for="nb-tab-shared"] {
+    background: linear-gradient(180deg, #efd898 0%, #d4ae58 100%);
+    color: #2a1200;
+    z-index: 3;
+  }
+
+  /* Victorian paper panel */
+  .nb-paper {
+    position: relative;
+    border: 1px solid #7a5010;
+    padding: 18px 20px 20px;
+    background:
+      radial-gradient(ellipse 60px 40px at 82% 18%, rgba(100,60,10,0.09) 0%, transparent 100%),
+      radial-gradient(ellipse 40px 30px at 12% 72%, rgba(90,55,8,0.08) 0%, transparent 100%),
+      radial-gradient(ellipse 80px 50px at 65% 88%, rgba(110,65,10,0.07) 0%, transparent 100%),
+      radial-gradient(ellipse 50px 60px at 5% 10%, rgba(80,45,5,0.10) 0%, transparent 100%),
+      radial-gradient(ellipse 110% 40% at 50% 100%, rgba(80,45,5,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 110% at 100% 50%, rgba(70,40,5,0.14) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 110% at 0% 50%, rgba(70,40,5,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 110% 40% at 50% 0%, rgba(60,35,5,0.10) 0%, transparent 60%),
+      linear-gradient(160deg, #efd898 0%, #e0c070 30%, #e8ca7a 60%, #d4ae58 100%);
+  }
+
+  /* Ruled lines overlay */
+  .nb-ruled {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: repeating-linear-gradient(
+      180deg,
+      transparent 0px, transparent 31px,
+      rgba(60,30,5,0.18) 31px, rgba(60,30,5,0.18) 32px
+    );
+  }
+
+  /* Pages */
+  .nb-page {
+    display: none;
+    position: relative;
+    z-index: 1;
+  }
+  #nb-tab-private:checked ~ .nb-paper [data-panel="private"] { display: block; }
+  #nb-tab-shared:checked  ~ .nb-paper [data-panel="shared"]  { display: block; }
+
+  /* Input row inside notebook */
+  .nb-input-row {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 16px;
+    border: 1px solid rgba(122,80,16,0.4);
+    background: rgba(255,255,255,0.18);
+  }
+  .nb-textarea {
+    flex: 1;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: #0e0600;
+    resize: none;
+    line-height: 1.65;
+    min-height: 60px;
+    outline: none;
+  }
+  .nb-textarea::placeholder { color: rgba(14,6,0,0.4); font-style: italic; }
+  .nb-add-btn {
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(122,80,16,0.4);
+    color: #5a3a10;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    align-self: stretch;
+  }
+  .nb-add-btn:hover { background: rgba(122,80,16,0.12); color: #2a1200; }
+
+  /* Notes feed in Victorian notebook */
+  .nb-notes { display: flex; flex-direction: column; gap: 0; }
+
+  .nb-note {
+    border-bottom: 1px solid rgba(122,80,16,0.15);
+    padding: 10px 14px 10px 0;
+    position: relative;
+    max-width: 100%;
+    transition: background 0.12s;
+  }
+  .nb-note:hover { background: rgba(122,80,16,0.07); }
+
+  .nb-note-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .nb-note-name {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #5a3a10;
+  }
+  .nb-note-time {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 0.6rem;
+    color: rgba(60,35,5,0.55);
+    flex-shrink: 0;
+  }
+  .nb-note-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .nb-note:hover .nb-note-actions { opacity: 1; }
+  .nb-note-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: #5a3a10;
+    padding: 1px 4px;
+    line-height: 1;
+    border-radius: 2px;
+    opacity: 0.7;
+    transition: opacity 0.12s, background 0.12s;
+    white-space: nowrap;
+  }
+  .nb-note-action:hover { opacity: 1; background: rgba(122,80,16,0.14); }
+  .nb-note-action.danger { color: #8b1a10; }
+
+  .nb-note-text {
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: #0e0600;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .nb-note-edit-input {
+    width: 100%;
+    font-family: 'Caveat', cursive;
+    font-size: 1.05rem;
+    color: #0e0600;
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(122,80,16,0.4);
+    padding: 4px 8px;
+    resize: vertical;
+    min-height: 48px;
+    line-height: 1.5;
+    box-sizing: border-box;
+    outline: none;
+  }
+  .nb-note-edit-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .nb-note-edit-save {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(122,80,16,0.15);
+    border: 1px solid rgba(122,80,16,0.4);
+    color: #2a1200;
+    padding: 3px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .nb-note-edit-cancel {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid rgba(122,80,16,0.25);
+    color: #5a3a10;
+    padding: 3px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  /* GM notebook in sidebar uses same .nb-* classes, but inside a compact container */
+  .gm-nb-wrap {
+    padding: 4px 0 0;
+  }
+  .gm-nb-wrap .nb-tab {
+    font-size: 0.6rem;
+    padding: 4px 10px 5px;
+  }
+  .gm-nb-wrap .nb-paper {
+    padding: 10px 12px 12px;
+  }
+  .gm-nb-wrap .nb-note {
+    padding: 8px 10px 8px 0;
+  }
+  .gm-nb-wrap .nb-note-text {
+    font-size: 0.9rem;
+  }

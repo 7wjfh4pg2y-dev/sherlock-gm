@@ -6,7 +6,7 @@
 <title>The Consulting Detective — Evidence Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Cutive+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Cutive+Mono&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -92,6 +92,7 @@
         </button>
         <div id="gm-sidebar-notes-section">
           <div id="gm-sidebar-notes-badge" style="font-family:'Courier New',Courier,monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--sepia);padding:4px 0 4px 8px;display:none;">0 notes</div>
+          <!-- GM notebook: tab radios rendered by JS into gm-sidebar-notes-list -->
           <div id="gm-sidebar-notes-list"></div>
         </div>
       </div>
@@ -173,11 +174,40 @@
       <div id="player-notebook-section" class="notebook-section" style="display:none">
         <hr class="ornamental">
         <div class="notebook-header">The Irregulars' Notebook</div>
-        <div class="notebook-input-row">
-          <textarea class="notebook-textarea" id="notebook-input" placeholder="Record your deductions…" rows="3"></textarea>
-          <button class="notebook-add-btn" onclick="addNote()">Add Note</button>
+
+        <!-- Tab radio inputs (CSS trick — no JS needed for switching) -->
+        <input type="radio" name="player-nb" id="nb-tab-private" class="nb-radio" checked>
+        <input type="radio" name="player-nb" id="nb-tab-shared" class="nb-radio">
+
+        <!-- Tab labels -->
+        <div class="nb-tabs">
+          <label class="nb-tab" for="nb-tab-private">My Notes</label>
+          <label class="nb-tab" for="nb-tab-shared">Team Notes</label>
         </div>
-        <div class="notebook-notes" id="notebook-notes"></div>
+
+        <!-- Victorian paper panel -->
+        <div class="nb-paper">
+          <!-- Ruled lines overlay -->
+          <div class="nb-ruled"></div>
+
+          <!-- My Notes panel -->
+          <div class="nb-page" data-panel="private">
+            <div class="nb-input-row">
+              <textarea class="nb-textarea" id="nb-private-input" placeholder="Record your private deductions…" rows="3"></textarea>
+              <button class="nb-add-btn" onclick="addPrivateNote()">Add Note</button>
+            </div>
+            <div class="nb-notes" id="nb-private-notes"></div>
+          </div>
+
+          <!-- Team Notes panel -->
+          <div class="nb-page" data-panel="shared">
+            <div class="nb-input-row">
+              <textarea class="nb-textarea" id="nb-shared-input" placeholder="Share your deductions with the team…" rows="3"></textarea>
+              <button class="nb-add-btn" onclick="addSharedNote()">Add Note</button>
+            </div>
+            <div class="nb-notes" id="nb-shared-notes"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

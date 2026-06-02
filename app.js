@@ -1076,7 +1076,7 @@ function renderGMRightPanel() {
     playersEl.style.display = gmPlayersPanelOpen ? '' : 'none';
   }
 
-  // Notes — rendered compactly into the GM sidebar
+  // Notes — tabbed Victorian notebook in GM sidebar
   const notesBadgeEl = document.getElementById('gm-sidebar-notes-badge');
   const notesListEl = document.getElementById('gm-sidebar-notes-list');
   if (notesBadgeEl) {
@@ -1085,24 +1085,76 @@ function renderGMRightPanel() {
   }
   if (notesListEl) {
     if (!gmSidebarOpen) { notesListEl.innerHTML = ''; return; }
-    if (!allNotes.length) {
-      notesListEl.innerHTML = `<p style="font-family:'Courier New',Courier,monospace;font-size:0.72rem;color:var(--fog);margin:4px 8px;font-style:italic;">No notes yet.</p>`;
-    } else {
-      notesListEl.innerHTML = allNotes.map(n => {
-        const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const isMin = gmMinimizedNotes.has(n.id);
-        return `<div class="notebook-note" style="color:${n.player_color}">
-          <div class="notebook-note-meta">
-            <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
-            <span class="notebook-note-time">${time}</span>
-            <button onclick="toggleGMSidebarNote('${n.id}')" class="note-action-btn" title="${isMin ? 'Expand' : 'Minimise'}">${isMin ? '▸' : '▾'}</button>
-            <button onclick="gmDeleteNote('${n.id}')" class="note-action-btn" title="Delete" style="color:var(--red)">✕</button>
-          </div>
-          ${isMin ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
-        </div>`;
-      }).join('');
-    }
+    renderGMNotebook();
   }
+}
+
+function renderGMNotesFeed(notes) {
+  if (!notes.length) {
+    return `<div style="font-family:'Courier Prime','Courier New',monospace;font-size:0.72rem;color:rgba(60,35,5,0.45);font-style:italic;padding:6px 0;">No notes yet.</div>`;
+  }
+  return notes.map(n => {
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="nb-note">
+      <div class="nb-note-meta">
+        <span class="nb-note-name" style="color:${n.player_color};">${escapeHtml(n.player_name)}</span>
+        <span class="nb-note-time">${time}</span>
+        <span class="nb-note-actions">
+          <button class="nb-note-action danger" title="Delete" onclick="gmDeleteNote('${n.id}')">✕</button>
+        </span>
+      </div>
+      <div class="nb-note-text" style="color:#0e0600;">${escapeHtml(n.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGMNotebook() {
+  const notesListEl = document.getElementById('gm-sidebar-notes-list');
+  if (!notesListEl) return;
+
+  // Unique player names from notes
+  const playerNames = [...new Set(allNotes.map(n => n.player_name))];
+
+  // Use numeric indices for tab IDs and panel attrs to avoid CSS selector escaping issues
+  const allTabId = 'gm-nb-tab-0';
+  const playerTabIds = playerNames.map((_, i) => `gm-nb-tab-${i + 1}`);
+
+  let radios = `<input type="radio" name="gm-nb" id="${allTabId}" class="nb-radio" checked>`;
+  playerTabIds.forEach(id => { radios += `<input type="radio" name="gm-nb" id="${id}" class="nb-radio">`; });
+
+  let tabLabels = `<label class="nb-tab" for="${allTabId}">All</label>`;
+  playerNames.forEach((name, i) => {
+    tabLabels += `<label class="nb-tab" for="${playerTabIds[i]}">${escapeHtml(name)}</label>`;
+  });
+
+  const allPanel = `<div data-gm-panel="0">${renderGMNotesFeed(allNotes)}</div>`;
+  let playerPanels = '';
+  playerNames.forEach((name, i) => {
+    const playerNotes = allNotes.filter(n => n.player_name === name);
+    playerPanels += `<div data-gm-panel="${i + 1}">${renderGMNotesFeed(playerNotes)}</div>`;
+  });
+
+  // Build active-tab CSS dynamically using numeric panel keys
+  let activeCSS = `#${allTabId}:checked ~ .nb-tabs label[for="${allTabId}"] { background: linear-gradient(180deg,#efd898 0%,#d4ae58 100%); color:#2a1200; z-index:3; }
+#${allTabId}:checked ~ .nb-paper [data-gm-panel="0"] { display:block; }`;
+  playerNames.forEach((_, i) => {
+    const tid = playerTabIds[i];
+    const panelIdx = i + 1;
+    activeCSS += `
+#${tid}:checked ~ .nb-tabs label[for="${tid}"] { background: linear-gradient(180deg,#efd898 0%,#d4ae58 100%); color:#2a1200; z-index:3; }
+#${tid}:checked ~ .nb-paper [data-gm-panel="${panelIdx}"] { display:block; }`;
+  });
+
+  notesListEl.innerHTML = `
+    <div class="gm-nb-wrap">
+      <style>.gm-nb-wrap [data-gm-panel]{display:none;} ${activeCSS}</style>
+      ${radios}
+      <div class="nb-tabs" style="flex-wrap:wrap;">${tabLabels}</div>
+      <div class="nb-paper">
+        <div class="nb-ruled"></div>
+        ${allPanel}${playerPanels}
+      </div>
+    </div>`;
 }
 
 async function revealClue(id) {
@@ -1256,6 +1308,7 @@ async function enterPlayer(caseId) {
   await loadDirectoryFromServer(caseId);
   await loadPlayerClues();
   await loadNotes();
+  renderPrivateNotes();
   subscribePlayer();
   subscribeNotes();
   subscribeKick(caseId);
@@ -1476,67 +1529,129 @@ let pendingCaseId = null;
 // ── NOTES ──
 let notesSubscription = null;
 let currentNotes = [];
-const minimizedNotes = new Set();
 
-async function loadNotes() {
-  const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at');
-  currentNotes = data || [];
-  renderNotes(currentNotes);
+// ── PRIVATE NOTES (localStorage) ──
+function privateNotesKey() {
+  return `private_notes_${playerName}_${currentCaseId}`;
 }
 
-function renderNotes(notes) {
-  const container = document.getElementById('notebook-notes');
+function loadPrivateNotes() {
+  try {
+    return JSON.parse(localStorage.getItem(privateNotesKey()) || '[]');
+  } catch { return []; }
+}
+
+function savePrivateNotes(notes) {
+  try { localStorage.setItem(privateNotesKey(), JSON.stringify(notes)); } catch {}
+}
+
+function renderPrivateNotes() {
+  const container = document.getElementById('nb-private-notes');
+  if (!container) return;
+  const notes = loadPrivateNotes();
   if (!notes.length) {
-    container.innerHTML = '<div style="font-family:\'Courier New\',Courier,monospace;font-size:0.8rem;color:var(--fog);font-style:italic;">No notes yet. Be the first to record a deduction.</div>';
+    container.innerHTML = `<div style="font-family:'Courier Prime','Courier New',monospace;font-size:0.78rem;color:rgba(60,35,5,0.45);font-style:italic;padding:6px 0;">No private notes yet.</div>`;
     return;
   }
   container.innerHTML = notes.map(n => {
-    const date = new Date(n.created_at);
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const isOwn = n.player_name === playerName && n.player_color === playerColor;
-    const isMinimized = minimizedNotes.has(n.id);
-    const minimizeBtn = `<button class="note-action-btn" title="${isMinimized ? 'Expand' : 'Minimise'}" onclick="toggleMinimizeNote('${n.id}')">${isMinimized ? '▸' : '▾'}</button>`;
-    const actionBtn = isOwn
-      ? `<button class="note-action-btn" title="Delete note" onclick="deleteNote('${n.id}')" style="color:var(--red)">✕</button>${minimizeBtn}`
-      : minimizeBtn;
-    return `<div class="notebook-note" style="color:${n.player_color}">
-      <div class="notebook-note-meta">
-        <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
-        <span class="notebook-note-time">${time}</span>
-        ${actionBtn}
+    const time = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="nb-note" data-private-id="${escapeHtml(n.id)}">
+      <div class="nb-note-meta">
+        <span class="nb-note-name" style="color:#5a3a10;">Private</span>
+        <span class="nb-note-time">${time}</span>
+        <span class="nb-note-actions">
+          <button class="nb-note-action" title="Edit" onclick="editPrivateNote('${escapeHtml(n.id)}')">✎ Edit</button>
+          <button class="nb-note-action" title="Share with team" onclick="sharePrivateNote('${escapeHtml(n.id)}')">↗ Share</button>
+          <button class="nb-note-action danger" title="Delete" onclick="deletePrivateNote('${escapeHtml(n.id)}')">✕</button>
+        </span>
       </div>
-      ${isMinimized ? '' : `<div class="notebook-note-text">${escapeHtml(n.content)}</div>`}
+      <div class="nb-note-text" id="nb-priv-text-${escapeHtml(n.id)}">${escapeHtml(n.text)}</div>
     </div>`;
   }).join('');
 }
 
-function showConfirmDelete(message, onConfirm) {
-  document.getElementById('confirm-delete-msg').textContent = message;
-  const btn = document.getElementById('confirm-delete-ok');
-  btn.onclick = () => { closeConfirmDelete(); onConfirm(); };
-  const modal = document.getElementById('modal-confirm-delete');
-  modal.style.display = 'flex';
-}
-function closeConfirmDelete() {
-  document.getElementById('modal-confirm-delete').style.display = 'none';
+function addPrivateNote() {
+  const input = document.getElementById('nb-private-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const notes = loadPrivateNotes();
+  notes.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), text, timestamp: Date.now() });
+  savePrivateNotes(notes);
+  input.value = '';
+  renderPrivateNotes();
 }
 
-async function deleteNote(id) {
-  showConfirmDelete('Delete this note from the Irregulars\' Notebook?', async () => {
-    const { error } = await sb.from('notes').delete().eq('id', id);
-    if (error) { toast('Error deleting note.'); return; }
-    await loadNotes();
+function deletePrivateNote(id) {
+  showConfirmDelete("Delete this private note?", () => {
+    const notes = loadPrivateNotes().filter(n => n.id !== id);
+    savePrivateNotes(notes);
+    renderPrivateNotes();
   });
 }
 
-function toggleMinimizeNote(id) {
-  if (minimizedNotes.has(id)) minimizedNotes.delete(id);
-  else minimizedNotes.add(id);
-  renderNotes(currentNotes);
+function editPrivateNote(id) {
+  const notes = loadPrivateNotes();
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const textEl = document.getElementById(`nb-priv-text-${id}`);
+  if (!textEl) return;
+  const noteEl = textEl.closest('.nb-note');
+  textEl.style.display = 'none';
+  const editArea = document.createElement('textarea');
+  editArea.className = 'nb-note-edit-input';
+  editArea.value = note.text;
+  const row = document.createElement('div');
+  row.className = 'nb-note-edit-row';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'nb-note-edit-save';
+  saveBtn.textContent = 'Save';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'nb-note-edit-cancel';
+  cancelBtn.textContent = 'Cancel';
+  row.appendChild(saveBtn);
+  row.appendChild(cancelBtn);
+  noteEl.appendChild(editArea);
+  noteEl.appendChild(row);
+  editArea.focus();
+  saveBtn.onclick = () => {
+    const newText = editArea.value.trim();
+    if (!newText) return;
+    const all = loadPrivateNotes();
+    const idx = all.findIndex(n => n.id === id);
+    if (idx !== -1) { all[idx].text = newText; savePrivateNotes(all); }
+    renderPrivateNotes();
+  };
+  cancelBtn.onclick = () => renderPrivateNotes();
 }
 
-async function addNote() {
-  const input = document.getElementById('notebook-input');
+async function sharePrivateNote(id) {
+  const notes = loadPrivateNotes();
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const { error } = await sb.from('notes').insert({
+    case_id: currentCaseId,
+    player_name: playerName,
+    player_color: playerColor,
+    content: note.text,
+  });
+  if (error) { toast('Error sharing note.'); return; }
+  toast('Note shared with the team.');
+  await loadNotes();
+}
+
+// ── SHARED NOTES (Supabase) ──
+async function loadNotes() {
+  const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at');
+  currentNotes = data || [];
+  renderSharedNotes(currentNotes);
+}
+
+// Keep addNote as alias for addSharedNote (called from subscriptions, etc.)
+async function addNote() { return addSharedNote(); }
+
+async function addSharedNote() {
+  const input = document.getElementById('nb-shared-input');
+  if (!input) return;
   const content = input.value.trim();
   if (!content) return;
   const { error } = await sb.from('notes').insert({
@@ -1548,6 +1663,85 @@ async function addNote() {
   if (error) { toast('Error saving note.'); return; }
   input.value = '';
   await loadNotes();
+}
+
+function renderSharedNotes(notes) {
+  const container = document.getElementById('nb-shared-notes');
+  if (!container) return;
+  if (!notes.length) {
+    container.innerHTML = `<div style="font-family:'Courier Prime','Courier New',monospace;font-size:0.78rem;color:rgba(60,35,5,0.45);font-style:italic;padding:6px 0;">No team notes yet. Be the first to record a deduction.</div>`;
+    return;
+  }
+  container.innerHTML = notes.map(n => {
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isOwn = n.player_name === playerName && n.player_color === playerColor;
+    const ownActions = isOwn ? `
+      <button class="nb-note-action" title="Edit" onclick="editSharedNote('${n.id}')">✎ Edit</button>
+      <button class="nb-note-action danger" title="Delete" onclick="deleteSharedNote('${n.id}')">✕</button>` : '';
+    return `<div class="nb-note" data-shared-id="${n.id}">
+      <div class="nb-note-meta">
+        <span class="nb-note-name" style="color:${n.player_color};">${escapeHtml(n.player_name)}</span>
+        <span class="nb-note-time">${time}</span>
+        ${isOwn ? `<span class="nb-note-actions">${ownActions}</span>` : ''}
+      </div>
+      <div class="nb-note-text" id="nb-shared-text-${n.id}" style="color:#0e0600;">${escapeHtml(n.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteSharedNote(id) {
+  showConfirmDelete("Delete this note from the team notebook?", async () => {
+    const { error } = await sb.from('notes').delete().eq('id', id);
+    if (error) { toast('Error deleting note.'); return; }
+    await loadNotes();
+  });
+}
+
+// Keep deleteNote as alias for backward compat
+async function deleteNote(id) { return deleteSharedNote(id); }
+
+async function editSharedNote(id) {
+  const note = currentNotes.find(n => n.id === id);
+  if (!note) return;
+  const textEl = document.getElementById(`nb-shared-text-${id}`);
+  if (!textEl) return;
+  const noteEl = textEl.closest('.nb-note');
+  textEl.style.display = 'none';
+  const editArea = document.createElement('textarea');
+  editArea.className = 'nb-note-edit-input';
+  editArea.value = note.content;
+  const row = document.createElement('div');
+  row.className = 'nb-note-edit-row';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'nb-note-edit-save';
+  saveBtn.textContent = 'Save';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'nb-note-edit-cancel';
+  cancelBtn.textContent = 'Cancel';
+  row.appendChild(saveBtn);
+  row.appendChild(cancelBtn);
+  noteEl.appendChild(editArea);
+  noteEl.appendChild(row);
+  editArea.focus();
+  saveBtn.onclick = async () => {
+    const newContent = editArea.value.trim();
+    if (!newContent) return;
+    const { error } = await sb.from('notes').update({ content: newContent }).eq('id', id);
+    if (error) { toast('Error saving.'); return; }
+    await loadNotes();
+  };
+  cancelBtn.onclick = () => renderSharedNotes(currentNotes);
+}
+
+function showConfirmDelete(message, onConfirm) {
+  document.getElementById('confirm-delete-msg').textContent = message;
+  const btn = document.getElementById('confirm-delete-ok');
+  btn.onclick = () => { closeConfirmDelete(); onConfirm(); };
+  const modal = document.getElementById('modal-confirm-delete');
+  modal.style.display = 'flex';
+}
+function closeConfirmDelete() {
+  document.getElementById('modal-confirm-delete').style.display = 'none';
 }
 
 function subscribeNotes() {
