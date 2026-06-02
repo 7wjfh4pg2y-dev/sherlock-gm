@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Cutive+Mono&display=swap" rel="stylesheet">
+<style>
+  body { background: #100a03; display: flex; justify-content: center; padding: 40px 20px; font-family: 'IM Fell English', Georgia, serif; }
+  .notebook { width: 680px; }
+
+  .nb-tabs { display: flex; gap: 0; margin-bottom: 0; }
+  .nb-tab {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    cursor: pointer;
+    border: 1px solid rgba(201,169,110,0.25);
+    border-bottom: none;
+    color: rgba(184,137,42,0.5);
+    background: rgba(10,6,1,0.6);
+    transition: all 0.15s;
+  }
+  .nb-tab.active {
+    color: #f4e8ce;
+    background: rgba(20,13,4,0.95);
+    border-color: rgba(201,169,110,0.4);
+  }
+  .nb-tab:not(.active):hover { color: rgba(184,137,42,0.8); }
+
+  .nb-panel {
+    background: rgba(20,13,4,0.95);
+    border: 1px solid rgba(201,169,110,0.4);
+    padding: 16px;
+  }
+
+  .nb-input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .nb-input {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,169,110,0.2);
+    color: #f4e8ce;
+    font-family: 'Cutive Mono', monospace;
+    font-size: 0.82rem;
+    padding: 10px 12px;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+  }
+  .nb-input::placeholder { color: rgba(168,144,112,0.5); font-style: italic; }
+  .nb-btn {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(201,169,110,0.7);
+    background: none;
+    border: 1px solid rgba(201,169,110,0.3);
+    padding: 0 14px;
+    cursor: pointer;
+    align-self: stretch;
+  }
+  .nb-btn:hover { color: #f4e8ce; border-color: rgba(201,169,110,0.6); }
+
+  .nb-divider {
+    border: none;
+    border-top: 1px solid rgba(201,169,110,0.12);
+    margin: 0 0 14px;
+  }
+
+  .note {
+    border-left: 2px solid;
+    padding: 8px 0 8px 12px;
+    margin-bottom: 10px;
+  }
+  .note-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .note-name { font-family: 'Courier Prime', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .note-time { font-family: 'Courier Prime', monospace; font-size: 0.65rem; color: rgba(168,144,112,0.6); }
+  .note-private-badge {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(122,92,18,0.8);
+    border: 1px solid rgba(122,92,18,0.4);
+    padding: 1px 5px;
+  }
+  .note-text { font-family: 'Cutive Mono', monospace; font-size: 0.82rem; color: #e5d0a8; line-height: 1.55; }
+
+  .empty { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 0.88rem; color: rgba(168,144,112,0.5); text-align: center; padding: 20px 0; }
+
+  /* Tab switcher logic */
+  [data-panel="shared"] { display: none; }
+  #tab-shared:checked ~ .nb-tabs [data-for="private"] { color: rgba(184,137,42,0.5); background: rgba(10,6,1,0.6); border-color: rgba(201,169,110,0.25); }
+  #tab-shared:checked ~ .nb-tabs [data-for="shared"] { color: #f4e8ce; background: rgba(20,13,4,0.95); border-color: rgba(201,169,110,0.4); }
+  #tab-shared:checked ~ .nb-panel [data-panel="private"] { display: none; }
+  #tab-shared:checked ~ .nb-panel [data-panel="shared"] { display: block; }
+  input[type=radio] { display: none; }
+</style>
+</head>
+<body>
+<div class="notebook">
+  <input type="radio" name="nb" id="tab-private" checked>
+  <input type="radio" name="nb" id="tab-shared">
+
+  <div class="nb-tabs">
+    <label class="nb-tab active" data-for="private" for="tab-private">My Notes</label>
+    <label class="nb-tab" data-for="shared" for="tab-shared">Team Notes</label>
+  </div>
+
+  <div class="nb-panel">
+
+    <!-- PRIVATE PANEL -->
+    <div data-panel="private">
+      <div class="nb-input-row">
+        <textarea class="nb-input" rows="2" placeholder="Your private deductions…"></textarea>
+        <button class="nb-btn">Add</button>
+      </div>
+      <hr class="nb-divider">
+      <div class="note" style="border-color:#c0392b;">
+        <div class="note-header">
+          <span class="note-name" style="color:#c0392b;">Watson</span>
+          <span class="note-time">09:42</span>
+          <span class="note-private-badge">Private</span>
+        </div>
+        <div class="note-text">The tobacconist on Fleet St mentioned a tall man in a grey coat — could match our suspect's description from the widow's statement.</div>
+      </div>
+      <div class="note" style="border-color:#c0392b;">
+        <div class="note-header">
+          <span class="note-name" style="color:#c0392b;">Watson</span>
+          <span class="note-time">10:15</span>
+          <span class="note-private-badge">Private</span>
+        </div>
+        <div class="note-text">Visit the docks next — the shipping manifest at location 34 seemed incomplete.</div>
+      </div>
+    </div>
+
+    <!-- SHARED PANEL -->
+    <div data-panel="shared">
+      <div class="nb-input-row">
+        <textarea class="nb-input" rows="2" placeholder="Share a deduction with the team…"></textarea>
+        <button class="nb-btn">Add</button>
+      </div>
+      <hr class="nb-divider">
+      <div class="note" style="border-color:#c0392b;">
+        <div class="note-header">
+          <span class="note-name" style="color:#c0392b;">Watson</span>
+          <span class="note-time">09:55</span>
+        </div>
+        <div class="note-text">We should check location 22 — the banker's office. The letter referenced an account.</div>
+      </div>
+      <div class="note" style="border-color:#2ecc71;">
+        <div class="note-header">
+          <span class="note-name" style="color:#2ecc71;">Lestrade</span>
+          <span class="note-time">10:02</span>
+        </div>
+        <div class="note-text">Agreed. Also — the victim's brother has a shop at location 8. Worth a visit.</div>
+      </div>
+      <div class="note" style="border-color:#e67e22;">
+        <div class="note-header">
+          <span class="note-name" style="color:#e67e22;">Hopkins</span>
+          <span class="note-time">10:18</span>
+        </div>
+        <div class="note-text">I checked 22. The manager was evasive about the date of withdrawal. Definitely suspicious.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
