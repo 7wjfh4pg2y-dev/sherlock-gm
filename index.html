@@ -385,6 +385,12 @@
   <button class="btn btn-secondary" style="margin-top:8px;" onclick="location.href=location.pathname">Return to Landing</button>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(6,4,1,0.96);z-index:950;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div class="loading-glass">🔍</div>
+  <div id="loading-message" class="loading-message">Consulting the records…</div>
+</div>
+
 <!-- LONDON DIRECTORY MODAL -->
 <div class="modal-overlay" id="modal-directory" onclick="if(event.target===this)closeModal('modal-directory')">
   <div class="modal directory-modal">
