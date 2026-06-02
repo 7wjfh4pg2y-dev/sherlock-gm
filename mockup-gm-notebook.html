@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #1a1005;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px;
+  font-family: 'Caveat', cursive;
+}
+
+.notebook {
+  width: 620px;
+  position: relative;
+  filter: drop-shadow(0 12px 40px rgba(0,0,0,0.8));
+}
+
+/* ── SPIRAL ── */
+.spiral {
+  position: absolute;
+  top: 64px; left: -14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 10;
+}
+.ring {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 4px solid #5a3e1a;
+  background: radial-gradient(circle at 35% 35%, #8a6530, #3a2510);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+  position: relative;
+}
+.ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #1a0e04;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* ── TABS ROW ── */
+.nb-tabs {
+  display: flex;
+  padding-left: 24px;
+  gap: 3px;
+  position: relative;
+  z-index: 2;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+
+input[type=radio] { display: none; }
+
+.nb-tab {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 7px 16px 11px;
+  cursor: pointer;
+  border-radius: 5px 5px 0 0;
+  border: 1px solid #8b6830;
+  border-bottom: none;
+  position: relative;
+  top: 1px;
+  transition: all 0.12s;
+  background: linear-gradient(180deg, #c8a96a 0%, #b8944a 100%);
+  color: #5a3a10;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,220,130,0.3);
+}
+.nb-tab:hover { background: linear-gradient(180deg, #d4b878 0%, #c4a458 100%); }
+
+/* Player tabs get a coloured dot */
+.nb-tab .dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
+
+/* Team tab = slightly wider, gold tint */
+.tab-team {
+  background: linear-gradient(180deg, #b89040 0%, #a07828 100%);
+  color: #3a2408;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+.tab-team:hover { background: linear-gradient(180deg, #c8a050 0%, #b08838 100%); }
+
+/* Active tab = open page */
+#t-team:checked     ~ .nb-tabs [for="t-team"],
+#t-watson:checked   ~ .nb-tabs [for="t-watson"],
+#t-lestrade:checked ~ .nb-tabs [for="t-lestrade"],
+#t-hopkins:checked  ~ .nb-tabs [for="t-hopkins"] {
+  background: linear-gradient(180deg, #fdf6e0 0%, #f5e8c0 100%);
+  color: #3a2008;
+  border-color: #9a7830;
+  top: 0;
+  padding-bottom: 12px;
+  z-index: 3;
+}
+
+/* ── PAGE ── */
+.nb-page {
+  position: relative;
+  background: #f5e8c0;
+  border: 1px solid #9a7830;
+  border-radius: 0 4px 4px 4px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.nb-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 31px,
+      rgba(140,100,40,0.16) 31px,
+      rgba(140,100,40,0.16) 32px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nb-page::after {
+  content: '';
+  position: absolute;
+  left: 52px; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(180,50,50,0.28);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.holes {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.hole {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #1a1005;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.5);
+  border: 1px solid #2e1e08;
+}
+
+.nb-inner {
+  position: relative;
+  z-index: 2;
+  padding: 18px 24px 24px 64px;
+  min-height: 380px;
+}
+
+/* ── GM HEADER ── */
+.gm-panel-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(100,70,20,0.45);
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(140,100,40,0.2);
+}
+.gm-panel-label span {
+  color: rgba(130,90,20,0.7);
+  font-weight: 700;
+}
+
+/* ── NOTE ── */
+.note {
+  margin-bottom: 18px;
+  padding-left: 12px;
+  border-left: 3px solid;
+}
+.note-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.note-name {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.note-time {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.6rem;
+  color: rgba(100,70,25,0.5);
+}
+.note-badge {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(120,80,20,0.3);
+  color: rgba(120,80,20,0.55);
+  padding: 1px 4px;
+}
+.note-text {
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  color: #1c1006;
+  line-height: 1.65;
+}
+
+/* GM can only delete, not edit */
+.note-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.note:hover .note-actions { opacity: 1; }
+.note-action {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.12s;
+}
+.note-action.delete { color: rgba(140,40,40,0.55); }
+.note-action.delete:hover { color: rgba(200,60,60,0.9); }
+
+.empty {
+  font-family: 'Caveat', cursive;
+  font-size: 1.05rem;
+  color: rgba(120,85,30,0.35);
+  font-style: italic;
+  padding: 24px 0 12px;
+}
+
+/* ── PANEL VISIBILITY ── */
+[data-panel] { display: none; }
+#t-team:checked     ~ .nb-page [data-panel="team"]     { display: block; }
+#t-watson:checked   ~ .nb-page [data-panel="watson"]   { display: block; }
+#t-lestrade:checked ~ .nb-page [data-panel="lestrade"] { display: block; }
+#t-hopkins:checked  ~ .nb-page [data-panel="hopkins"]  { display: block; }
+</style>
+</head>
+<body>
+
+<div class="notebook">
+  <input type="radio" name="nb" id="t-team" checked>
+  <input type="radio" name="nb" id="t-watson">
+  <input type="radio" name="nb" id="t-lestrade">
+  <input type="radio" name="nb" id="t-hopkins">
+
+  <div class="spiral">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div>
+  </div>
+
+  <div class="nb-tabs">
+    <label class="nb-tab tab-team" for="t-team">Team Notes</label>
+    <label class="nb-tab" for="t-watson"><span class="dot" style="background:#c0392b;"></span>Watson</label>
+    <label class="nb-tab" for="t-lestrade"><span class="dot" style="background:#2ecc71;"></span>Lestrade</label>
+    <label class="nb-tab" for="t-hopkins"><span class="dot" style="background:#e67e22;"></span>Hopkins</label>
+  </div>
+
+  <div class="nb-page">
+    <div class="holes">
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div>
+    </div>
+    <div class="nb-inner">
+
+      <!-- TEAM -->
+      <div data-panel="team">
+        <div class="gm-panel-label">Shared notebook — <span>visible to all players</span></div>
+        <div class="note" style="border-color:#c0392b;">
+          <div class="note-header">
+            <span class="note-name" style="color:#c0392b;">Watson</span>
+            <span class="note-time">09:55</span>
+          </div>
+          <div class="note-text">We should check location 22 — the banker's office. The letter referenced an account number.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+        <div class="note" style="border-color:#2ecc71;">
+          <div class="note-header">
+            <span class="note-name" style="color:#2ecc71;">Lestrade</span>
+            <span class="note-time">10:02</span>
+          </div>
+          <div class="note-text">Agreed. The victim's brother keeps a shop at location 8. Worth a visit before the docks.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+        <div class="note" style="border-color:#e67e22;">
+          <div class="note-header">
+            <span class="note-name" style="color:#e67e22;">Hopkins</span>
+            <span class="note-time">10:18</span>
+          </div>
+          <div class="note-text">Checked 22. The manager was evasive about the date of the withdrawal. Something is being concealed.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+      </div>
+
+      <!-- WATSON -->
+      <div data-panel="watson">
+        <div class="gm-panel-label">Watson's private notes — <span>only visible to GM</span></div>
+        <div class="note" style="border-color:#c0392b;">
+          <div class="note-header">
+            <span class="note-name" style="color:#c0392b;">Watson</span>
+            <span class="note-time">09:42</span>
+            <span class="note-badge">Private</span>
+          </div>
+          <div class="note-text">The tobacconist on Fleet St mentioned a tall man in a grey coat — matches the widow's description precisely.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+        <div class="note" style="border-color:#c0392b;">
+          <div class="note-header">
+            <span class="note-name" style="color:#c0392b;">Watson</span>
+            <span class="note-time">10:15</span>
+            <span class="note-badge">Private</span>
+          </div>
+          <div class="note-text">Visit the docks next. The shipping manifest at location 34 seemed deliberately incomplete.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+      </div>
+
+      <!-- LESTRADE -->
+      <div data-panel="lestrade">
+        <div class="gm-panel-label">Lestrade's private notes — <span>only visible to GM</span></div>
+        <div class="note" style="border-color:#2ecc71;">
+          <div class="note-header">
+            <span class="note-name" style="color:#2ecc71;">Lestrade</span>
+            <span class="note-time">09:50</span>
+            <span class="note-badge">Private</span>
+          </div>
+          <div class="note-text">I suspect Watson is holding something back. He keeps circling back to the Fleet St interview.</div>
+          <div class="note-actions"><button class="note-action delete" onclick="deleteNote(this)">✕ Delete</button></div>
+        </div>
+      </div>
+
+      <!-- HOPKINS -->
+      <div data-panel="hopkins">
+        <div class="gm-panel-label">Hopkins's private notes — <span>only visible to GM</span></div>
+        <div class="empty">No private notes yet.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function deleteNote(btn) {
+  const note = btn.closest('.note');
+  note.style.transition = 'opacity 0.2s';
+  note.style.opacity = '0';
+  setTimeout(() => note.remove(), 200);
+}
+</script>
+</body>
+</html>
