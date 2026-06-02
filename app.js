@@ -313,16 +313,29 @@ function doGMLogin() {
   enterGM();
 }
 
+function mastheadLogout() {
+  if (isGM) { gmLogout(); } else { playerLogout(); }
+}
+function playerLogout() {
+  if (kickSubscription) sb.removeChannel(kickSubscription);
+  if (playerPresenceChannel) sb.removeChannel(playerPresenceChannel);
+  location.reload();
+}
 function gmLogout() {
   if (gmSubscription) sb.removeChannel(gmSubscription);
   if (gmPresenceChannel) sb.removeChannel(gmPresenceChannel);
   store.remove(GM_SESSION_KEY);
   location.reload();
 }
+function showMastheadLogout() {
+  const btn = document.getElementById('masthead-logout-btn');
+  if (btn) btn.style.display = '';
+}
 
 async function enterGM() {
   isGM = true;
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge gm">Game Master</span>';
+  showMastheadLogout();
   showScreen('gm-screen');
   await loadMapsLibrary();
   await loadCases();
@@ -1215,6 +1228,7 @@ async function enterPlayer(caseId) {
     currentMapUrl = mapData?.url || '';
   }
   document.getElementById('mode-indicator').innerHTML = '<span class="mode-badge player">Investigator</span>';
+  showMastheadLogout();
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
   renderPlayerMap();
