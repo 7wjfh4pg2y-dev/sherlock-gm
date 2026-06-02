@@ -116,7 +116,8 @@
     color: rgba(220,195,140,0.45);
     background: none;
     border: 1px solid rgba(220,195,140,0.2);
-    padding: 3px 10px;
+    padding: 4px 12px;
+    letter-spacing: 0.14em;
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;
   }
@@ -1500,29 +1501,3 @@
     transition: opacity 0.15s;
   }
   .note-action-btn:hover { opacity: 1; }
-
-/* ── LOADING OVERLAY ── */
-@keyframes glassSwing {
-  0%   { transform: rotate(-18deg); }
-  50%  { transform: rotate(18deg); }
-  100% { transform: rotate(-18deg); }
-}
-@keyframes loadingFade {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1; }
-}
-.loading-glass {
-  font-size: 3rem;
-  transform-origin: 80% 20%;
-  animation: glassSwing 1.6s ease-in-out infinite;
-  filter: sepia(1) saturate(1.5);
-  user-select: none;
-}
-.loading-message {
-  font-family: 'IM Fell English', Georgia, serif;
-  font-style: italic;
-  font-size: 1rem;
-  color: var(--sepia);
-  letter-spacing: 0.04em;
-  animation: loadingFade 1.6s ease-in-out infinite;
-}

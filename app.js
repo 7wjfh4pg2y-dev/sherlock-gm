@@ -260,14 +260,6 @@ function copyInviteCode() {
   if (!code || code === '—') return;
   navigator.clipboard.writeText(code).then(() => toast('Code copied: ' + code));
 }
-function showLoading(msg = 'Consulting the records…') {
-  const el = document.getElementById('loading-overlay');
-  document.getElementById('loading-message').textContent = msg;
-  el.style.display = 'flex';
-}
-function hideLoading() {
-  document.getElementById('loading-overlay').style.display = 'none';
-}
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function toast(msg) {
@@ -1178,13 +1170,13 @@ async function doPlayerJoin() {
   if (!name) { errEl.textContent = 'Enter your name.'; return; }
   playerName = name;
   playerColor = nameToColor(name);
-  showLoading('Consulting the records…');
+  
   // Accept short 8-char prefix code — resolve to full UUID
   if (/^[0-9A-Fa-f]{8}$/.test(code)) {
     const prefix = code.toLowerCase();
     const { data: cases } = await sb.from('cases').select('id');
     const match = (cases || []).find(c => c.id.startsWith(prefix));
-    if (!match) { hideLoading(); errEl.textContent = 'Case not found. Check the code and try again.'; return; }
+    if (!match) { errEl.textContent = 'Case not found. Check the code and try again.'; return; }
     code = match.id;
   }
   await enterPlayer(code);
@@ -1198,19 +1190,19 @@ async function enterPlayer(caseId) {
     sb.from('players').select('is_kicked').eq('case_id', caseId).eq('player_name', playerName).single()
   ]);
   if (error || !caseData) {
-    hideLoading();
+    
     document.getElementById('player-join-error') && (document.getElementById('player-join-error').textContent = 'Case not found.');
     return;
   }
 
   if (existing?.is_kicked) {
-    hideLoading();
+    
     const errEl = document.getElementById('player-join-error') || document.getElementById('identity-error');
     if (errEl) errEl.textContent = 'You have been removed from this case by the Game Master.';
     return;
   }
 
-  showLoading('Taking your seat…');
+  
   // Register player
   await sb.from('players').upsert(
     { case_id: caseId, player_name: playerName, player_color: playerColor, is_kicked: false },
@@ -1232,7 +1224,7 @@ async function enterPlayer(caseId) {
   document.getElementById('player-case-title').textContent = caseData.name;
   renderPlayerBriefing();
   renderPlayerMap();
-  hideLoading();
+  
   closeModal('modal-player-join');
   showScreen('player-screen');
   document.getElementById('player-notebook-section').style.display = '';
