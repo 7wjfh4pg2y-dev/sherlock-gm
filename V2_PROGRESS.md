@@ -84,8 +84,17 @@ NOT bundled into logic.
   (`trackPresence`/`watchPresence`), and `noteEditor` in notebook.
   Typechecks + builds clean. NOT yet imported by main.ts (wired in S5).
   Player-screen layout CSS is intentionally deferred to S5.
-- [ ] **S4 — GM module** (part 3). login, case CRUD, clue add/reveal/hide/edit,
-  player mgmt, maps library + attach, notebook (all/per-player tabs).
+- [x] **S4 — GM module** (part 3). Done: `src/gm/auth.ts` (localStorage
+  session-only password: attemptLogin / gmLogout / resetGMPassword),
+  `src/gm/loginScreen.ts` (GM login form; sets store.role='gm' on success),
+  `src/gm/load.ts` (loadGMCase / loadGMMaps / loadGMRightPanel / loadGMClues
+  — fetch + store.set, called by realtime handlers),
+  `src/gm/screen.ts` (full reactive GM screen: case select+CRUD, briefing
+  edit inline, clue grid with reveal/hide/edit/delete + add clue modal
+  (text or image upload), player panel with presence dots + kick/unkick/delete,
+  maps library modal with attach/detach + upload/rename/delete, GM notebook
+  modal with Shared + per-player dynamic tabs using createNotebook + noteCard
+  delete actions). Typechecks clean. NOT yet wired by main.ts (S5).
 - [ ] **S5 — Styles + full wiring** (part 6). Port Victorian CSS into structured
   files; assemble `main.ts` router (landing → GM / player); index.html shells.
 - [ ] **S6 — Verify + swap.** End-to-end check (GM creates case, player joins,
@@ -108,13 +117,11 @@ NOT bundled into logic.
 
 ## Current status
 
-**S3 complete.** Player module done; builds + typechecks clean. Next:
-**S4 — GM module** (`src/gm/`): GM login (session-only password — not a
-security boundary), case CRUD + select, clue add (text/image upload) /
-reveal / hide / edit / delete, player management (kick/reinstate/delete +
-presence via `watchPresence`), maps library + attach-to-case, GM notebook
-(Shared tab + per-player tabs using `createNotebook` with dynamic tabs and
-`noteCard` delete actions). See `legacy/app.js`: GM auth ~280-345, case
-mgmt ~330-405, clues ~1126+, players ~487+, maps library ~466-560, GM
-notebook builders ~1080-1124. Mutations write to repos; `subscribeToCase`
-+ `loadGM*` refresh the store; screen reacts.
+**S4 complete.** GM module done; typechecks clean. Next:
+**S5 — Styles + full wiring**: Port Victorian CSS (masthead, landing page,
+GM screen layout, player screen layout, clue grid, GM right panel) into
+`src/styles/`. Assemble `main.ts` router: detect `?case=` param for player
+join, otherwise show landing with GM / Player buttons; route to
+`createGMLoginScreen()` / `createGMScreen()` / `createPlayerScreen()`.
+Complete `index.html` with single `<div id="app">` mount. Also needed:
+player join form (name input + case code; auto-fills from `?case=` param).
