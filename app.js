@@ -1123,6 +1123,15 @@ function renderGMNotebook() {
   if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
 
+async function gmDeleteNote(id) {
+  showConfirmDelete('Delete this note from the notebook?', async () => {
+    const { error } = await sb.from('notes').delete().eq('id', id);
+    if (error) { toast('Error deleting note.'); return; }
+    allNotes = allNotes.filter(n => n.id !== id);
+    renderGMNotebookModal();
+  });
+}
+
 async function revealClue(id) {
   await sb.from('clues').update({ revealed: true }).eq('id', id);
   await loadGMClues();
