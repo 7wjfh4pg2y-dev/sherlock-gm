@@ -85,7 +85,7 @@ input[type=radio] { display: none; }
 /* active tab = open page colour */
 #tab-private:checked ~ .nb-tabs [for="tab-private"],
 #tab-shared:checked  ~ .nb-tabs [for="tab-shared"] {
-  background: linear-gradient(180deg, #fdf6e0 0%, #f5e8c0 100%);
+  background: linear-gradient(180deg, #d4a96a 0%, #c49050 100%);
   color: #3a2008;
   border-color: #9a7830;
   top: 0;
@@ -96,29 +96,35 @@ input[type=radio] { display: none; }
 /* ── PAPER PAGE ── */
 .nb-page {
   position: relative;
-  background: #f5e8c0;
-  border: 1px solid #9a7830;
+  background:
+    radial-gradient(ellipse 60px 40px at 82% 18%, rgba(100,60,10,0.09) 0%, transparent 100%),
+    radial-gradient(ellipse 40px 30px at 12% 72%, rgba(90,55,8,0.08) 0%, transparent 100%),
+    radial-gradient(ellipse 80px 50px at 65% 88%, rgba(110,65,10,0.07) 0%, transparent 100%),
+    radial-gradient(ellipse 50px 60px at 5%  10%, rgba(80,45,5,0.10)  0%, transparent 100%),
+    radial-gradient(ellipse 110% 40% at 50% 100%, rgba(80,45,5,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 110% at 100% 50%, rgba(70,40,5,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 110% at 0%   50%, rgba(70,40,5,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 110% 40% at 50% 0%,   rgba(60,35,5,0.10) 0%, transparent 60%),
+    linear-gradient(160deg, #c8954a 0%, #b87c30 30%, #c48a3a 60%, #aa7025 100%);
+  border: 1px solid #7a5010;
   border-radius: 0 4px 4px 4px;
   overflow: hidden;
   z-index: 1;
 }
 
-/* Paper texture via repeating grain */
 .nb-page::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    /* Ruled lines */
     repeating-linear-gradient(
       180deg,
       transparent 0px,
       transparent 31px,
-      rgba(140,100,40,0.18) 31px,
-      rgba(140,100,40,0.18) 32px
+      rgba(60,30,5,0.18) 31px,
+      rgba(60,30,5,0.18) 32px
     ),
-    /* Paper grain */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 0;
 }
@@ -232,7 +238,7 @@ input[type=radio] { display: none; }
   border: 1px dashed rgba(140,100,40,0.4);
   font-family: 'Caveat', cursive;
   font-size: 1.1rem;
-  color: #1c1006;
+  color: #150c02;
   padding: 4px 6px;
   resize: none;
   outline: none;
@@ -288,7 +294,7 @@ input[type=radio] { display: none; }
 .note-text {
   font-family: 'Caveat', cursive;
   font-size: 1.12rem;
-  color: #1c1006;
+  color: #150c02;
   line-height: 1.65;
 }
 
