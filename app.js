@@ -1630,6 +1630,7 @@ async function addSharedNote() {
     player_name: playerName,
     player_color: playerColor,
     content,
+    is_private: false,
   });
   if (error) { toast('Error saving note.'); return; }
   input.value = '';
