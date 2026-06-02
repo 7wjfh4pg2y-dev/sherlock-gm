@@ -504,38 +504,6 @@ async function deletePlayerData(id, name, color) {
   toast('Player data deleted.');
 }
 
-function gmNotesHTML() {
-  const noNotes = `<p style="font-family:'Courier Prime','Courier New',monospace;font-size:0.8rem;color:var(--fog);margin:0;font-style:italic;">No notes have been written yet.</p>`;
-  const rows = allNotes.length ? allNotes.map(n => {
-    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `<div class="notebook-note" style="color:${n.player_color}">
-      <div class="notebook-note-meta">
-        <span class="notebook-note-name">${escapeHtml(n.player_name)}</span>
-        <span class="notebook-note-time">${time}</span>
-        <button onclick="gmDeleteNote('${n.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);opacity:0.5;font-size:0.75rem;padding:0 2px;line-height:1;" title="Delete note">✕</button>
-      </div>
-      <div class="notebook-note-text">${escapeHtml(n.content)}</div>
-    </div>`;
-  }).join('') : noNotes;
-
-  return `<div class="case-briefing-panel" style="margin-bottom:24px;">
-    <div class="briefing-header" onclick="toggleBriefing('gm-notes-body')">
-      <span>Investigators' Notes <span class="counter-badge">${allNotes.length}</span></span>
-      <span id="gm-notes-toggle" class="briefing-toggle">▾</span>
-    </div>
-    <div id="gm-notes-body" class="briefing-body" style="padding:12px 16px;">
-      ${rows}
-    </div>
-  </div>`;
-}
-
-function gmDeleteNote(id) {
-  showConfirmDelete('Delete this note from the Irregulars\' Notebook?', async () => {
-    await sb.from('notes').delete().eq('id', id);
-    await loadGMClues();
-  });
-}
-
 function subscribeGMUpdates(caseId) {
   if (gmSubscription) sb.removeChannel(gmSubscription);
   gmSubscription = sb.channel('gm-live-' + caseId)
