@@ -1058,16 +1058,19 @@ function renderGMRightPanel() {
   if (modal && modal.style.display !== 'none') renderGMNotebookModal();
 }
 
-function renderGMNotesFeed(notes) {
+function renderGMNotesFeed(notes, showPrivateBadge = false) {
   if (!notes.length) {
     return `<div style="font-family:'Courier Prime','Courier New',monospace;font-size:0.72rem;color:rgba(60,35,5,0.45);font-style:italic;padding:6px 0;">No notes yet.</div>`;
   }
   return notes.map(n => {
     const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const badge = showPrivateBadge && n.is_private
+      ? `<span style="font-family:'Courier Prime','Courier New',monospace;font-size:0.5rem;letter-spacing:0.08em;text-transform:uppercase;border:1px solid rgba(120,80,20,0.3);color:rgba(60,30,5,0.65);padding:1px 4px;margin-left:4px;">Private</span>`
+      : '';
     return `<div class="nb-note">
       <div class="nb-note-meta">
         <span class="nb-note-name" style="color:${n.player_color};">${escapeHtml(n.player_name)}</span>
-        <span class="nb-note-time">${time}</span>
+        <span class="nb-note-time">${time}</span>${badge}
         <span class="nb-note-actions">
           <button class="nb-note-action danger" title="Delete" onclick="gmDeleteNote('${n.id}')">✕</button>
         </span>
@@ -1078,6 +1081,7 @@ function renderGMNotesFeed(notes) {
 }
 
 function buildGMNotebookHTML(prefix) {
+  const sharedNotes = allNotes.filter(n => !n.is_private);
   const playerNames = [...new Set(allNotes.map(n => n.player_name))];
   const allTabId = `${prefix}-tab-0`;
   const playerTabIds = playerNames.map((_, i) => `${prefix}-tab-${i + 1}`);
@@ -1085,17 +1089,17 @@ function buildGMNotebookHTML(prefix) {
   let radios = `<input type="radio" name="${prefix}" id="${allTabId}" class="nb-radio" checked>`;
   playerTabIds.forEach(id => { radios += `<input type="radio" name="${prefix}" id="${id}" class="nb-radio">`; });
 
-  let tabLabels = `<label class="nb-tab" for="${allTabId}">All</label>`;
+  let tabLabels = `<label class="nb-tab" for="${allTabId}">Shared</label>`;
   playerNames.forEach((name, i) => {
     const color = allNotes.find(n => n.player_name === name)?.player_color || 'inherit';
     tabLabels += `<label class="nb-tab" for="${playerTabIds[i]}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle;position:relative;top:-1px;"></span>${escapeHtml(name)}</label>`;
   });
 
-  const allPanel = `<div data-gm-panel="0">${renderGMNotesFeed(allNotes)}</div>`;
+  const allPanel = `<div data-gm-panel="0">${renderGMNotesFeed(sharedNotes)}</div>`;
   let playerPanels = '';
   playerNames.forEach((name, i) => {
     const playerNotes = allNotes.filter(n => n.player_name === name);
-    playerPanels += `<div data-gm-panel="${i + 1}">${renderGMNotesFeed(playerNotes)}</div>`;
+    playerPanels += `<div data-gm-panel="${i + 1}">${renderGMNotesFeed(playerNotes, true)}</div>`;
   });
 
   let activeCSS = `#${allTabId}:checked ~ .nb-tabs label[for="${allTabId}"] { background: linear-gradient(180deg,#efd898 0%,#d4ae58 100%); color:#2a1200; z-index:3; }
@@ -1282,8 +1286,7 @@ async function enterPlayer(caseId) {
   document.getElementById('player-notebook-section').style.display = '';
   await loadDirectoryFromServer(caseId);
   await loadPlayerClues();
-  await loadNotes();
-  renderPrivateNotes();
+  await Promise.all([loadNotes(), loadPrivateNotesFromDB()]);
   subscribePlayer();
   subscribeNotes();
   subscribeKick(caseId);
@@ -1503,70 +1506,60 @@ let pendingCaseId = null;
 
 // ── NOTES ──
 let notesSubscription = null;
+let currentPrivateNotes = [];
 let currentNotes = [];
 
-// ── PRIVATE NOTES (localStorage) ──
-function privateNotesKey() {
-  return `private_notes_${playerName}_${currentCaseId}`;
-}
-
-function loadPrivateNotes() {
-  try {
-    return JSON.parse(localStorage.getItem(privateNotesKey()) || '[]');
-  } catch { return []; }
-}
-
-function savePrivateNotes(notes) {
-  try { localStorage.setItem(privateNotesKey(), JSON.stringify(notes)); } catch {}
-}
-
+// ── PRIVATE NOTES (Supabase, is_private=true) ──
 function renderPrivateNotes() {
   const container = document.getElementById('nb-private-notes');
   if (!container) return;
-  const notes = loadPrivateNotes();
-  if (!notes.length) {
+  if (!currentPrivateNotes.length) {
     container.innerHTML = `<div style="font-family:'Courier Prime','Courier New',monospace;font-size:0.78rem;color:rgba(60,35,5,0.45);font-style:italic;padding:6px 0;">No private notes yet.</div>`;
     return;
   }
-  container.innerHTML = notes.map(n => {
-    const time = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `<div class="nb-note" data-private-id="${escapeHtml(n.id)}">
+  container.innerHTML = currentPrivateNotes.map(n => {
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `<div class="nb-note" data-private-id="${n.id}">
       <div class="nb-note-meta">
         <span class="nb-note-name" style="color:#5a3a10;">Private</span>
         <span class="nb-note-time">${time}</span>
         <span class="nb-note-actions">
-          <button class="nb-note-action" title="Edit" onclick="editPrivateNote('${escapeHtml(n.id)}')">✎ Edit</button>
-          <button class="nb-note-action" title="Share with team" onclick="sharePrivateNote('${escapeHtml(n.id)}')">↗ Share</button>
-          <button class="nb-note-action danger" title="Delete" onclick="deletePrivateNote('${escapeHtml(n.id)}')">✕</button>
+          <button class="nb-note-action" title="Edit" onclick="editPrivateNote('${n.id}')">✎ Edit</button>
+          <button class="nb-note-action" title="Share with team" onclick="sharePrivateNote('${n.id}')">↗ Share</button>
+          <button class="nb-note-action danger" title="Delete" onclick="deletePrivateNote('${n.id}')">✕</button>
         </span>
       </div>
-      <div class="nb-note-text" id="nb-priv-text-${escapeHtml(n.id)}">${escapeHtml(n.text)}</div>
+      <div class="nb-note-text" id="nb-priv-text-${n.id}">${escapeHtml(n.content)}</div>
     </div>`;
   }).join('');
 }
 
-function addPrivateNote() {
+async function addPrivateNote() {
   const input = document.getElementById('nb-private-input');
-  const text = input.value.trim();
-  if (!text) return;
-  const notes = loadPrivateNotes();
-  notes.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), text, timestamp: Date.now() });
-  savePrivateNotes(notes);
+  const content = input.value.trim();
+  if (!content) return;
+  const { error } = await sb.from('notes').insert({
+    case_id: currentCaseId,
+    player_name: playerName,
+    player_color: playerColor,
+    content,
+    is_private: true,
+  });
+  if (error) { toast('Error saving note.'); return; }
   input.value = '';
-  renderPrivateNotes();
+  await loadPrivateNotesFromDB();
 }
 
-function deletePrivateNote(id) {
-  showConfirmDelete("Delete this private note?", () => {
-    const notes = loadPrivateNotes().filter(n => n.id !== id);
-    savePrivateNotes(notes);
-    renderPrivateNotes();
+async function deletePrivateNote(id) {
+  showConfirmDelete("Delete this private note?", async () => {
+    const { error } = await sb.from('notes').delete().eq('id', id);
+    if (error) { toast('Error deleting note.'); return; }
+    await loadPrivateNotesFromDB();
   });
 }
 
-function editPrivateNote(id) {
-  const notes = loadPrivateNotes();
-  const note = notes.find(n => n.id === id);
+async function editPrivateNote(id) {
+  const note = currentPrivateNotes.find(n => n.id === id);
   if (!note) return;
   const textEl = document.getElementById(`nb-priv-text-${id}`);
   if (!textEl) return;
@@ -1574,7 +1567,7 @@ function editPrivateNote(id) {
   textEl.style.display = 'none';
   const editArea = document.createElement('textarea');
   editArea.className = 'nb-note-edit-input';
-  editArea.value = note.text;
+  editArea.value = note.content;
   const row = document.createElement('div');
   row.className = 'nb-note-edit-row';
   const saveBtn = document.createElement('button');
@@ -1588,35 +1581,38 @@ function editPrivateNote(id) {
   noteEl.appendChild(editArea);
   noteEl.appendChild(row);
   editArea.focus();
-  saveBtn.onclick = () => {
-    const newText = editArea.value.trim();
-    if (!newText) return;
-    const all = loadPrivateNotes();
-    const idx = all.findIndex(n => n.id === id);
-    if (idx !== -1) { all[idx].text = newText; savePrivateNotes(all); }
-    renderPrivateNotes();
+  saveBtn.onclick = async () => {
+    const newContent = editArea.value.trim();
+    if (!newContent) return;
+    const { error } = await sb.from('notes').update({ content: newContent }).eq('id', id);
+    if (error) { toast('Error saving.'); return; }
+    await loadPrivateNotesFromDB();
   };
   cancelBtn.onclick = () => renderPrivateNotes();
 }
 
 async function sharePrivateNote(id) {
-  const notes = loadPrivateNotes();
-  const note = notes.find(n => n.id === id);
+  const note = currentPrivateNotes.find(n => n.id === id);
   if (!note) return;
-  const { error } = await sb.from('notes').insert({
-    case_id: currentCaseId,
-    player_name: playerName,
-    player_color: playerColor,
-    content: note.text,
-  });
+  const { error } = await sb.from('notes').update({ is_private: false }).eq('id', id);
   if (error) { toast('Error sharing note.'); return; }
   toast('Note shared with the team.');
-  await loadNotes();
+  await Promise.all([loadPrivateNotesFromDB(), loadNotes()]);
+}
+
+async function loadPrivateNotesFromDB() {
+  const { data } = await sb.from('notes').select('*')
+    .eq('case_id', currentCaseId)
+    .eq('player_name', playerName)
+    .eq('is_private', true)
+    .order('created_at');
+  currentPrivateNotes = data || [];
+  renderPrivateNotes();
 }
 
 // ── SHARED NOTES (Supabase) ──
 async function loadNotes() {
-  const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).order('created_at');
+  const { data } = await sb.from('notes').select('*').eq('case_id', currentCaseId).eq('is_private', false).order('created_at');
   currentNotes = data || [];
   renderSharedNotes(currentNotes);
 }
@@ -1723,7 +1719,7 @@ function subscribeNotes() {
   if (notesSubscription) sb.removeChannel(notesSubscription);
   notesSubscription = sb.channel('notes-' + currentCaseId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `case_id=eq.${currentCaseId}` },
-      () => loadNotes())
+      () => { loadPrivateNotesFromDB(); loadNotes(); })
     .subscribe();
 }
 
