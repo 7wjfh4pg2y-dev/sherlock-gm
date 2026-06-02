@@ -1,0 +1,14 @@
+/* ── Design tokens ── */
+:root {
+  --ink: #14100a;
+  --parchment: #f4e8ce;
+  --parchment-dark: #e5d0a8;
+  --parchment-darker: #c9a96e;
+  --sepia: #7a5c12;
+  --sepia-light: #b8892a;
+  --red: #7a1515;
+  --green: #1a4020;
+  --fog: #a89070;
+  --paper: #faf2e0;
+  --shadow: rgba(10, 7, 3, 0.55);
+}

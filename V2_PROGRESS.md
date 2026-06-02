@@ -53,8 +53,22 @@ NOT bundled into logic.
   realtime helper; raw client isolated here), `src/data/colors.ts`
   (PLAYER_COLORS + nameToColor, same algo as v1), `src/state/store.ts`
   (observable store + selectors). Typechecks clean.
-- [ ] **S2 — Shared components** (part 5). toast, modal shell, confirm-delete,
-  notebook (parchment tabbed UI — port CSS from legacy), directory modal, map viewer.
+- [x] **S2a — Shared components: core.** Done: `src/util/dom.ts` (typed
+  hyperscript `h()` — XSS-safe by construction, no innerHTML strings; `clear`,
+  `replaceChildren`, `formatTime`, `escapeHtml`), `src/components/toast.ts`,
+  `src/components/modal.ts` (generic overlay + `openTitledModal`; backdrop/Esc
+  close), `src/components/confirmDelete.ts` (promise-based), and the reusable
+  `src/components/notebook.ts` (`createNotebook` parchment tabbed UI with
+  JS-driven `.active` tabs + `noteCard`/`noteFeed`/`fillFeed`/`noteComposer`
+  builders). Styles ported to `src/styles/{tokens,components}.css`.
+  NOTE: tab switching is now a click handler + `.active` class (not the v1 CSS
+  `:checked` trick) so the GM's dynamic per-player tabs work and re-renders
+  don't lose focus/active-tab.
+- [ ] **S2b — Shared components: directory + map viewer.** Directory modal
+  (search + category filter over `public/directory.json`, GM add/remove/edit,
+  per-case overrides via `storage.{load,save}DirectoryOverrides`), map viewer
+  (fullscreen image modal). See `legacy/app.js` directory fns (~lines 58-260)
+  and the canvas map renderer (~line 750).
 - [ ] **S3 — Player module** (part 4). join flow + identity, clue feed, notebook
   wired to store + realtime.
 - [ ] **S4 — GM module** (part 3). login, case CRUD, clue add/reveal/hide/edit,
@@ -81,9 +95,7 @@ NOT bundled into logic.
 
 ## Current status
 
-**S1 complete.** Data layer + observable store in place, typechecks clean.
-Next: **S2 — shared components** (toast, modal, confirm-delete, notebook,
-directory, map viewer). Port the Victorian parchment CSS from
-`legacy/style.css` for the notebook. Build render helpers that take data +
-return DOM (typed, class-based — no inline styles, no copy-paste between GM
-and player).
+**S2a complete.** Core shared components + the reusable notebook build &
+typecheck clean. Next: **S2b — directory modal + map viewer**, then S3
+(player module). Components are pure DOM builders (not yet imported by
+`main.ts`, so the JS bundle is still tiny — they get wired in S3/S4).

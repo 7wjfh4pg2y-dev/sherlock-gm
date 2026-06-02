@@ -1,10 +1,13 @@
-/* v2 styles — populated in Segment 6 (design tokens, base, per-module). */
+/* v2 styles — entry. Global theme/layout lands in S5; tokens + components here. */
+@import './tokens.css';
+@import './components.css';
+
 :root {
   color-scheme: dark;
 }
 body {
   margin: 0;
   background: #1a1005;
-  color: #e8d9b0;
+  color: var(--parchment);
   font-family: 'IM Fell English', Georgia, serif;
 }
