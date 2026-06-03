@@ -226,7 +226,8 @@ export function createPlayerScreen(): ScreenHandle {
       replaceChildren(clueFeed, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
       return;
     }
-    replaceChildren(clueFeed, ...revealed.map(clueCard));
+    const grid = h('div', { class: 'clues-grid' }, ...revealed.map(clueCard));
+    replaceChildren(clueFeed, grid);
   }
 
   function renderChrome(s: AppState): void {
