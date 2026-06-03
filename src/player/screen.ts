@@ -3,7 +3,7 @@
 // realtime) refresh the clue feed and notebook feeds in place — composer focus
 // and the active tab survive because only feed contents are replaced.
 
-import { h, replaceChildren, clear } from '../util/dom';
+import { h, replaceChildren } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
@@ -48,7 +48,24 @@ export function createPlayerScreen(): ScreenHandle {
     h('div', { class: 'player-toolbar' }, dirBtn, mapBtn, leaveBtn),
   );
 
-  const briefing = h('div', { class: 'player-briefing' });
+  let briefingCollapsed = false;
+  const briefingBody = h('div', { class: 'briefing-body' });
+  const briefingChevron = h('span', { class: 'briefing-chevron', text: '▾' });
+  const briefingToggle = h(
+    'button',
+    {
+      class: 'briefing-toggle',
+      on: {
+        click: () => {
+          briefingCollapsed = !briefingCollapsed;
+          briefing.classList.toggle('collapsed', briefingCollapsed);
+        },
+      },
+    },
+    h('span', { class: 'briefing-title', text: 'Case Briefing' }),
+    briefingChevron,
+  );
+  const briefing = h('div', { class: 'player-briefing' }, briefingToggle, briefingBody);
   const clueFeed = h('div', { class: 'player-content' });
 
   // ── Notebook ──
@@ -217,14 +234,10 @@ export function createPlayerScreen(): ScreenHandle {
     caseTitle.textContent = current?.name ?? '';
     const desc = current?.description?.trim();
     if (desc) {
-      clear(briefing);
-      briefing.style.display = '';
-      briefing.append(
-        h('div', { class: 'briefing-title', text: 'Case Briefing' }),
-        h('p', { class: 'briefing-text', text: desc }),
-      );
+      replaceChildren(briefingBody, h('p', { class: 'briefing-text', text: desc }));
+      briefing.hidden = false;
     } else {
-      briefing.style.display = 'none';
+      briefing.hidden = true;
     }
     mapBtn.style.display = current?.map_id ? '' : 'none';
   }

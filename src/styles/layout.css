@@ -351,10 +351,10 @@ body::before {
 .player-screen {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 320px;
-  grid-template-rows: auto 1fr;
-  grid-template-areas: "header header" "content notebook";
-  gap: 20px; padding: 24px 32px;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas: "header header" "briefing briefing" "content notebook";
+  gap: 16px; padding: 24px 32px;
 }
 .player-header {
   grid-area: header;
@@ -370,47 +370,62 @@ body::before {
   font-size: 0.72rem; letter-spacing: 0.08em; color: var(--fog); margin-top: 4px;
 }
 .player-toolbar { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* Collapsible briefing panel */
 .player-briefing {
-  grid-column: 1 / -1;
+  grid-area: briefing;
   border: 1px solid rgba(201,169,110,0.3);
-  padding: 18px 22px; background: rgba(20,14,6,0.4);
+  background: rgba(20,14,6,0.4);
 }
+.player-briefing[hidden] { display: none; }
+.briefing-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; background: none; border: none; cursor: pointer;
+  color: var(--parchment); text-align: left;
+}
+.briefing-toggle:hover { background: rgba(201,169,110,0.06); }
 .briefing-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.95rem; font-style: italic; color: var(--parchment); margin-bottom: 8px;
+  font-size: 0.95rem; font-style: italic; color: var(--parchment);
 }
-.player-content { grid-area: content; }
-.player-content .clues-grid, .player-content { min-width: 0; }
+.briefing-chevron {
+  font-size: 0.75rem; color: var(--fog); transition: transform 0.2s; flex-shrink: 0;
+}
+.player-briefing.collapsed .briefing-chevron { transform: rotate(-90deg); }
+.briefing-body { padding: 0 18px 14px; }
+.player-briefing.collapsed .briefing-body { display: none; }
+
+.player-content { grid-area: content; min-width: 0; }
 .player-notebook { grid-area: notebook; align-self: start; position: sticky; top: 24px; }
 
-/* Player revealed clue cards */
+/* Player revealed clue cards — compact */
 .revealed-card {
   cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-  overflow: hidden; display: flex; flex-direction: column; min-height: 210px;
+  overflow: hidden; display: flex; flex-direction: column;
   border: 2px solid var(--parchment-darker); background: var(--parchment);
   box-shadow: 3px 3px 0 rgba(0,0,0,0.25);
 }
 .revealed-card:hover { transform: translateY(-2px); box-shadow: 5px 5px 0 rgba(0,0,0,0.35); }
-.revealed-card img { width: 100%; height: 170px; flex-shrink: 0; object-fit: cover; display: block; }
+.revealed-card img { width: 100%; height: 110px; flex-shrink: 0; object-fit: cover; display: block; }
 .revealed-card-text {
-  padding: 10px 12px; flex: 1;
+  padding: 8px 10px; flex: 1;
   font-family: 'IM Fell English', Georgia, serif;
-  font-size: 0.88rem; line-height: 1.55; color: var(--ink); background: var(--paper);
-  overflow: hidden;
-  background-image: repeating-linear-gradient(transparent, transparent 24px, rgba(122,92,18,0.1) 24px, rgba(122,92,18,0.1) 25px);
+  font-size: 0.8rem; line-height: 1.45; color: var(--ink); background: var(--paper);
+  overflow: hidden; max-height: 90px;
+  background-image: repeating-linear-gradient(transparent, transparent 22px, rgba(122,92,18,0.1) 22px, rgba(122,92,18,0.1) 23px);
 }
 .revealed-card-label {
-  flex-shrink: 0; padding: 8px 10px;
+  flex-shrink: 0; padding: 5px 8px;
   font-family: 'Courier Prime', 'Courier New', monospace;
-  font-size: 0.72rem; letter-spacing: 0.05em; color: var(--ink);
+  font-size: 0.67rem; letter-spacing: 0.05em; color: var(--ink);
   border-top: 1px solid var(--parchment-darker); background: var(--parchment);
 }
-.player-content .clues-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.player-content .clues-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 
 @media (max-width: 860px) {
   .player-screen {
     grid-template-columns: 1fr;
-    grid-template-areas: "header" "content" "notebook";
+    grid-template-areas: "header" "briefing" "content" "notebook";
   }
   .player-notebook { position: static; }
   .gm-content { flex-direction: column; }
