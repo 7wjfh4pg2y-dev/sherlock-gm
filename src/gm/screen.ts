@@ -647,6 +647,7 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   let briefingEditing = false;
+  let briefingCollapsed = false;
 
   function renderBriefing(s: AppState): void {
     const current = selectors.currentCase(s);
@@ -693,11 +694,25 @@ export function createGMScreen(): GMScreenHandle {
     });
     const editView = h('div', { class: 'briefing-edit' }, textarea, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
 
+    const toggleHeader = h('button', {
+      class: 'briefing-toggle',
+      on: {
+        click: () => {
+          briefingCollapsed = !briefingCollapsed;
+          briefingPanel.classList.toggle('collapsed', briefingCollapsed);
+        },
+      },
+    },
+      h('span', { class: 'briefing-title', text: 'Case Briefing' }),
+      h('span', { class: 'briefing-chevron', text: '▾' }),
+    );
+
     clear(briefingPanel);
     briefingPanel.style.display = '';
+    briefingPanel.classList.toggle('collapsed', briefingCollapsed);
     briefingPanel.append(
-      h('div', { class: 'briefing-header', text: 'Case Briefing' }),
-      briefingEditing ? editView : displayView,
+      toggleHeader,
+      h('div', { class: 'briefing-body' }, briefingEditing ? editView : displayView),
     );
   }
 

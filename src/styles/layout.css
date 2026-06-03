@@ -200,20 +200,19 @@ body::before {
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
 
-/* GM briefing */
+/* GM briefing — collapsible */
 .gm-briefing {
   border: 1px solid rgba(201,169,110,0.3);
   margin-bottom: 24px; overflow: hidden;
   box-shadow: 2px 3px 12px rgba(0,0,0,0.3);
 }
-.briefing-header {
-  padding: 12px 20px;
+.gm-briefing .briefing-toggle {
   background: rgba(139,105,20,0.12);
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 0.85rem; font-style: italic; letter-spacing: 0.08em;
-  color: var(--parchment);
   border-bottom: 1px solid rgba(201,169,110,0.25);
+  border-radius: 0;
 }
+.gm-briefing.collapsed .briefing-body { display: none; }
+.gm-briefing .briefing-body { padding: 0; }
 .briefing-display, .briefing-edit { padding: 18px 22px; }
 .briefing-text {
   font-family: 'IM Fell English', Georgia, serif;
@@ -351,7 +350,7 @@ body::before {
 .player-screen {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 450px;
   grid-template-rows: auto auto 1fr;
   grid-template-areas: "header header" "briefing briefing" "content notebook";
   gap: 16px; padding: 24px 32px;
@@ -420,7 +419,7 @@ body::before {
   font-size: 0.67rem; letter-spacing: 0.05em; color: var(--ink);
   border-top: 1px solid var(--parchment-darker); background: var(--parchment);
 }
-.player-content .clues-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.player-content .clues-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
 @media (max-width: 860px) {
   .player-screen {
