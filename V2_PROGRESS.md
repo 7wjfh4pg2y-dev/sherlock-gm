@@ -95,8 +95,18 @@ NOT bundled into logic.
   maps library modal with attach/detach + upload/rename/delete, GM notebook
   modal with Shared + per-player dynamic tabs using createNotebook + noteCard
   delete actions). Typechecks clean. NOT yet wired by main.ts (S5).
-- [ ] **S5 — Styles + full wiring** (part 6). Port Victorian CSS into structured
-  files; assemble `main.ts` router (landing → GM / player); index.html shells.
+- [x] **S5 — Styles + full wiring** (part 6). Done: `src/styles/layout.css`
+  (base/grain, landing, GM login, form inputs, GM screen layout, clue grid,
+  briefing, player panel rows, maps grid, player screen grid layout, responsive
+  breakpoint); `index.css` now imports tokens → layout → components.
+  `src/landing.ts` (two-door landing, onJoin callback), `src/gm/loginScreen.ts`
+  (already in S4), `src/player/joinScreen.ts` (name + case-code form; resolves
+  full-UUID or 8-char-prefix codes; `?case=` deep-link prefills + locks code),
+  `src/main.ts` (router: one #app mount, reacts to store.role + local wantJoin;
+  mounts landing / join / gm-login / gm / player; tears down prev screen's
+  realtime via destroy()). Builds + typechecks clean. Verified in jsdom (esbuild
+  IIFE bundle): landing→GM-login→GM-screen and landing→join + `?case=` deep-link
+  all mount correctly with the right controls.
 - [ ] **S6 — Verify + swap.** End-to-end check (GM creates case, player joins,
   clue reveal, notes private+shared sync, map attach). Then swap to `main`,
   delete `legacy/`, confirm Pages deploy.
@@ -117,11 +127,14 @@ NOT bundled into logic.
 
 ## Current status
 
-**S4 complete.** GM module done; typechecks clean. Next:
-**S5 — Styles + full wiring**: Port Victorian CSS (masthead, landing page,
-GM screen layout, player screen layout, clue grid, GM right panel) into
-`src/styles/`. Assemble `main.ts` router: detect `?case=` param for player
-join, otherwise show landing with GM / Player buttons; route to
-`createGMLoginScreen()` / `createGMScreen()` / `createPlayerScreen()`.
-Complete `index.html` with single `<div id="app">` mount. Also needed:
-player join form (name input + case code; auto-fills from `?case=` param).
+**S5 complete.** Full app wired: builds clean, router verified in jsdom for all
+navigation paths (landing → GM login → GM screen; landing → join; `?case=`
+deep-link). Next: **S6 — Verify + swap.** Live end-to-end against real Supabase
+(GM creates case, player joins via code, clue reveal propagates, notes
+private+shared sync both ways, map attach shows for player) — needs a real
+browser + network, which the build environment blocks; run on Pages or locally.
+Then swap to `main`: point the Pages workflow at the v2 build (already does —
+`.github/workflows/deploy.yml` builds `dist/` on push to main), delete
+`legacy/`, remove old root `app.js`/`style.css`/`index.html` v1 remnants if any,
+confirm Pages deploy. NOTE: v1 currently lives on `main`; merging v2 will replace
+the live site — do the live verify FIRST.

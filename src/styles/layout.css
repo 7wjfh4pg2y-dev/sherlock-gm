@@ -1,0 +1,418 @@
+/* ── Layout & screens ── */
+/* Base, landing, GM screen, player screen, clue grid, forms. Component CSS
+   (buttons, modal, toast, notebook, directory, map viewer) lives in
+   components.css; design tokens in tokens.css. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0e0b06;
+  color: var(--ink);
+  font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at 15% 40%, #241a07 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, #1a1005 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, #1c1408 0%, transparent 60%);
+}
+
+/* Film-grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.5;
+}
+
+#app { min-height: 100vh; }
+
+.empty-state {
+  color: var(--fog);
+  font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.8;
+}
+
+.counter-badge {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.68rem;
+  background: var(--sepia);
+  color: var(--parchment);
+  padding: 2px 8px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Landing ── */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.landing-card {
+  background: var(--parchment);
+  border: 2px solid rgba(160, 120, 40, 0.7);
+  max-width: 480px;
+  width: 100%;
+  padding: 52px 56px;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 120px rgba(0,0,0,0.5), inset 0 0 80px rgba(122,92,18,0.06);
+  background-image: linear-gradient(160deg, #fdf8ee 0%, var(--parchment) 45%, #ede5d0 100%);
+}
+.landing-card::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(160,120,40,0.25);
+  pointer-events: none;
+}
+.landing-eyebrow {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--sepia); text-align: center; margin-bottom: 8px; opacity: 0.75;
+}
+.landing-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.2rem; font-weight: 700; text-align: center;
+  line-height: 1.1; color: var(--ink); margin-bottom: 4px;
+}
+.landing-divider { display: flex; align-items: center; justify-content: center; margin: 18px 0 16px; }
+.landing-divider-ornament {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.8rem; color: rgba(160,120,40,0.5); letter-spacing: 0.2em;
+}
+.landing-desc {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  font-size: 0.88rem; line-height: 1.75; color: var(--sepia);
+  text-align: center; margin-bottom: 28px; opacity: 0.85;
+}
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+
+/* ── GM login screen ── */
+.gm-login-screen {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px; max-width: 380px; margin: 0 auto;
+}
+.gm-login-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem; color: var(--parchment); text-align: center;
+}
+.gm-login-hint {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.72rem; color: var(--fog); text-align: center; letter-spacing: 0.04em;
+}
+.gm-reset-pw { opacity: 0.7; }
+
+/* ── Form inputs (shared by GM modals) ── */
+.gm-input {
+  width: 100%;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.95rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--parchment-darker);
+  padding: 10px 12px;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+.gm-input:focus { border-color: var(--sepia); }
+.form-error {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.75rem; color: var(--red); margin: 4px 0 8px; min-height: 1em;
+}
+.form-hint {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.72rem; color: var(--fog); margin: 4px 0 8px;
+}
+.form-section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem; font-style: italic; color: var(--sepia);
+  margin: 12px 0 8px;
+}
+.file-drop-label {
+  display: block;
+  border: 1px dashed var(--parchment-darker);
+  background: var(--paper);
+  padding: 18px; text-align: center; cursor: pointer;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.73rem; color: var(--fog); letter-spacing: 0.08em;
+  transition: all 0.2s; margin-bottom: 10px;
+}
+.file-drop-label:hover { border-color: var(--sepia); color: var(--ink); }
+.clue-type-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+.clue-type-field { margin-bottom: 4px; }
+
+/* ── GM screen ── */
+.gm-screen { min-height: 100vh; display: flex; flex-direction: column; }
+.gm-topbar {
+  background: rgba(14, 8, 2, 0.98);
+  border-bottom: 1px solid rgba(139,105,20,0.4);
+  padding: 12px 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.gm-case-row { display: flex; align-items: center; gap: 10px; }
+.gm-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gm-case-select {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.82rem; padding: 7px 10px;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--sepia); cursor: pointer; outline: none;
+}
+.gm-share-block {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding-top: 8px;
+}
+.gm-share-label {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fog);
+}
+.gm-invite-code {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 0.95rem; letter-spacing: 0.18em;
+  color: var(--sepia-light); background: rgba(244,232,206,0.06);
+  padding: 3px 10px; border: 1px solid rgba(139,105,20,0.4);
+}
+
+.gm-content { flex: 1; display: flex; gap: 24px; padding: 28px 32px; align-items: flex-start; }
+.gm-main { flex: 1; min-width: 0; }
+.gm-section { margin-bottom: 8px; }
+.gm-right-panel {
+  flex: 0 0 260px;
+  background: rgba(20, 14, 6, 0.6);
+  border: 1px solid rgba(139,105,20,0.3);
+  padding: 16px;
+  position: sticky; top: 28px;
+}
+.gm-panel-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem; font-style: italic; color: var(--parchment-dark);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+
+/* GM briefing */
+.gm-briefing {
+  border: 1px solid rgba(201,169,110,0.3);
+  margin-bottom: 24px; overflow: hidden;
+  box-shadow: 2px 3px 12px rgba(0,0,0,0.3);
+}
+.briefing-header {
+  padding: 12px 20px;
+  background: rgba(139,105,20,0.12);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.85rem; font-style: italic; letter-spacing: 0.08em;
+  color: var(--parchment);
+  border-bottom: 1px solid rgba(201,169,110,0.25);
+}
+.briefing-display, .briefing-edit { padding: 18px 22px; }
+.briefing-text {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.95rem; color: var(--parchment-dark);
+  line-height: 1.8; white-space: pre-wrap; margin: 0 0 12px;
+}
+.briefing-empty { display: block; color: var(--fog); font-style: italic; margin-bottom: 12px; }
+.briefing-textarea { margin-bottom: 8px; }
+.briefing-edit-row { display: flex; gap: 8px; }
+
+/* ── Player panel rows ── */
+.player-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid rgba(201,169,110,0.12);
+}
+.presence-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); flex-shrink: 0;
+}
+.presence-dot.online { background: #4caf50; box-shadow: 0 0 4px #4caf50; }
+.player-color-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);
+}
+.player-name {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.78rem; color: var(--parchment);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.player-name.kicked { opacity: 0.45; text-decoration: line-through; }
+.player-actions { display: flex; gap: 4px; }
+.player-actions .btn { font-size: 0.6rem; padding: 3px 6px; }
+.kicked-divider {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid rgba(201,169,110,0.2);
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fog);
+}
+
+/* ── Clue grid (GM + player share these) ── */
+.clues-section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.05rem; font-style: italic; color: var(--parchment-dark);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+}
+.clues-section-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(245,234,214,0.25), transparent);
+}
+.clues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.clue-card {
+  background: var(--parchment);
+  border: 1px solid var(--parchment-darker);
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+}
+.clue-card:hover { border-color: var(--sepia); transform: translateY(-3px); box-shadow: 5px 6px 0 rgba(0,0,0,0.35); }
+.clue-card.revealed { border-color: var(--sepia-light); background: #fffbf0; }
+.clue-card.revealed::after {
+  content: '✓ REVEALED';
+  position: absolute; top: 6px; right: 6px;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.52rem; letter-spacing: 0.12em;
+  background: var(--green); color: #b8ddb8; padding: 2px 6px;
+}
+.clue-thumb { width: 100%; height: 110px; object-fit: cover; display: block; background: var(--parchment-dark); }
+.clue-thumb-text {
+  width: 100%; height: 110px; padding: 10px 12px;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.8rem; line-height: 1.5; color: var(--ink); background: var(--paper);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+  background-image: repeating-linear-gradient(transparent, transparent 19px, rgba(122,92,18,0.13) 19px, rgba(122,92,18,0.13) 20px);
+}
+.clue-label {
+  padding: 8px 10px;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.70rem; letter-spacing: 0.06em; color: var(--ink);
+  border-top: 1px solid var(--parchment-darker);
+}
+.clue-actions { display: flex; border-top: 1px solid var(--parchment-darker); }
+.clue-action-btn {
+  flex: 1; padding: 6px 4px; border: none; background: transparent;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.63rem; letter-spacing: 0.05em; cursor: pointer; transition: background 0.15s;
+}
+.clue-action-btn.reveal { color: var(--green); border-right: 1px solid var(--parchment-darker); }
+.clue-action-btn.reveal:hover { background: #e8f5e8; }
+.clue-action-btn.hide { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
+.clue-action-btn.hide:hover { background: var(--parchment-dark); }
+.clue-action-btn.edit { color: var(--sepia); border-right: 1px solid var(--parchment-darker); }
+.clue-action-btn.edit:hover { background: var(--parchment-dark); }
+.clue-action-btn.del { color: var(--red); }
+.clue-action-btn.del:hover { background: #f5e8e8; }
+.clue-add-card {
+  border: 1px dashed rgba(184,160,120,0.45);
+  background: rgba(244,232,206,0.04);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 150px; cursor: pointer; color: var(--fog); transition: all 0.2s;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.73rem; letter-spacing: 0.1em; gap: 8px;
+}
+.clue-add-card:hover { border-color: rgba(184,160,120,0.8); color: var(--parchment-dark); }
+.clue-add-icon { font-size: 1.8rem; line-height: 1; }
+
+/* Clue expand modal body */
+.clue-expand-text {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 1rem; line-height: 1.8; color: var(--ink); white-space: pre-wrap;
+}
+
+/* ── Maps library ── */
+.maps-library-modal { max-width: 720px; width: 100%; }
+.maps-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.map-card { border: 1px solid var(--parchment-darker); overflow: hidden; }
+.map-card-attached { border-color: var(--green); }
+.map-thumb { width: 100%; height: 140px; object-fit: cover; display: block; cursor: pointer; }
+.map-card-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.map-rename-input { font-size: 0.78rem; padding: 4px 6px; margin-bottom: 0; }
+.map-card-actions { display: flex; gap: 4px; }
+.map-card-actions .btn { font-size: 0.65rem; padding: 3px 7px; }
+.map-attached { color: var(--green); border-color: var(--green); }
+.maps-upload-form { border-top: 1px solid var(--parchment-darker); padding-top: 14px; }
+
+/* ── GM notebook modal ── */
+.gm-notebook-modal { max-width: 720px; width: 100%; }
+
+/* ── Player screen ── */
+.player-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "header header" "content notebook";
+  gap: 20px; padding: 24px 32px;
+}
+.player-header {
+  grid-area: header;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 16px;
+}
+.screen-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.8rem; color: var(--parchment); font-weight: 700;
+}
+.screen-meta {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.72rem; letter-spacing: 0.08em; color: var(--fog); margin-top: 4px;
+}
+.player-toolbar { display: flex; gap: 8px; flex-shrink: 0; }
+.player-briefing {
+  grid-column: 1 / -1;
+  border: 1px solid rgba(201,169,110,0.3);
+  padding: 18px 22px; background: rgba(20,14,6,0.4);
+}
+.briefing-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem; font-style: italic; color: var(--parchment); margin-bottom: 8px;
+}
+.player-content { grid-area: content; }
+.player-content .clues-grid, .player-content { min-width: 0; }
+.player-notebook { grid-area: notebook; align-self: start; position: sticky; top: 24px; }
+
+/* Player revealed clue cards */
+.revealed-card {
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden; display: flex; flex-direction: column; min-height: 210px;
+  border: 2px solid var(--parchment-darker); background: var(--parchment);
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+}
+.revealed-card:hover { transform: translateY(-2px); box-shadow: 5px 5px 0 rgba(0,0,0,0.35); }
+.revealed-card img { width: 100%; height: 170px; flex-shrink: 0; object-fit: cover; display: block; }
+.revealed-card-text {
+  padding: 10px 12px; flex: 1;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.88rem; line-height: 1.55; color: var(--ink); background: var(--paper);
+  overflow: hidden;
+  background-image: repeating-linear-gradient(transparent, transparent 24px, rgba(122,92,18,0.1) 24px, rgba(122,92,18,0.1) 25px);
+}
+.revealed-card-label {
+  flex-shrink: 0; padding: 8px 10px;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.72rem; letter-spacing: 0.05em; color: var(--ink);
+  border-top: 1px solid var(--parchment-darker); background: var(--parchment);
+}
+.player-content .clues-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+@media (max-width: 860px) {
+  .player-screen {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "content" "notebook";
+  }
+  .player-notebook { position: static; }
+  .gm-content { flex-direction: column; }
+  .gm-right-panel { flex: 1 1 auto; width: 100%; position: static; }
+}

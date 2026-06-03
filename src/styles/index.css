@@ -1,13 +1,6 @@
-/* v2 styles — entry. Global theme/layout lands in S5; tokens + components here. */
+/* v2 styles — entry. tokens → layout → components. */
 @import './tokens.css';
+@import './layout.css';
 @import './components.css';
 
-:root {
-  color-scheme: dark;
-}
-body {
-  margin: 0;
-  background: #1a1005;
-  color: var(--parchment);
-  font-family: 'IM Fell English', Georgia, serif;
-}
+:root { color-scheme: dark; }
