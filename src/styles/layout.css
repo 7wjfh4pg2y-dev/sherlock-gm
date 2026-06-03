@@ -321,10 +321,11 @@ body::before {
 .clue-add-card:hover { border-color: rgba(184,160,120,0.8); color: var(--parchment-dark); }
 .clue-add-icon { font-size: 1.8rem; line-height: 1; }
 
-/* Clue expand modal body */
+/* Clue expand modal — wider lightbox, shared by GM + player */
+.clue-expand { max-width: 760px; width: 100%; }
 .clue-expand-text {
   font-family: 'IM Fell English', Georgia, serif;
-  font-size: 1rem; line-height: 1.8; color: var(--ink); white-space: pre-wrap;
+  font-size: 1.05rem; line-height: 1.85; color: var(--ink); white-space: pre-wrap;
 }
 
 /* ── Maps library ── */
