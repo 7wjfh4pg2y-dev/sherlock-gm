@@ -177,8 +177,10 @@ export function createGMScreen(): GMScreenHandle {
 
   async function handleDeleteClue(id: string): Promise<void> {
     if (!(await confirmDelete('Delete this clue?'))) return;
+    const caseId = store.getState().currentCaseId;
     try {
       await clueRepo.remove(id);
+      if (caseId) await loadGMClues(caseId); // DELETE events drop the case_id filter — refresh directly
     } catch { toast('Could not delete clue.'); }
   }
 
@@ -317,12 +319,16 @@ export function createGMScreen(): GMScreenHandle {
 
   async function handleDeletePlayer(player: PlayerRow): Promise<void> {
     if (!(await confirmDelete(`Delete all data for "${player.player_name}"? This removes their notes and cannot be undone.`))) return;
+    const caseId = store.getState().currentCaseId;
     try {
       const playerNotes = store.getState().notes.filter(
         (n) => n.player_name === player.player_name && n.player_color === player.player_color,
       );
       await Promise.all(playerNotes.map((n) => noteRepo.remove(n.id)));
       await playerRepo.remove(player.id);
+      // DELETE realtime events don't carry case_id (default replica identity),
+      // so the channel filter drops them — refresh our own view directly.
+      if (caseId) await loadGMRightPanel(caseId);
       toast('Player data deleted.');
     } catch { toast('Could not delete player data.'); }
   }
@@ -330,8 +336,10 @@ export function createGMScreen(): GMScreenHandle {
   // ── Mutations: notes ──
   async function handleDeleteNote(id: string): Promise<void> {
     if (!(await confirmDelete('Delete this note?'))) return;
+    const caseId = store.getState().currentCaseId;
     try {
       await noteRepo.remove(id);
+      if (caseId) await loadGMRightPanel(caseId); // see note above re: DELETE events
     } catch { toast('Could not delete note.'); }
   }
 

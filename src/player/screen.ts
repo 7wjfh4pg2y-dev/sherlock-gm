@@ -103,8 +103,12 @@ export function createPlayerScreen(): ScreenHandle {
 
   async function deleteNote(note: NoteRow): Promise<void> {
     if (!(await confirmDelete('Delete this note?'))) return;
+    const caseId = store.getState().currentCaseId;
     try {
       await noteRepo.remove(note.id);
+      // DELETE realtime events don't carry case_id, so the channel filter drops
+      // them — refresh our own notes directly so the card disappears.
+      if (caseId) store.set({ notes: await noteRepo.listForCase(caseId) });
     } catch {
       toast('Could not delete note.');
     }
