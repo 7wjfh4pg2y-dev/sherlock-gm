@@ -8,7 +8,6 @@ import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
-import { openTitledModal } from '../components/modal';
 import { openMapViewer } from '../components/mapViewer';
 import { openDirectoryModal } from '../components/directory';
 import { confirmDelete } from '../components/confirmDelete';
@@ -21,8 +20,10 @@ export interface ScreenHandle {
 }
 
 export function createPlayerScreen(): ScreenHandle {
-  // Local UI state (not store): which note is being edited inline.
+  // Local UI state (not store): which note is being edited inline, and which
+  // clue is expanded in the inline detail panel.
   let editingId: string | null = null;
+  let selectedClueId: string | null = null;
 
   const caseTitle = h('h1', { class: 'screen-title' });
   const meta = h('div', { class: 'screen-meta' });
@@ -66,7 +67,12 @@ export function createPlayerScreen(): ScreenHandle {
     briefingChevron,
   );
   const briefing = h('div', { class: 'player-briefing' }, briefingToggle, briefingBody);
-  const clueFeed = h('div', { class: 'player-content' });
+  // Clue detail panel (inline, above the grid) + the grid itself. Keeping the
+  // detail inline rather than in a modal means the notebook stays interactive
+  // while a clue is open.
+  const clueDetail = h('div', { class: 'clue-detail' });
+  const clueGrid = h('div', { class: 'clues-grid' });
+  const clueFeed = h('div', { class: 'player-content' }, clueDetail, clueGrid);
 
   // ── Notebook ──
   const privateFeed = h('div', { class: 'nb-notes' });
@@ -146,21 +152,60 @@ export function createPlayerScreen(): ScreenHandle {
     const body = c.clue_text
       ? h('div', { class: 'revealed-card-text', text: c.clue_text })
       : h('img', { attrs: { src: c.image_url, alt: c.location_name } });
+    const cls = 'revealed-card' + (c.id === selectedClueId ? ' selected' : '');
     return h(
       'div',
-      { class: 'revealed-card', on: { click: () => openClue(c) } },
+      { class: cls, on: { click: () => openClue(c) } },
       body,
       h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`),
     );
   }
 
   function openClue(c: ClueRow): void {
-    if (!c.clue_text && c.image_url) {
-      openMapViewer(c.image_url, c.location_name);
+    // Toggle: clicking the open clue again closes the panel.
+    selectedClueId = selectedClueId === c.id ? null : c.id;
+    renderDetail(store.getState());
+    renderClues(store.getState());
+  }
+
+  function closeDetail(): void {
+    selectedClueId = null;
+    renderDetail(store.getState());
+    renderClues(store.getState());
+  }
+
+  function renderDetail(s: AppState): void {
+    const c = selectedClueId
+      ? selectors.revealedClues(s).find((x) => x.id === selectedClueId)
+      : null;
+    // Selected clue gone (hidden/deleted by GM) → collapse the panel.
+    if (!c) {
+      selectedClueId = null;
+      clueDetail.hidden = true;
+      replaceChildren(clueDetail);
       return;
     }
-    const { body } = openTitledModal(c.location_name, { contentClass: 'clue-expand' });
-    body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
+    clueDetail.hidden = false;
+    const closeBtn = h('button', {
+      class: 'clue-detail-close',
+      text: '✕',
+      attrs: { 'aria-label': 'Close clue' },
+      on: { click: closeDetail },
+    });
+    const head = h(
+      'div',
+      { class: 'clue-detail-head' },
+      h('span', { class: 'clue-detail-title', text: c.location_name }),
+      closeBtn,
+    );
+    const bodyContent = c.clue_text
+      ? h('div', { class: 'clue-detail-text', text: c.clue_text })
+      : h('img', {
+          class: 'clue-detail-img',
+          attrs: { src: c.image_url, alt: c.location_name },
+          on: { click: () => openMapViewer(c.image_url!, c.location_name) },
+        });
+    replaceChildren(clueDetail, head, bodyContent);
   }
 
   function openMap(): void {
@@ -223,11 +268,10 @@ export function createPlayerScreen(): ScreenHandle {
       ? `${revealed.length} clue${revealed.length === 1 ? '' : 's'} gathered thus far`
       : '';
     if (!revealed.length) {
-      replaceChildren(clueFeed, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
+      replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
       return;
     }
-    const grid = h('div', { class: 'clues-grid' }, ...revealed.map(clueCard));
-    replaceChildren(clueFeed, grid);
+    replaceChildren(clueGrid, ...revealed.map(clueCard));
   }
 
   function renderChrome(s: AppState): void {
@@ -245,6 +289,7 @@ export function createPlayerScreen(): ScreenHandle {
 
   function render(s: AppState): void {
     renderChrome(s);
+    renderDetail(s);
     renderClues(s);
     renderNotes(s);
   }
