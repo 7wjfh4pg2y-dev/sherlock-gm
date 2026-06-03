@@ -107,9 +107,14 @@ NOT bundled into logic.
   realtime via destroy()). Builds + typechecks clean. Verified in jsdom (esbuild
   IIFE bundle): landing→GM-login→GM-screen and landing→join + `?case=` deep-link
   all mount correctly with the right controls.
-- [ ] **S6 — Verify + swap.** End-to-end check (GM creates case, player joins,
-  clue reveal, notes private+shared sync, map attach). Then swap to `main`,
-  delete `legacy/`, confirm Pages deploy.
+- [x] **S6 — Swap + verify (shipped live-first).** Sandbox can't open a browser
+  or reach Supabase, so the live GM↔player data flow couldn't be driven here.
+  Decision (user): go live-first rather than block on a preview. Fast-forwarded
+  `claude/v2-rebuild` → `main` (clean, no conflicts), pushed; Pages workflow ran
+  green (build + deploy). Root v1 `app.js`/`style.css`/`index.html` replaced by
+  the v2 build; `legacy/` deleted. User confirmed the live site works as far as
+  tested (GM login/case/clue reveal, player join, notes, map). v1 history remains
+  in git if ever needed.
 
 ## Things v1 got wrong — must NOT recreate
 
@@ -127,14 +132,12 @@ NOT bundled into logic.
 
 ## Current status
 
-**S5 complete.** Full app wired: builds clean, router verified in jsdom for all
-navigation paths (landing → GM login → GM screen; landing → join; `?case=`
-deep-link). Next: **S6 — Verify + swap.** Live end-to-end against real Supabase
-(GM creates case, player joins via code, clue reveal propagates, notes
-private+shared sync both ways, map attach shows for player) — needs a real
-browser + network, which the build environment blocks; run on Pages or locally.
-Then swap to `main`: point the Pages workflow at the v2 build (already does —
-`.github/workflows/deploy.yml` builds `dist/` on push to main), delete
-`legacy/`, remove old root `app.js`/`style.css`/`index.html` v1 remnants if any,
-confirm Pages deploy. NOTE: v1 currently lives on `main`; merging v2 will replace
-the live site — do the live verify FIRST.
+**SHIPPED.** All six segments complete; v2 is live on GitHub Pages from `main`.
+`legacy/` removed. The rebuild is done.
+
+Architecture recap (the whole point of v2): mutations only ever *write* to
+Supabase; realtime (`subscribeToCase` in `src/data/supabase.ts`) is the *only*
+thing that calls `store.set`; components `store.subscribe` and re-render. No
+second copy of truth. If a sync bug appears, it's in one of three places: the
+realtime handlers in `src/data/supabase.ts`, or the `store.subscribe` render
+paths in `src/gm/screen.ts` / `src/player/screen.ts`.
