@@ -116,6 +116,15 @@ NOT bundled into logic.
   tested (GM login/case/clue reveal, player join, notes, map). v1 history remains
   in git if ever needed.
 
+## Operational notes (Supabase)
+
+- **REPLICA IDENTITY FULL** is set on `clues`, `notes`, `players`, `cases` (run
+  in the SQL editor). Required so realtime DELETE events carry `case_id` — the
+  per-case channel filter (`case_id=eq.X`) drops deletes otherwise, and records
+  would linger on other clients. The acting client also refreshes its own store
+  slice after each delete (belt-and-suspenders). If a fresh Supabase project is
+  ever used, re-run the four `ALTER TABLE … REPLICA IDENTITY FULL;` statements.
+
 ## Things v1 got wrong — must NOT recreate
 
 - Two copies of truth (manual reload + realtime). v2: realtime is the only thing
