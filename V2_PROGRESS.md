@@ -116,6 +116,17 @@ NOT bundled into logic.
   tested (GM login/case/clue reveal, player join, notes, map). v1 history remains
   in git if ever needed.
 
+## Operational notes (GitHub Pages)
+
+- **Pages Source MUST be "GitHub Actions"** (Settings → Pages → Build and
+  deployment → Source). It was originally "Deploy from a branch" (v1 served raw
+  `index.html`/`app.js` from `main`). After the v2 swap that stale branch deploy
+  kept being served — the site showed a blank/white page because v2's root
+  `index.html` references built `assets/…` that don't exist in the repo source.
+  Fix: set Source = GitHub Actions, then run the `deploy.yml` workflow (push to
+  main or manual dispatch) so the built `dist/` becomes the live deployment.
+  Do NOT re-enable the legacy "pages build and deployment" (Jekyll) workflow.
+
 ## Operational notes (Supabase)
 
 - **REPLICA IDENTITY FULL** is set on `clues`, `notes`, `players`, `cases` (run
