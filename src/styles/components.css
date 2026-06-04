@@ -233,7 +233,9 @@
 /* ── Map viewer ── */
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }
 .map-viewer-stage { max-width: 100%; max-height: 100%; overflow: auto; display: flex; align-items: center; justify-content: center; }
+.map-viewer-stage--pdf { width: 94vw; height: 94vh; overflow: hidden; }
 .map-viewer-img { max-width: 92vw; max-height: 90vh; object-fit: contain; cursor: zoom-in; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); }
 .map-viewer-img.zoomed { max-width: none; max-height: none; cursor: zoom-out; }
+.map-viewer-pdf { width: 100%; height: 100%; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); background: #fff; }
 .map-viewer-close { position: fixed; top: 18px; right: 22px; font-size: 1.6rem; color: var(--fog); cursor: pointer; background: none; border: none; line-height: 1; z-index: 801; }
 .map-viewer-close:hover { color: var(--parchment); }

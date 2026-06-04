@@ -23,9 +23,9 @@ export function openNewspaperModal(): void {
     attrs: { type: 'text', placeholder: 'Label (e.g. The Times, 15 Oct)' },
   }) as HTMLInputElement;
   const fileInput = h('input', {
-    attrs: { type: 'file', accept: 'image/*', style: 'display:none' },
+    attrs: { type: 'file', accept: 'image/*,application/pdf', style: 'display:none' },
   }) as HTMLInputElement;
-  const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to select newspaper scan' });
+  const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to select newspaper scan (image or PDF)' });
   fileLabel.appendChild(fileInput);
   fileInput.addEventListener('change', () => {
     if (fileInput.files?.[0]) fileLabel.textContent = '📄 ' + fileInput.files[0].name;
@@ -78,15 +78,24 @@ export function openNewspaperModal(): void {
         },
       });
 
+      const isPdf = p.image_url.split('?')[0].toLowerCase().endsWith('.pdf');
+      const preview = isPdf
+        ? h('div', {
+            class: 'map-thumb map-thumb--pdf',
+            text: '📄',
+            on: { click: () => openMapViewer(p.image_url, p.name) },
+          })
+        : h('img', {
+            class: 'map-thumb',
+            attrs: { src: p.image_url, alt: p.name },
+            on: { click: () => openMapViewer(p.image_url, p.name) },
+          });
+
       grid.append(
         h(
           'div',
           { class: 'map-card' },
-          h('img', {
-            class: 'map-thumb',
-            attrs: { src: p.image_url, alt: p.name },
-            on: { click: () => openMapViewer(p.image_url, p.name) },
-          }),
+          preview,
           h(
             'div',
             { class: 'map-card-body' },

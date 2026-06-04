@@ -337,6 +337,7 @@ body::before {
 .map-card { border: 1px solid var(--parchment-darker); overflow: hidden; }
 .map-card-attached { border-color: var(--green); }
 .map-thumb { width: 100%; height: 140px; object-fit: cover; display: block; cursor: pointer; }
+.map-thumb--pdf { display: flex; align-items: center; justify-content: center; font-size: 3rem; background: var(--parchment-dark); height: 140px; }
 .map-card-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .newspaper-page-label {
   font-family: 'Courier Prime', 'Courier New', monospace;

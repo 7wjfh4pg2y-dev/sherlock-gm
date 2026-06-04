@@ -1,21 +1,15 @@
-// ── Map viewer ──
-// Fullscreen image overlay with click-to-zoom (fit ⇄ actual size, pan by scroll)
-// and ✕ / backdrop / Esc to close. Its own chrome — not the parchment modal box.
+// ── Map / document viewer ──
+// Fullscreen overlay. Images: click-to-zoom (fit ⇄ actual size).
+// PDFs: rendered in an <iframe> — native browser PDF renderer, full zoom controls.
+// ✕ / backdrop / Esc to close.
 
 import { h } from '../util/dom';
 
-export function openMapViewer(url: string, name = 'Map'): void {
-  const img = h('img', {
-    class: 'map-viewer-img',
-    attrs: { src: url, alt: name },
-    on: {
-      click: (e) => {
-        e.stopPropagation();
-        img.classList.toggle('zoomed');
-      },
-    },
-  });
+function isPdf(url: string): boolean {
+  return url.split('?')[0].toLowerCase().endsWith('.pdf');
+}
 
+export function openMapViewer(url: string, name = 'Map'): void {
   const close = (): void => {
     document.removeEventListener('keydown', onKey);
     overlay.remove();
@@ -24,14 +18,37 @@ export function openMapViewer(url: string, name = 'Map'): void {
     if (e.key === 'Escape') close();
   }
 
+  let stage: HTMLElement;
+  if (isPdf(url)) {
+    const frame = h('iframe', {
+      class: 'map-viewer-pdf',
+      attrs: { src: url, title: name },
+    });
+    stage = h('div', { class: 'map-viewer-stage map-viewer-stage--pdf' }, frame);
+  } else {
+    const img = h('img', {
+      class: 'map-viewer-img',
+      attrs: { src: url, alt: name },
+      on: {
+        click: (e) => {
+          e.stopPropagation();
+          img.classList.toggle('zoomed');
+        },
+      },
+    });
+    stage = h('div', { class: 'map-viewer-stage' }, img);
+  }
+
+  // For PDFs the iframe captures pointer events, so backdrop click is unreliable.
+  // Close via ✕ button or Esc only when showing a PDF; backdrop click works for images.
   const overlay = h(
     'div',
     {
       class: 'map-viewer-overlay',
-      on: { click: () => close() },
+      on: { click: (e) => { if (!isPdf(url) && e.target === overlay) close(); } },
     },
     h('button', { class: 'map-viewer-close', text: '✕', on: { click: () => close() } }),
-    h('div', { class: 'map-viewer-stage' }, img),
+    stage,
   );
 
   document.addEventListener('keydown', onKey);

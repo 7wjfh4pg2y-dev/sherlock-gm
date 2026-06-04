@@ -237,17 +237,26 @@ export function createPlayerScreen(): ScreenHandle {
       return;
     }
 
-    const thumb = (p: NewspaperRow): HTMLElement =>
-      h(
+    const thumb = (p: NewspaperRow): HTMLElement => {
+      const isPdf = p.image_url.split('?')[0].toLowerCase().endsWith('.pdf');
+      const preview = isPdf
+        ? h('div', {
+            class: 'map-thumb map-thumb--pdf',
+            text: '📄',
+            on: { click: () => openMapViewer(p.image_url, p.name) },
+          })
+        : h('img', {
+            class: 'map-thumb',
+            attrs: { src: p.image_url, alt: p.name },
+            on: { click: () => openMapViewer(p.image_url, p.name) },
+          });
+      return h(
         'div',
         { class: 'map-card' },
-        h('img', {
-          class: 'map-thumb',
-          attrs: { src: p.image_url, alt: p.name },
-          on: { click: () => openMapViewer(p.image_url, p.name) },
-        }),
+        preview,
         h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })),
       );
+    };
 
     // Group by owning case (chronological) so players can tell which mystery's
     // paper is which. case_name/case_ordinal come from the listUnlocked join.
