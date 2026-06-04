@@ -9,7 +9,9 @@ import { toast } from './toast';
 import * as directory from '../data/directory';
 import type { DirectoryEntry } from '../data/types';
 
-export function openDirectoryModal(isGM: boolean): void {
+/** Builds the directory UI as a standalone element (no modal chrome) so it can
+ *  be embedded inline in a panel or wrapped in a modal. */
+export function buildDirectory(isGM: boolean): HTMLElement {
   // ── Search controls ──
   const searchInput = h('input', {
     class: 'directory-search-input',
@@ -182,6 +184,11 @@ export function openDirectoryModal(isGM: boolean): void {
 
   refreshCategories();
   renderResults();
-  openModal(content, { contentClass: 'directory-modal' });
   setTimeout(() => searchInput.focus(), 80);
+  return content;
+}
+
+/** Opens the directory in a modal overlay (GM still uses this path). */
+export function openDirectoryModal(isGM: boolean): void {
+  openModal(buildDirectory(isGM), { contentClass: 'directory-modal' });
 }

@@ -9,7 +9,7 @@ import type { ClueRow, NoteRow, NewspaperRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
-import { openDirectoryModal } from '../components/directory';
+import { buildDirectory } from '../components/directory';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { leaveCase } from './join';
@@ -44,9 +44,6 @@ export function createPlayerScreen(): ScreenHandle {
   const tabBar = h('div', { class: 'player-tab-bar' });
 
   function switchTab(id: TabId): void {
-    // Directory + Map open overlays; they don't change the panel content.
-    if (id === 'directory') { openDirectoryModal(false); return; }
-    if (id === 'map') { openMap(); return; }
     activeTab = id;
     for (const [tid, btn] of Object.entries(tabButtons)) {
       btn?.classList.toggle('active', tid === id);
@@ -77,6 +74,12 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Newspaper panel (inline PDF.js) ──
   const newspaperPanel = h('div', { class: 'player-newspaper-panel' });
+
+  // ── Directory panel (inline; built once, retains search state) ──
+  const directoryPanel = h('div', { class: 'player-directory-panel' });
+
+  // ── Map panel (inline image + expand-to-overlay) ──
+  const mapPanel = h('div', { class: 'player-map-panel' });
 
   // ── Notebook (always right) ──
   const privateFeed = h('div', { class: 'nb-notes' });
@@ -131,15 +134,6 @@ export function createPlayerScreen(): ScreenHandle {
     editingId = null;
     try { await noteRepo.updateContent(note.id, text); }
     catch { toast('Could not save edit.'); renderNotes(store.getState()); }
-  }
-
-  // ── Map helper (still overlay) ──
-  function openMap(): void {
-    const s = store.getState();
-    const current = selectors.currentCase(s);
-    const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
-    if (!map) { toast('No map attached to this case.'); return; }
-    openMapViewer(map.url, map.name);
   }
 
   // ── Rendering ──
@@ -227,6 +221,37 @@ export function createPlayerScreen(): ScreenHandle {
     }
   }
 
+  // Directory is built lazily once so its search box keeps state across tab
+  // switches and store re-renders (it manages its own data internally).
+  let directoryBuilt = false;
+  function renderDirectory(): void {
+    if (!directoryBuilt) {
+      replaceChildren(directoryPanel, buildDirectory(false));
+      directoryBuilt = true;
+    }
+  }
+
+  function renderMap(s: AppState): void {
+    clear(mapPanel);
+    const current = selectors.currentCase(s);
+    const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
+    if (!map) {
+      mapPanel.append(h('div', { class: 'empty-state', text: 'No map attached to this case.' }));
+      return;
+    }
+    const expandBtn = h('button', {
+      class: 'btn btn-secondary btn-sm map-expand-btn',
+      text: '⤢ Open fullscreen',
+      on: { click: () => openMapViewer(map.url, map.name) },
+    });
+    const img = h('img', {
+      class: 'player-map-img',
+      attrs: { src: map.url, alt: map.name },
+      on: { click: () => openMapViewer(map.url, map.name) },
+    });
+    mapPanel.append(h('div', { class: 'player-map-head' }, expandBtn), img);
+  }
+
   function renderPanel(s: AppState): void {
     if (activeTab === 'briefing') {
       renderBriefing(s);
@@ -238,6 +263,12 @@ export function createPlayerScreen(): ScreenHandle {
     } else if (activeTab === 'newspaper') {
       renderNewspaper(s);
       replaceChildren(panelEl, newspaperPanel);
+    } else if (activeTab === 'directory') {
+      renderDirectory();
+      replaceChildren(panelEl, directoryPanel);
+    } else if (activeTab === 'map') {
+      renderMap(s);
+      replaceChildren(panelEl, mapPanel);
     }
   }
 
