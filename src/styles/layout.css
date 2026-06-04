@@ -374,7 +374,7 @@ body::before {
 
 /* ── Player screen ── */
 .player-screen {
-  min-height: 100vh;
+  height: 100vh; overflow: hidden;
   display: flex; flex-direction: column;
   padding: 20px 28px; gap: 0;
 }
@@ -422,41 +422,46 @@ body::before {
   background: rgba(201,169,110,0.06);
 }
 
-/* Panel area below tabs */
-.player-main { display: flex; flex-direction: column; min-width: 0; }
-.player-panel { padding: 20px 0; min-height: 200px; }
+/* Panel area below tabs — fills the stretched column so all tabs share height */
+.player-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.player-panel {
+  padding: 20px 0; flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+}
 
-/* Briefing panel */
-.player-briefing-panel { padding: 4px 0; }
+/* Text panels scroll internally if they overflow */
+.player-briefing-panel,
+.player-newspaper-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0; }
 .player-briefing-panel .briefing-text {
   font-family: 'IM Fell English', Georgia, serif;
   font-size: 1rem; line-height: 1.85; color: var(--parchment-dark); white-space: pre-wrap;
 }
-
-/* Newspaper panel */
-.player-newspaper-panel { padding: 4px 0; }
 .player-newspaper-panel .maps-grid { margin-bottom: 24px; }
+
+/* Clues panel scrolls internally too */
+.player-panel > div:not([class]) { flex: 1; min-height: 0; overflow-y: auto; }
 
 /* Directory panel (inline — needs parchment bg so ink text is visible) */
 .player-directory-panel {
   background: var(--parchment);
   padding: 16px 20px;
   border: 1px solid var(--parchment-darker);
-  max-height: calc(100vh - 180px);
+  flex: 1; min-height: 0;
   display: flex; flex-direction: column;
 }
 .player-directory-panel .directory-modal-header { padding: 0 0 12px; }
 .player-directory-panel .modal-title { font-size: 1.1rem; color: var(--ink); }
-.player-directory-panel .directory-results { max-height: calc(100vh - 340px); }
+.player-directory-panel > div { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.player-directory-panel .directory-results { flex: 1; min-height: 0; }
 
 /* Map panel */
-.player-map-panel { padding: 0; }
+.player-map-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
 .player-map-inlay {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--parchment-darker);
   box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
-  height: calc(100vh - 160px);
+  flex: 1; min-height: 0;
   background: #0e0b06;
 }
 .player-map-viewport {
@@ -477,8 +482,7 @@ body::before {
    align-items:stretch). The note feed scrolls internally with a hidden bar. */
 .player-notebook {
   display: flex; flex-direction: column;
-  position: sticky; top: 20px;
-  max-height: calc(100vh - 76px); /* 76px ≈ header + body padding-top */
+  min-height: 0; /* fills the stretched grid column; bottom aligns with map/directory */
 }
 .player-notebook .notebook { display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .player-notebook .nb-paper { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; }
