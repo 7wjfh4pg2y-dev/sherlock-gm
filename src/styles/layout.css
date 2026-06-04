@@ -470,16 +470,32 @@ body::before {
   transform-origin: center center;
   user-select: none; pointer-events: none;
 }
-.player-map-fullscreen-btn {
+.player-map-ctrls {
   position: absolute; bottom: 12px; right: 12px;
+  display: flex; gap: 8px;
+}
+.player-map-ctrl-btn {
   background: rgba(14,11,6,0.75); border: 1px solid var(--sepia);
   color: var(--parchment); font-size: 1rem; width: 34px; height: 34px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background 0.15s; border-radius: 2px;
 }
-.player-map-fullscreen-btn:hover { background: var(--sepia); }
+.player-map-ctrl-btn:hover { background: var(--sepia); }
 
 .player-notebook { align-self: start; position: sticky; top: 20px; }
+
+/* Cap the notebook to the panel height so the page doesn't grow forever; the
+   note feed scrolls internally with a hidden scrollbar. Composer stays pinned. */
+.player-notebook { max-height: calc(100vh - 160px); display: flex; flex-direction: column; }
+.player-notebook .notebook { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.player-notebook .nb-paper { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; }
+.player-notebook .nb-page.active { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.player-notebook .nb-page.active > div { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.player-notebook .nb-notes {
+  overflow-y: auto; min-height: 0; flex: 1;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
 /* Collapsible briefing (GM side still uses these) */
 .player-briefing {

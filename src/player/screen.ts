@@ -10,6 +10,7 @@ import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
+import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { leaveCase } from './join';
@@ -25,6 +26,8 @@ export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
   let selectedClueId: string | null = null;
   let activeTab: TabId = 'clues';
+  let mapPanZoom: PanZoomHandle | null = null;
+  let builtMapId: string | null = null;
 
   // ── Header (slim — just title + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
@@ -232,82 +235,47 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function renderMap(s: AppState): void {
-    (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup?.();
-    clear(mapPanel);
     const current = selectors.currentCase(s);
     const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
+    // Don't rebuild (and lose zoom/pan) if the same map is already mounted — a
+    // store update from notes/clues shouldn't reset what the player is examining.
+    if ((map?.id ?? null) === builtMapId && mapPanel.childElementCount > 0) return;
+    builtMapId = map?.id ?? null;
+    mapPanZoom?.detach();
+    mapPanZoom = null;
+    clear(mapPanel);
     if (!map) {
       mapPanel.append(h('div', { class: 'empty-state', text: 'No map attached to this case.' }));
       return;
     }
 
-    // Pan/zoom state
-    let scale = 1;
-    let tx = 0;
-    let ty = 0;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startTx = 0;
-    let startTy = 0;
-
     const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name } });
     const viewport = h('div', { class: 'player-map-viewport' }, img);
+    mapPanZoom = attachPanZoom(viewport, img);
 
-    function applyTransform(): void {
-      img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-    }
-
-    viewport.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      scale = Math.min(6, Math.max(0.5, scale + delta));
-      applyTransform();
-    }, { passive: false });
-
-    viewport.addEventListener('mousedown', (e) => {
-      if (e.button !== 0) return;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startTx = tx;
-      startTy = ty;
-      viewport.style.cursor = 'grabbing';
+    const resetBtn = h('button', {
+      class: 'player-map-ctrl-btn',
+      text: '⟲',
+      attrs: { title: 'Reset view' },
+      on: { click: () => mapPanZoom?.reset() },
     });
-
-    function onMouseMove(e: MouseEvent): void {
-      if (!dragging) return;
-      tx = startTx + (e.clientX - startX);
-      ty = startTy + (e.clientY - startY);
-      applyTransform();
-    }
-    function onMouseUp(): void {
-      if (!dragging) return;
-      dragging = false;
-      viewport.style.cursor = 'grab';
-    }
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    // Clean up window listeners when map panel is next cleared (tab switch / case change)
-    const origClear = mapPanel.dataset['cleanup'];
-    void origClear;
-    (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-
     const fullscreenBtn = h('button', {
-      class: 'player-map-fullscreen-btn',
+      class: 'player-map-ctrl-btn',
       text: '⤢',
       attrs: { title: 'Open fullscreen' },
       on: { click: () => openMapViewer(map.url, map.name) },
     });
 
-    mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, fullscreenBtn));
+    mapPanel.append(h('div', { class: 'player-map-inlay' },
+      viewport,
+      h('div', { class: 'player-map-ctrls' }, resetBtn, fullscreenBtn),
+    ));
   }
 
   function renderPanel(s: AppState): void {
+    // Tear down the map's window listeners whenever we're not showing the map.
+    // builtMapId resets so re-entering the tab rebuilds and re-attaches pan/zoom.
+    if (activeTab !== 'map' && mapPanZoom) { mapPanZoom.detach(); mapPanZoom = null; builtMapId = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
@@ -385,7 +353,7 @@ export function createPlayerScreen(): ScreenHandle {
     element,
     destroy() {
       unsubscribe();
-      (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup?.();
+      mapPanZoom?.detach();
     },
   };
 }

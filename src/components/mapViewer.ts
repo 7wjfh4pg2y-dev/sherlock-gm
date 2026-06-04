@@ -1,9 +1,10 @@
 // ── Map / document viewer ──
-// Fullscreen overlay. Images: click-to-zoom (fit ⇄ actual size).
+// Fullscreen overlay. Images: drag-to-pan + wheel-to-zoom, with a reset button.
 // PDFs delegate to openPdfViewer (PDF.js, in-world chrome).
 // ✕ / backdrop / Esc to close.
 
 import { h } from '../util/dom';
+import { attachPanZoom } from '../util/panZoom';
 
 function isPdf(url: string): boolean {
   return url.split('?')[0].toLowerCase().endsWith('.pdf');
@@ -19,6 +20,7 @@ export function openMapViewer(url: string, name = 'Map'): void {
 
   const close = (): void => {
     document.removeEventListener('keydown', onKey);
+    pz.detach();
     overlay.remove();
   };
   function onKey(e: KeyboardEvent): void {
@@ -28,14 +30,16 @@ export function openMapViewer(url: string, name = 'Map'): void {
   const img = h('img', {
     class: 'map-viewer-img',
     attrs: { src: url, alt: name },
-    on: {
-      click: (e) => {
-        e.stopPropagation();
-        img.classList.toggle('zoomed');
-      },
-    },
   });
   const stage = h('div', { class: 'map-viewer-stage' }, img);
+  const pz = attachPanZoom(stage, img);
+
+  const resetBtn = h('button', {
+    class: 'map-viewer-reset',
+    text: '⟲',
+    attrs: { title: 'Reset view' },
+    on: { click: (e) => { e.stopPropagation(); pz.reset(); } },
+  });
 
   const overlay = h(
     'div',
@@ -44,6 +48,7 @@ export function openMapViewer(url: string, name = 'Map'): void {
       on: { click: (e) => { if (e.target === overlay) close(); } },
     },
     h('button', { class: 'map-viewer-close', text: '✕', on: { click: () => close() } }),
+    resetBtn,
     stage,
   );
 

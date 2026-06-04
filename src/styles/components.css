@@ -232,11 +232,12 @@
 
 /* ── Map viewer ── */
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }
-.map-viewer-stage { max-width: 100%; max-height: 100%; overflow: auto; display: flex; align-items: center; justify-content: center; }
-.map-viewer-img { max-width: 92vw; max-height: 90vh; object-fit: contain; cursor: zoom-in; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); }
-.map-viewer-img.zoomed { max-width: none; max-height: none; cursor: zoom-out; }
+.map-viewer-stage { width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: grab; }
+.map-viewer-img { max-width: 92vw; max-height: 90vh; object-fit: contain; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); transform-origin: center center; user-select: none; pointer-events: none; }
 .map-viewer-close { position: fixed; top: 18px; right: 22px; font-size: 1.6rem; color: var(--fog); cursor: pointer; background: none; border: none; line-height: 1; z-index: 801; }
 .map-viewer-close:hover { color: var(--parchment); }
+.map-viewer-reset { position: fixed; top: 18px; right: 60px; font-size: 1.4rem; color: var(--fog); cursor: pointer; background: none; border: none; line-height: 1; z-index: 801; }
+.map-viewer-reset:hover { color: var(--parchment); }
 
 /* ── PDF viewer (PDF.js, in-world chrome) ── */
 .pdf-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.96); z-index: 800; display: flex; flex-direction: column; align-items: center; }
