@@ -20,12 +20,12 @@ export function openNewspaperModal(): void {
   const grid = h('div', { class: 'maps-grid' });
   const nameInput = h('input', {
     class: 'gm-input',
-    attrs: { type: 'text', placeholder: 'Page label (e.g. The Times, p.1)' },
+    attrs: { type: 'text', placeholder: 'Label (e.g. The Times, 15 Oct)' },
   }) as HTMLInputElement;
   const fileInput = h('input', {
     attrs: { type: 'file', accept: 'image/*', style: 'display:none' },
   }) as HTMLInputElement;
-  const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to select scan' });
+  const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to select newspaper scan' });
   fileLabel.appendChild(fileInput);
   fileInput.addEventListener('change', () => {
     if (fileInput.files?.[0]) fileLabel.textContent = '📄 ' + fileInput.files[0].name;
@@ -38,7 +38,7 @@ export function openNewspaperModal(): void {
   function renderGrid(rows: NewspaperRow[]): void {
     clear(grid);
     if (!rows.length) {
-      grid.append(h('p', { class: 'empty-state', text: 'No newspaper pages added yet.' }));
+      grid.append(h('p', { class: 'empty-state', text: 'No newspapers added yet. Add as many as the case requires.' }));
       return;
     }
     for (const p of rows) {
@@ -103,7 +103,7 @@ export function openNewspaperModal(): void {
   uploadBtn.addEventListener('click', async () => {
     const file = fileInput.files?.[0];
     if (!file) { uploadErr.textContent = 'Select a scan image.'; return; }
-    const name = nameInput.value.trim() || `Page ${store.getState().newspapers.length + 1}`;
+    const name = nameInput.value.trim() || `Newspaper ${store.getState().newspapers.length + 1}`;
     uploadErr.textContent = 'Uploading…';
     uploadBtn.setAttribute('disabled', '');
     try {
@@ -127,7 +127,7 @@ export function openNewspaperModal(): void {
   body.append(
     grid,
     h('div', { class: 'maps-upload-form' },
-      h('h3', { class: 'form-section-title', text: 'Add Newspaper Page' }),
+      h('h3', { class: 'form-section-title', text: 'Add Newspaper' }),
       nameInput,
       fileLabel,
       uploadErr,
