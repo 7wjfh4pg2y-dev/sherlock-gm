@@ -28,6 +28,9 @@ export function createPlayerScreen(): ScreenHandle {
   let activeTab: TabId = 'clues';
   let mapPanZoom: PanZoomHandle | null = null;
   let builtMapId: string | null = null;
+  let newspaperPdfHandle: { destroy(): void; zoomIn(): void; zoomOut(): void; reset(): void } | null = null;
+  let builtNewspaperUrl: string | null = null;
+  let currentNewspaperUrl: string | null = null;
 
   // ── Header (slim — just title + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
@@ -195,33 +198,70 @@ export function createPlayerScreen(): ScreenHandle {
     }
   }
 
-  function renderNewspaper(s: AppState): void {
+  function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
+    // Don't rebuild if the same paper is already displayed.
+    if (paper.image_url === builtNewspaperUrl && newspaperPanel.childElementCount > 0) return;
+    newspaperPdfHandle?.destroy();
+    newspaperPdfHandle = null;
+    builtNewspaperUrl = paper.image_url;
     clear(newspaperPanel);
+
+    // Selector strip when multiple papers available.
+    if (allPapers.length > 1) {
+      const strip = h('div', { class: 'newspaper-selector' });
+      for (const p of allPapers) {
+        strip.append(h('button', {
+          class: 'newspaper-selector-btn' + (p.image_url === paper.image_url ? ' active' : ''),
+          text: p.name,
+          on: {
+            click: () => {
+              currentNewspaperUrl = p.image_url;
+              builtNewspaperUrl = null; // force rebuild
+              buildNewspaperInlay(p, allPapers);
+            },
+          },
+        }));
+      }
+      newspaperPanel.append(strip);
+    }
+
+    // Inline PDF inlay.
+    const scrollEl = h('div', { class: 'pdf-inlay-scroll' },
+      h('div', { class: 'pdf-viewer-status', text: 'Loading…' }));
+
+    let handle: { destroy(): void; zoomIn(): void; zoomOut(): void; reset(): void } | null = null;
+
+    const ctrls = h('div', { class: 'map-ctrl-bar' },
+      h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },  on: { click: () => handle?.reset() } }),
+      h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },     on: { click: () => handle?.zoomOut() } }),
+      h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },      on: { click: () => handle?.zoomIn() } }),
+      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(paper.image_url, paper.name) } }),
+    );
+
+    const inlay = h('div', { class: 'player-newspaper-inlay' }, scrollEl, ctrls);
+    newspaperPanel.append(inlay);
+
+    void import('../components/pdfViewer').then((m) => {
+      const pdfHandle = m.createInlinePdfViewer(paper.image_url);
+      handle = pdfHandle;
+      newspaperPdfHandle = pdfHandle;
+      // Replace the loading placeholder with the PDF element.
+      scrollEl.replaceChildren(pdfHandle.element);
+    });
+  }
+
+  function renderNewspaper(s: AppState): void {
     const papers = s.newspapers;
     if (!papers.length) {
+      clear(newspaperPanel);
       newspaperPanel.append(h('div', { class: 'empty-state', text: 'No newspapers available for this case yet.' }));
       return;
     }
-    // Group by owning case (chronological)
-    const groups = new Map<number, { name: string; items: NewspaperRow[] }>();
-    for (const p of papers) {
-      const ord = p.case_ordinal ?? 0;
-      if (!groups.has(ord)) groups.set(ord, { name: p.case_name ?? 'Newspapers', items: [] });
-      groups.get(ord)!.items.push(p);
+    if (!currentNewspaperUrl || !papers.find((p) => p.image_url === currentNewspaperUrl)) {
+      currentNewspaperUrl = papers[0].image_url;
     }
-    const sorted = [...groups.entries()].sort((a, b) => a[0] - b[0]);
-    for (const [, g] of sorted) {
-      const isPdf = (p: NewspaperRow) => p.image_url.split('?')[0].toLowerCase().endsWith('.pdf');
-      const card = (p: NewspaperRow): HTMLElement => {
-        const preview = isPdf(p)
-          ? h('div', { class: 'map-thumb map-thumb--pdf', text: '📄', on: { click: () => openMapViewer(p.image_url, p.name) } })
-          : h('img', { class: 'map-thumb', attrs: { src: p.image_url, alt: p.name }, on: { click: () => openMapViewer(p.image_url, p.name) } });
-        return h('div', { class: 'map-card' }, preview,
-          h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })));
-      };
-      if (sorted.length > 1) newspaperPanel.append(h('h3', { class: 'newspaper-group-title', text: g.name }));
-      newspaperPanel.append(h('div', { class: 'maps-grid' }, ...g.items.map(card)));
-    }
+    const paper = papers.find((p) => p.image_url === currentNewspaperUrl)!;
+    buildNewspaperInlay(paper, papers);
   }
 
   // Directory is built lazily once so its search box keeps state across tab
@@ -265,8 +305,9 @@ export function createPlayerScreen(): ScreenHandle {
 
   function renderPanel(s: AppState): void {
     // Tear down the map's window listeners whenever we're not showing the map.
-    // builtMapId resets so re-entering the tab rebuilds and re-attaches pan/zoom.
     if (activeTab !== 'map' && mapPanZoom) { mapPanZoom.detach(); mapPanZoom = null; builtMapId = null; }
+    // Tear down newspaper PDF when leaving; builtNewspaperUrl resets so it rebuilds on re-enter.
+    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
@@ -345,6 +386,7 @@ export function createPlayerScreen(): ScreenHandle {
     destroy() {
       unsubscribe();
       mapPanZoom?.detach();
+      newspaperPdfHandle?.destroy();
     },
   };
 }

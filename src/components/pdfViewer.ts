@@ -17,6 +17,62 @@ const ZOOM_STEP = 0.25;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4;
 
+export interface InlinePdfHandle {
+  element: HTMLElement;
+  zoomIn(): void;
+  zoomOut(): void;
+  reset(): void;
+  destroy(): void;
+}
+
+export function createInlinePdfViewer(url: string): InlinePdfHandle {
+  let zoom = 1;
+  let doc: pdfjsLib.PDFDocumentProxy | null = null;
+  const loadingTask = pdfjsLib.getDocument({ url });
+  const pagesEl = h('div', { class: 'pdf-inlay-pages' });
+  const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
+  const element = h('div', { class: 'pdf-inlay-scroll' }, status, pagesEl);
+
+  async function renderPages(): Promise<void> {
+    if (!doc) return;
+    clear(pagesEl);
+    const dpr = window.devicePixelRatio || 1;
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const unscaled = page.getViewport({ scale: 1 });
+      const scale = (BASE_WIDTH / unscaled.width) * zoom;
+      const viewport = page.getViewport({ scale: scale * dpr });
+      const canvas = h('canvas', { class: 'pdf-viewer-page' }) as HTMLCanvasElement;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.width = viewport.width / dpr + 'px';
+      canvas.style.height = viewport.height / dpr + 'px';
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        pagesEl.append(canvas);
+        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      }
+    }
+  }
+
+  loadingTask.promise
+    .then((d) => { doc = d; status.remove(); return renderPages(); })
+    .catch(() => { status.textContent = 'Could not load this document.'; });
+
+  function bump(dir: 1 | -1): void {
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round((zoom + dir * ZOOM_STEP) * 100) / 100));
+    void renderPages();
+  }
+
+  return {
+    element,
+    zoomIn()  { bump(1); },
+    zoomOut() { bump(-1); },
+    reset()   { zoom = 1; void renderPages(); },
+    destroy() { void loadingTask.destroy(); },
+  };
+}
+
 export function openPdfViewer(url: string, name = 'Document'): void {
   let zoom = 1;
   let doc: pdfjsLib.PDFDocumentProxy | null = null;
