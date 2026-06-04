@@ -2,18 +2,19 @@
 // Called when a case is selected (or re-selected after realtime events).
 // Fetches all case data in parallel and pushes it into the store.
 
-import { cases, clues, players, notes, maps } from '../data/supabase';
+import { cases, clues, players, notes, maps, newspapers } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
 import { store } from '../state/store';
 import type { MapRow } from '../data/types';
 
 export async function loadGMCase(caseId: string): Promise<void> {
-  const [caseData, allClues, allPlayers, allNotes, allMaps] = await Promise.all([
+  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers] = await Promise.all([
     cases.get(caseId),
     clues.listForCase(caseId),
     players.listForCase(caseId),
     notes.listForCase(caseId),
     maps.list(),
+    newspapers.listForCase(caseId),
   ]);
 
   const mapList: MapRow[] = allMaps;
@@ -26,7 +27,13 @@ export async function loadGMCase(caseId: string): Promise<void> {
     players: allPlayers,
     notes: allNotes,
     maps: mapList,
+    newspapers: allNewspapers,
   });
+}
+
+/** Reload only newspapers (used by the newspapers realtime handler). */
+export async function loadGMNewspapers(caseId: string): Promise<void> {
+  store.set({ newspapers: await newspapers.listForCase(caseId) });
 }
 
 export async function loadGMMaps(): Promise<void> {

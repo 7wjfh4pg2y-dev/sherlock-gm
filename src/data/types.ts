@@ -47,6 +47,17 @@ export interface MapRow {
   created_at: string;
 }
 
+// A newspaper is a per-case collection of scanned page images, always visible
+// to players (handed out at case start in the physical game, not "revealed").
+export interface NewspaperRow {
+  id: string;
+  case_id: string;
+  name: string;
+  image_url: string;
+  position: number;
+  created_at: string;
+}
+
 // ── Insert payloads (server fills id/created_at/defaults) ──
 export type CaseInsert = { name: string; description?: string | null };
 export type ClueInsert = {
@@ -69,6 +80,12 @@ export type NoteInsert = {
   is_private: boolean;
 };
 export type MapInsert = { name: string; url: string };
+export type NewspaperInsert = {
+  case_id: string;
+  name: string;
+  image_url: string;
+  position: number;
+};
 
 // ── App-level (non-DB) types ──
 export interface DirectoryEntry {

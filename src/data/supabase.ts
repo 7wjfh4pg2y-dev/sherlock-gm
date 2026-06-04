@@ -9,6 +9,7 @@ import type {
   PlayerRow, PlayerInsert,
   NoteRow, NoteInsert,
   MapRow, MapInsert,
+  NewspaperRow, NewspaperInsert,
   DirectoryOverrides,
 } from './types';
 
@@ -154,6 +155,25 @@ export const maps = {
   },
 };
 
+// ── Newspapers ──
+// Per-case scanned pages, always visible to players (no reveal flag).
+export const newspapers = {
+  async listForCase(caseId: string): Promise<NewspaperRow[]> {
+    return unwrap(
+      await sb.from('newspapers').select('*').eq('case_id', caseId).order('position'),
+    ) ?? [];
+  },
+  async create(payload: NewspaperInsert): Promise<NewspaperRow> {
+    return unwrap(await sb.from('newspapers').insert(payload).select().single());
+  },
+  async rename(id: string, name: string): Promise<void> {
+    unwrap(await sb.from('newspapers').update({ name }).eq('id', id).select());
+  },
+  async remove(id: string): Promise<void> {
+    unwrap(await sb.from('newspapers').delete().eq('id', id).select());
+  },
+};
+
 // ── Storage ──
 export const storage = {
   async uploadImage(file: File): Promise<string> {
@@ -166,6 +186,13 @@ export const storage = {
   async uploadMapImage(file: File): Promise<string> {
     const ext = file.name.split('.').pop() ?? 'png';
     const path = `maps/${Date.now()}.${ext}`;
+    const { error } = await sb.storage.from(STORAGE_BUCKET).upload(path, file);
+    if (error) throw new DbError(error.message);
+    return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  },
+  async uploadNewspaperImage(file: File): Promise<string> {
+    const ext = file.name.split('.').pop() ?? 'png';
+    const path = `newspapers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await sb.storage.from(STORAGE_BUCKET).upload(path, file);
     if (error) throw new DbError(error.message);
     return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
@@ -198,7 +225,7 @@ export const storage = {
 // One channel per case carrying clues/players/notes changes. Callers pass a
 // single handler invoked (debounced upstream if desired) on any change to the
 // named table. This is the ONLY thing that should drive store updates.
-type TableName = 'clues' | 'players' | 'notes';
+type TableName = 'clues' | 'players' | 'notes' | 'newspapers';
 
 export function subscribeToCase(
   caseId: string,

@@ -135,6 +135,12 @@ NOT bundled into logic.
   would linger on other clients. The acting client also refreshes its own store
   slice after each delete (belt-and-suspenders). If a fresh Supabase project is
   ever used, re-run the four `ALTER TABLE … REPLICA IDENTITY FULL;` statements.
+- **`newspapers` table** must exist (run `db/001_newspapers.sql` in the SQL
+  editor). Per-case scanned newspaper pages, always visible to players (no
+  reveal flag — handed out at case start in the physical game). Open RLS +
+  REPLICA IDENTITY FULL + added to the `supabase_realtime` publication, same as
+  the other tables. Without it, the GM "📰 Newspaper" upload and the player
+  reader will error.
 
 ## Things v1 got wrong — must NOT recreate
 

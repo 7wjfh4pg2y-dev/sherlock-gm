@@ -5,7 +5,7 @@
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { MapRow } from '../data/types';
 import {
-  cases, players, clues, notes, maps,
+  cases, players, clues, notes, maps, newspapers,
   subscribeToCase, trackPresence, removeChannel,
 } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
@@ -39,9 +39,10 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
   }
 
   await loadDirectory(caseId);
-  const [revealed, allNotes] = await Promise.all([
+  const [revealed, allNotes, allNewspapers] = await Promise.all([
     clues.listRevealed(caseId),
     notes.listForCase(caseId),
+    newspapers.listForCase(caseId),
   ]);
 
   store.set({
@@ -52,6 +53,7 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
     clues: revealed,
     notes: allNotes,
     maps: mapList,
+    newspapers: allNewspapers,
     players: [],
   });
 
@@ -60,6 +62,7 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
     subscribeToCase(caseId, {
       clues: () => void clues.listRevealed(caseId).then((c) => store.set({ clues: c })),
       notes: () => void notes.listForCase(caseId).then((n) => store.set({ notes: n })),
+      newspapers: () => void newspapers.listForCase(caseId).then((p) => store.set({ newspapers: p })),
       players: () =>
         void players.kickedState(caseId, name).then((kicked) => {
           if (kicked) leaveCase();

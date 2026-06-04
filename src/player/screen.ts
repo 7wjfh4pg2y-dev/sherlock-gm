@@ -8,6 +8,7 @@ import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
+import { openTitledModal } from '../components/modal';
 import { openMapViewer } from '../components/mapViewer';
 import { openDirectoryModal } from '../components/directory';
 import { confirmDelete } from '../components/confirmDelete';
@@ -32,6 +33,11 @@ export function createPlayerScreen(): ScreenHandle {
     text: '🗺 Map',
     on: { click: openMap },
   });
+  const newspaperBtn = h('button', {
+    class: 'btn btn-secondary btn-sm',
+    text: '📰 Newspaper',
+    on: { click: openNewspaper },
+  });
   const dirBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: '📖 Directory',
@@ -46,7 +52,7 @@ export function createPlayerScreen(): ScreenHandle {
     'header',
     { class: 'player-header' },
     h('div', {}, caseTitle, meta),
-    h('div', { class: 'player-toolbar' }, dirBtn, mapBtn, leaveBtn),
+    h('div', { class: 'player-toolbar' }, dirBtn, mapBtn, newspaperBtn, leaveBtn),
   );
 
   let briefingCollapsed = false;
@@ -219,6 +225,37 @@ export function createPlayerScreen(): ScreenHandle {
     openMapViewer(map.url, map.name);
   }
 
+  function openNewspaper(): void {
+    const pages = store.getState().newspapers;
+    if (!pages.length) {
+      toast('No newspaper for this case.');
+      return;
+    }
+    // Single page → straight to the zoom viewer. Multiple → a picker grid.
+    if (pages.length === 1) {
+      openMapViewer(pages[0].image_url, pages[0].name);
+      return;
+    }
+    const grid = h(
+      'div',
+      { class: 'maps-grid' },
+      ...pages.map((p) =>
+        h(
+          'div',
+          { class: 'map-card' },
+          h('img', {
+            class: 'map-thumb',
+            attrs: { src: p.image_url, alt: p.name },
+            on: { click: () => openMapViewer(p.image_url, p.name) },
+          }),
+          h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })),
+        ),
+      ),
+    );
+    const { body } = openTitledModal('Newspaper', { contentClass: 'maps-library-modal' });
+    body.append(grid);
+  }
+
   function ownNoteActions(note: NoteRow): ReturnType<typeof noteCard> {
     const isPrivate = note.is_private;
     return noteCard({
@@ -285,6 +322,7 @@ export function createPlayerScreen(): ScreenHandle {
       briefing.hidden = true;
     }
     mapBtn.style.display = current?.map_id ? '' : 'none';
+    newspaperBtn.style.display = s.newspapers.length ? '' : 'none';
   }
 
   function render(s: AppState): void {

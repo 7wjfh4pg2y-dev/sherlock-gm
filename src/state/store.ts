@@ -3,7 +3,7 @@
 // imperatively. Mutations write to Supabase; realtime events call the setters
 // here; setters notify subscribers. That loop is the whole point of v2.
 
-import type { CaseRow, ClueRow, PlayerRow, NoteRow, MapRow } from '../data/types';
+import type { CaseRow, ClueRow, PlayerRow, NoteRow, MapRow, NewspaperRow } from '../data/types';
 
 export type Role = 'landing' | 'gm' | 'player';
 
@@ -24,6 +24,7 @@ export interface AppState {
   players: PlayerRow[];
   notes: NoteRow[];
   maps: MapRow[];
+  newspapers: NewspaperRow[];
   // Player identity (player role only).
   identity: Identity | null;
 }
@@ -37,6 +38,7 @@ const initialState: AppState = {
   players: [],
   notes: [],
   maps: [],
+  newspapers: [],
   identity: null,
 };
 
@@ -70,6 +72,7 @@ function createStore(initial: AppState) {
       clues: [],
       players: [],
       notes: [],
+      newspapers: [],
       identity: null,
     });
   }

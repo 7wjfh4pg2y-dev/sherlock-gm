@@ -17,9 +17,10 @@ import {
   removeChannel,
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { loadGMCase, loadGMRightPanel, loadGMClues } from './load';
+import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers } from './load';
 import { gmLogout, resetGMPassword } from './auth';
 import { openMapsLibrary, openCaseMap } from './mapsLibrary';
+import { openNewspaperModal } from './newspaperModal';
 import { openGMNotebook } from './notebookModal';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
@@ -55,6 +56,11 @@ export function createGMScreen(): GMScreenHandle {
     text: '🗺 Maps Library',
     on: { click: openMapsLibrary },
   });
+  const newspaperBtn = h('button', {
+    class: 'btn btn-secondary btn-sm',
+    text: '📰 Newspaper',
+    on: { click: openNewspaperModal },
+  });
   const dirBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: '📖 Directory',
@@ -81,7 +87,7 @@ export function createGMScreen(): GMScreenHandle {
     'div',
     { class: 'gm-topbar' },
     h('div', { class: 'gm-case-row' }, caseSelect, newCaseBtn, deleteCaseBtn),
-    h('div', { class: 'gm-toolbar' }, dirBtn, mapsBtn, mapViewBtn, notebookBtn, logoutBtn),
+    h('div', { class: 'gm-toolbar' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn, logoutBtn),
     shareBlock,
   );
 
@@ -351,6 +357,7 @@ export function createGMScreen(): GMScreenHandle {
         clues: () => void loadGMClues(caseId),
         players: () => void loadGMRightPanel(caseId),
         notes: () => void loadGMRightPanel(caseId),
+        newspapers: () => void loadGMNewspapers(caseId),
       }),
     );
     presenceChannel = watchPresence(caseId, (online) => {
