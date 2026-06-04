@@ -33,9 +33,13 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 export const cases = {
   async list(): Promise<CaseRow[]> {
     // Chronological order (ordinal) first, then creation order as a tiebreak.
-    return unwrap(
-      await sb.from('cases').select('*').order('ordinal').order('created_at'),
-    ) ?? [];
+    // Falls back to created_at order if the `ordinal` column isn't present yet
+    // (db/002 not run) — so existing cases still load before the migration.
+    const res = await sb.from('cases').select('*').order('ordinal').order('created_at');
+    if (res.error) {
+      return unwrap(await sb.from('cases').select('*').order('created_at')) ?? [];
+    }
+    return (res.data as CaseRow[]) ?? [];
   },
   async get(id: string): Promise<CaseRow | null> {
     const rows = unwrap(await sb.from('cases').select('*').eq('id', id)) as CaseRow[] | null;
@@ -173,18 +177,18 @@ export const newspapers = {
   // chronological position. Joins the owning case so the player reader can
   // group papers by mystery. Ordered by case ordinal, then page position.
   async listUnlocked(caseId: string): Promise<NewspaperRow[]> {
-    const cur = unwrap(
-      await sb.from('cases').select('ordinal').eq('id', caseId),
-    ) as { ordinal: number }[] | null;
-    const ordinal = cur?.[0]?.ordinal ?? 0;
-    const rows = (unwrap(
-      await sb
-        .from('newspapers')
-        .select('*, cases!inner(name, ordinal)')
-        .lte('cases.ordinal', ordinal)
-        .order('ordinal', { foreignTable: 'cases' })
-        .order('position'),
-    ) as (NewspaperRow & { cases: { name: string; ordinal: number } | null })[] | null) ?? [];
+    const cur = await sb.from('cases').select('ordinal').eq('id', caseId);
+    // No `ordinal` column yet (db/002 not run) → fall back to this case only.
+    if (cur.error) return this.listForCase(caseId);
+    const ordinal = (cur.data as { ordinal: number }[] | null)?.[0]?.ordinal ?? 0;
+    const res = await sb
+      .from('newspapers')
+      .select('*, cases!inner(name, ordinal)')
+      .lte('cases.ordinal', ordinal)
+      .order('ordinal', { foreignTable: 'cases' })
+      .order('position');
+    if (res.error) return this.listForCase(caseId);
+    const rows = (res.data as (NewspaperRow & { cases: { name: string; ordinal: number } | null })[] | null) ?? [];
     return rows.map((r) => ({
       id: r.id,
       case_id: r.case_id,
