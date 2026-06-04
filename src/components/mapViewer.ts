@@ -1,6 +1,6 @@
 // ── Map / document viewer ──
 // Fullscreen overlay. Images: click-to-zoom (fit ⇄ actual size).
-// PDFs: rendered in an <iframe> — native browser PDF renderer, full zoom controls.
+// PDFs delegate to openPdfViewer (PDF.js, in-world chrome).
 // ✕ / backdrop / Esc to close.
 
 import { h } from '../util/dom';
@@ -10,6 +10,13 @@ function isPdf(url: string): boolean {
 }
 
 export function openMapViewer(url: string, name = 'Map'): void {
+  if (isPdf(url)) {
+    // Lazy-load PDF.js (~1.2MB) only when a PDF is actually opened, so it never
+    // weighs down the initial page load.
+    void import('./pdfViewer').then((m) => m.openPdfViewer(url, name));
+    return;
+  }
+
   const close = (): void => {
     document.removeEventListener('keydown', onKey);
     overlay.remove();
@@ -18,34 +25,23 @@ export function openMapViewer(url: string, name = 'Map'): void {
     if (e.key === 'Escape') close();
   }
 
-  let stage: HTMLElement;
-  if (isPdf(url)) {
-    const frame = h('iframe', {
-      class: 'map-viewer-pdf',
-      attrs: { src: url, title: name },
-    });
-    stage = h('div', { class: 'map-viewer-stage map-viewer-stage--pdf' }, frame);
-  } else {
-    const img = h('img', {
-      class: 'map-viewer-img',
-      attrs: { src: url, alt: name },
-      on: {
-        click: (e) => {
-          e.stopPropagation();
-          img.classList.toggle('zoomed');
-        },
+  const img = h('img', {
+    class: 'map-viewer-img',
+    attrs: { src: url, alt: name },
+    on: {
+      click: (e) => {
+        e.stopPropagation();
+        img.classList.toggle('zoomed');
       },
-    });
-    stage = h('div', { class: 'map-viewer-stage' }, img);
-  }
+    },
+  });
+  const stage = h('div', { class: 'map-viewer-stage' }, img);
 
-  // For PDFs the iframe captures pointer events, so backdrop click is unreliable.
-  // Close via ✕ button or Esc only when showing a PDF; backdrop click works for images.
   const overlay = h(
     'div',
     {
       class: 'map-viewer-overlay',
-      on: { click: (e) => { if (!isPdf(url) && e.target === overlay) close(); } },
+      on: { click: (e) => { if (e.target === overlay) close(); } },
     },
     h('button', { class: 'map-viewer-close', text: '✕', on: { click: () => close() } }),
     stage,
