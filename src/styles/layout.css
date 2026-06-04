@@ -375,16 +375,12 @@ body::before {
 /* ── Player screen ── */
 .player-screen {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr 450px;
-  grid-template-rows: auto auto 1fr;
-  grid-template-areas: "header header" "briefing briefing" "content notebook";
-  gap: 16px; padding: 24px 32px;
+  display: flex; flex-direction: column;
+  padding: 20px 28px; gap: 0;
 }
 .player-header {
-  grid-area: header;
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 14px; margin-bottom: 0;
 }
 .screen-title {
   font-family: 'Playfair Display', Georgia, serif;
@@ -394,9 +390,56 @@ body::before {
   font-family: 'Courier Prime', 'Courier New', monospace;
   font-size: 0.72rem; letter-spacing: 0.08em; color: var(--fog); margin-top: 4px;
 }
-.player-toolbar { display: flex; gap: 8px; flex-shrink: 0; }
 
-/* Collapsible briefing panel */
+/* Two-column body: main (tabs + panel) | notebook */
+.player-body {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  align-items: start;
+  padding-top: 16px;
+}
+
+/* Tab bar */
+.player-tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 2px solid rgba(201,169,110,0.3);
+  margin-bottom: 0;
+}
+.player-tab-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fog); padding: 10px 18px;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: color 0.15s;
+}
+.player-tab-btn:hover { color: var(--parchment); }
+.player-tab-btn.active {
+  color: var(--parchment); border-bottom-color: var(--sepia);
+  background: rgba(201,169,110,0.06);
+}
+
+/* Panel area below tabs */
+.player-main { display: flex; flex-direction: column; min-width: 0; }
+.player-panel { padding: 20px 0; min-height: 200px; }
+
+/* Briefing panel */
+.player-briefing-panel { padding: 4px 0; }
+.player-briefing-panel .briefing-text {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 1rem; line-height: 1.85; color: var(--parchment-dark); white-space: pre-wrap;
+}
+
+/* Newspaper panel */
+.player-newspaper-panel { padding: 4px 0; }
+.player-newspaper-panel .maps-grid { margin-bottom: 24px; }
+
+.player-notebook { align-self: start; position: sticky; top: 20px; }
+
+/* Collapsible briefing (GM side still uses these) */
 .player-briefing {
   grid-area: briefing;
   border: 1px solid rgba(201,169,110,0.3);
@@ -421,7 +464,6 @@ body::before {
 .player-briefing.collapsed .briefing-body { display: none; }
 
 .player-content { grid-area: content; min-width: 0; }
-.player-notebook { grid-area: notebook; align-self: start; position: sticky; top: 24px; }
 
 /* Inline clue detail panel — expands above the grid so the notebook stays
    interactive while a clue is open (no blocking modal overlay). */

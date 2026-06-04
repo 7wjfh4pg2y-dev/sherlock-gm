@@ -1,14 +1,13 @@
 // ── Player screen ──
-// Renders purely from the store. Subscribes once; store changes (driven by
-// realtime) refresh the clue feed and notebook feeds in place — composer focus
-// and the active tab survive because only feed contents are replaced.
+// Tabbed layout: left panel has tabs (Briefing / Clues / Newspaper / Directory / Map),
+// right panel is always the notebook. Notes stay interactive regardless of which tab
+// is open. Newspaper renders inline as PDF.js canvases — no overlay.
 
-import { h, replaceChildren } from '../util/dom';
+import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
-import { openTitledModal } from '../components/modal';
 import { openMapViewer } from '../components/mapViewer';
 import { openDirectoryModal } from '../components/directory';
 import { confirmDelete } from '../components/confirmDelete';
@@ -20,88 +19,89 @@ export interface ScreenHandle {
   destroy(): void;
 }
 
+type TabId = 'briefing' | 'clues' | 'newspaper' | 'directory' | 'map';
+
 export function createPlayerScreen(): ScreenHandle {
-  // Local UI state (not store): which note is being edited inline, and which
-  // clue is expanded in the inline detail panel.
   let editingId: string | null = null;
   let selectedClueId: string | null = null;
+  let activeTab: TabId = 'clues';
 
+  // ── Header (slim — just title + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
-  const meta = h('div', { class: 'screen-meta' });
-  const mapBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '🗺 Map',
-    on: { click: openMap },
-  });
-  const newspaperBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '📰 Newspaper',
-    on: { click: openNewspaper },
-  });
-  const dirBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '📖 Directory',
-    on: { click: () => openDirectoryModal(false) },
-  });
-  const leaveBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: 'Leave',
-    on: { click: leaveCase },
-  });
-  const header = h(
-    'header',
-    { class: 'player-header' },
-    h('div', {}, caseTitle, meta),
-    h('div', { class: 'player-toolbar' }, dirBtn, mapBtn, newspaperBtn, leaveBtn),
-  );
+  const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
+  const header = h('header', { class: 'player-header' }, caseTitle, leaveBtn);
 
-  let briefingCollapsed = false;
-  const briefingBody = h('div', { class: 'briefing-body' });
-  const briefingChevron = h('span', { class: 'briefing-chevron', text: '▾' });
-  const briefingToggle = h(
-    'button',
-    {
-      class: 'briefing-toggle',
-      on: {
-        click: () => {
-          briefingCollapsed = !briefingCollapsed;
-          briefing.classList.toggle('collapsed', briefingCollapsed);
-        },
-      },
-    },
-    h('span', { class: 'briefing-title', text: 'Case Briefing' }),
-    briefingChevron,
-  );
-  const briefing = h('div', { class: 'player-briefing' }, briefingToggle, briefingBody);
-  // Clue detail panel (inline, above the grid) + the grid itself. Keeping the
-  // detail inline rather than in a modal means the notebook stays interactive
-  // while a clue is open.
+  // ── Tab bar ──
+  const TAB_DEFS: { id: TabId; label: string }[] = [
+    { id: 'briefing',  label: 'Case Brief' },
+    { id: 'clues',     label: 'Clues' },
+    { id: 'newspaper', label: 'Newspaper' },
+    { id: 'directory', label: 'Directory' },
+    { id: 'map',       label: 'Map' },
+  ];
+
+  const tabButtons: Partial<Record<TabId, HTMLElement>> = {};
+  const tabBar = h('div', { class: 'player-tab-bar' });
+
+  function switchTab(id: TabId): void {
+    // Directory + Map open overlays; they don't change the panel content.
+    if (id === 'directory') { openDirectoryModal(false); return; }
+    if (id === 'map') { openMap(); return; }
+    activeTab = id;
+    for (const [tid, btn] of Object.entries(tabButtons)) {
+      btn?.classList.toggle('active', tid === id);
+    }
+    renderPanel(store.getState());
+  }
+
+  for (const { id, label } of TAB_DEFS) {
+    const btn = h('button', {
+      class: 'player-tab-btn' + (id === activeTab ? ' active' : ''),
+      text: label,
+      on: { click: () => switchTab(id) },
+    });
+    tabButtons[id] = btn;
+    tabBar.append(btn);
+  }
+
+  // ── Main panel (tab content) ──
+  const panelEl = h('div', { class: 'player-panel' });
+
+  // ── Clue detail (inline, inside panel) ──
   const clueDetail = h('div', { class: 'clue-detail' });
   const clueGrid = h('div', { class: 'clues-grid' });
-  const clueFeed = h('div', { class: 'player-content' }, clueDetail, clueGrid);
+  const cluesPanel = h('div', {}, clueDetail, clueGrid);
 
-  // ── Notebook ──
+  // ── Briefing panel ──
+  const briefingPanel = h('div', { class: 'player-briefing-panel' });
+
+  // ── Newspaper panel (inline PDF.js) ──
+  const newspaperPanel = h('div', { class: 'player-newspaper-panel' });
+
+  // ── Notebook (always right) ──
   const privateFeed = h('div', { class: 'nb-notes' });
   const sharedFeed = h('div', { class: 'nb-notes' });
-  const privateContent = h(
-    'div',
-    {},
+  const privateContent = h('div', {},
     noteComposer({ placeholder: 'Record your private deductions…', onSubmit: (t) => addNote(t, true) }),
     privateFeed,
   );
-  const sharedContent = h(
-    'div',
-    {},
+  const sharedContent = h('div', {},
     noteComposer({ placeholder: 'Share your deductions with the team…', onSubmit: (t) => addNote(t, false) }),
     sharedFeed,
   );
   const notebook = createNotebook([
     { id: 'private', label: 'My Notes', content: privateContent },
-    { id: 'shared', label: 'Team Notes', content: sharedContent },
+    { id: 'shared',  label: 'Team Notes', content: sharedContent },
   ]);
   const notebookWrap = h('aside', { class: 'player-notebook' }, notebook.element);
 
-  const element = h('div', { class: 'player-screen' }, header, briefing, clueFeed, notebookWrap);
+  const element = h('div', { class: 'player-screen' },
+    header,
+    h('div', { class: 'player-body' },
+      h('div', { class: 'player-main' }, tabBar, panelEl),
+      notebookWrap,
+    ),
+  );
 
   // ── Mutations ──
   async function addNote(text: string, isPrivate: boolean): Promise<void> {
@@ -109,25 +109,13 @@ export function createPlayerScreen(): ScreenHandle {
     const me = store.getState().identity;
     if (!id || !me) return;
     try {
-      await noteRepo.create({
-        case_id: id,
-        player_name: me.name,
-        player_color: me.color,
-        content: text,
-        is_private: isPrivate,
-      });
-    } catch {
-      toast('Could not save note.');
-    }
+      await noteRepo.create({ case_id: id, player_name: me.name, player_color: me.color, content: text, is_private: isPrivate });
+    } catch { toast('Could not save note.'); }
   }
 
   async function shareNote(note: NoteRow): Promise<void> {
-    try {
-      await noteRepo.setPrivate(note.id, false);
-      toast('Shared with the team.');
-    } catch {
-      toast('Could not share note.');
-    }
+    try { await noteRepo.setPrivate(note.id, false); toast('Shared with the team.'); }
+    catch { toast('Could not share note.'); }
   }
 
   async function deleteNote(note: NoteRow): Promise<void> {
@@ -135,22 +123,23 @@ export function createPlayerScreen(): ScreenHandle {
     const caseId = store.getState().currentCaseId;
     try {
       await noteRepo.remove(note.id);
-      // DELETE realtime events don't carry case_id, so the channel filter drops
-      // them — refresh our own notes directly so the card disappears.
       if (caseId) store.set({ notes: await noteRepo.listForCase(caseId) });
-    } catch {
-      toast('Could not delete note.');
-    }
+    } catch { toast('Could not delete note.'); }
   }
 
   async function saveEdit(note: NoteRow, text: string): Promise<void> {
     editingId = null;
-    try {
-      await noteRepo.updateContent(note.id, text);
-    } catch {
-      toast('Could not save edit.');
-      renderNotes(store.getState());
-    }
+    try { await noteRepo.updateContent(note.id, text); }
+    catch { toast('Could not save edit.'); renderNotes(store.getState()); }
+  }
+
+  // ── Map helper (still overlay) ──
+  function openMap(): void {
+    const s = store.getState();
+    const current = selectors.currentCase(s);
+    const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
+    if (!map) { toast('No map attached to this case.'); return; }
+    openMapViewer(map.url, map.name);
   }
 
   // ── Rendering ──
@@ -158,17 +147,13 @@ export function createPlayerScreen(): ScreenHandle {
     const body = c.clue_text
       ? h('div', { class: 'revealed-card-text', text: c.clue_text })
       : h('img', { attrs: { src: c.image_url, alt: c.location_name } });
-    const cls = 'revealed-card' + (c.id === selectedClueId ? ' selected' : '');
-    return h(
-      'div',
-      { class: cls, on: { click: () => openClue(c) } },
-      body,
-      h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`),
-    );
+    return h('div', {
+      class: 'revealed-card' + (c.id === selectedClueId ? ' selected' : ''),
+      on: { click: () => openClue(c) },
+    }, body, h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`));
   }
 
   function openClue(c: ClueRow): void {
-    // Toggle: clicking the open clue again closes the panel.
     selectedClueId = selectedClueId === c.id ? null : c.id;
     renderDetail(store.getState());
     renderClues(store.getState());
@@ -181,109 +166,94 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function renderDetail(s: AppState): void {
-    const c = selectedClueId
-      ? selectors.revealedClues(s).find((x) => x.id === selectedClueId)
-      : null;
-    // Selected clue gone (hidden/deleted by GM) → collapse the panel.
-    if (!c) {
-      selectedClueId = null;
-      clueDetail.hidden = true;
-      replaceChildren(clueDetail);
-      return;
-    }
+    const c = selectedClueId ? selectors.revealedClues(s).find((x) => x.id === selectedClueId) : null;
+    if (!c) { selectedClueId = null; clueDetail.hidden = true; replaceChildren(clueDetail); return; }
     clueDetail.hidden = false;
-    const closeBtn = h('button', {
-      class: 'clue-detail-close',
-      text: '✕',
-      attrs: { 'aria-label': 'Close clue' },
-      on: { click: closeDetail },
-    });
-    const head = h(
-      'div',
-      { class: 'clue-detail-head' },
-      h('span', { class: 'clue-detail-title', text: c.location_name }),
-      closeBtn,
-    );
+    const closeBtn = h('button', { class: 'clue-detail-close', text: '✕', attrs: { 'aria-label': 'Close clue' }, on: { click: closeDetail } });
+    const head = h('div', { class: 'clue-detail-head' },
+      h('span', { class: 'clue-detail-title', text: c.location_name }), closeBtn);
     const bodyContent = c.clue_text
       ? h('div', { class: 'clue-detail-text', text: c.clue_text })
-      : h('img', {
-          class: 'clue-detail-img',
-          attrs: { src: c.image_url, alt: c.location_name },
-          on: { click: () => openMapViewer(c.image_url!, c.location_name) },
-        });
+      : h('img', { class: 'clue-detail-img', attrs: { src: c.image_url, alt: c.location_name },
+          on: { click: () => openMapViewer(c.image_url!, c.location_name) } });
     replaceChildren(clueDetail, head, bodyContent);
   }
 
-  function openMap(): void {
-    const s = store.getState();
-    const current = selectors.currentCase(s);
-    const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
-    if (!map) {
-      toast('No map attached to this case.');
+  function renderClues(s: AppState): void {
+    const revealed = selectors.revealedClues(s);
+    if (!revealed.length) {
+      replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
       return;
     }
-    openMapViewer(map.url, map.name);
+    replaceChildren(clueGrid, ...revealed.map(clueCard));
   }
 
-  function openNewspaper(): void {
-    const papers = store.getState().newspapers;
+  function renderBriefing(s: AppState): void {
+    const current = selectors.currentCase(s);
+    const desc = current?.description?.trim();
+    if (desc) {
+      replaceChildren(briefingPanel, h('p', { class: 'briefing-text', text: desc }));
+    } else {
+      replaceChildren(briefingPanel, h('p', { class: 'empty-state', text: 'No briefing for this case yet.' }));
+    }
+  }
+
+  function renderNewspaper(s: AppState): void {
+    clear(newspaperPanel);
+    const papers = s.newspapers;
     if (!papers.length) {
-      toast('No newspapers available yet.');
+      newspaperPanel.append(h('div', { class: 'empty-state', text: 'No newspapers available for this case yet.' }));
       return;
     }
-    // Single paper → straight to the zoom viewer.
-    if (papers.length === 1) {
-      openMapViewer(papers[0].image_url, papers[0].name);
-      return;
-    }
-
-    const thumb = (p: NewspaperRow): HTMLElement => {
-      const isPdf = p.image_url.split('?')[0].toLowerCase().endsWith('.pdf');
-      const preview = isPdf
-        ? h('div', {
-            class: 'map-thumb map-thumb--pdf',
-            text: '📄',
-            on: { click: () => openMapViewer(p.image_url, p.name) },
-          })
-        : h('img', {
-            class: 'map-thumb',
-            attrs: { src: p.image_url, alt: p.name },
-            on: { click: () => openMapViewer(p.image_url, p.name) },
-          });
-      return h(
-        'div',
-        { class: 'map-card' },
-        preview,
-        h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })),
-      );
-    };
-
-    // Group by owning case (chronological) so players can tell which mystery's
-    // paper is which. case_name/case_ordinal come from the listUnlocked join.
+    // Group by owning case (chronological)
     const groups = new Map<number, { name: string; items: NewspaperRow[] }>();
     for (const p of papers) {
       const ord = p.case_ordinal ?? 0;
       if (!groups.has(ord)) groups.set(ord, { name: p.case_name ?? 'Newspapers', items: [] });
       groups.get(ord)!.items.push(p);
     }
-
-    const { body } = openTitledModal('Newspapers', { contentClass: 'maps-library-modal' });
     const sorted = [...groups.entries()].sort((a, b) => a[0] - b[0]);
     for (const [, g] of sorted) {
-      body.append(
-        h('h3', { class: 'newspaper-group-title', text: g.name }),
-        h('div', { class: 'maps-grid' }, ...g.items.map(thumb)),
-      );
+      const isPdf = (p: NewspaperRow) => p.image_url.split('?')[0].toLowerCase().endsWith('.pdf');
+      const card = (p: NewspaperRow): HTMLElement => {
+        const preview = isPdf(p)
+          ? h('div', { class: 'map-thumb map-thumb--pdf', text: '📄', on: { click: () => openMapViewer(p.image_url, p.name) } })
+          : h('img', { class: 'map-thumb', attrs: { src: p.image_url, alt: p.name }, on: { click: () => openMapViewer(p.image_url, p.name) } });
+        return h('div', { class: 'map-card' }, preview,
+          h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })));
+      };
+      if (sorted.length > 1) newspaperPanel.append(h('h3', { class: 'newspaper-group-title', text: g.name }));
+      newspaperPanel.append(h('div', { class: 'maps-grid' }, ...g.items.map(card)));
     }
+  }
+
+  function renderPanel(s: AppState): void {
+    if (activeTab === 'briefing') {
+      renderBriefing(s);
+      replaceChildren(panelEl, briefingPanel);
+    } else if (activeTab === 'clues') {
+      renderDetail(s);
+      renderClues(s);
+      replaceChildren(panelEl, cluesPanel);
+    } else if (activeTab === 'newspaper') {
+      renderNewspaper(s);
+      replaceChildren(panelEl, newspaperPanel);
+    }
+  }
+
+  function renderNotes(s: AppState): void {
+    const me = s.identity;
+    const priv = selectors.ownPrivateNotes(s).map((n) => noteRow(n, true));
+    fillFeed(privateFeed, priv, 'No private notes yet.');
+    const shared = selectors.sharedNotes(s)
+      .map((n) => noteRow(n, !!me && n.player_name === me.name && n.player_color === me.color));
+    fillFeed(sharedFeed, shared, 'No team notes yet. Be the first to record a deduction.');
   }
 
   function ownNoteActions(note: NoteRow): ReturnType<typeof noteCard> {
     const isPrivate = note.is_private;
     return noteCard({
-      name: note.player_name,
-      color: note.player_color,
-      time: note.created_at,
-      text: note.content,
+      name: note.player_name, color: note.player_color, time: note.created_at, text: note.content,
       badge: isPrivate ? 'Private' : undefined,
       actions: [
         { label: '✎ Edit', onClick: () => { editingId = note.id; renderNotes(store.getState()); } },
@@ -295,71 +265,35 @@ export function createPlayerScreen(): ScreenHandle {
 
   function noteRow(note: NoteRow, mine: boolean): HTMLElement {
     if (mine && editingId === note.id) {
-      return noteEditor(
-        note.content,
-        (text) => void saveEdit(note, text),
-        () => { editingId = null; renderNotes(store.getState()); },
-      );
+      return noteEditor(note.content, (text) => void saveEdit(note, text),
+        () => { editingId = null; renderNotes(store.getState()); });
     }
     if (mine) return ownNoteActions(note);
-    return noteCard({
-      name: note.player_name,
-      color: note.player_color,
-      time: note.created_at,
-      text: note.content,
-    });
-  }
-
-  function renderNotes(s: AppState): void {
-    const me = s.identity;
-    const priv = selectors.ownPrivateNotes(s).map((n) => noteRow(n, true));
-    fillFeed(privateFeed, priv, 'No private notes yet.');
-    const shared = selectors
-      .sharedNotes(s)
-      .map((n) => noteRow(n, !!me && n.player_name === me.name && n.player_color === me.color));
-    fillFeed(sharedFeed, shared, 'No team notes yet. Be the first to record a deduction.');
-  }
-
-  function renderClues(s: AppState): void {
-    const revealed = selectors.revealedClues(s);
-    meta.textContent = revealed.length
-      ? `${revealed.length} clue${revealed.length === 1 ? '' : 's'} gathered thus far`
-      : '';
-    if (!revealed.length) {
-      replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
-      return;
-    }
-    replaceChildren(clueGrid, ...revealed.map(clueCard));
+    return noteCard({ name: note.player_name, color: note.player_color, time: note.created_at, text: note.content });
   }
 
   function renderChrome(s: AppState): void {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
-    const desc = current?.description?.trim();
-    if (desc) {
-      replaceChildren(briefingBody, h('p', { class: 'briefing-text', text: desc }));
-      briefing.hidden = false;
-    } else {
-      briefing.hidden = true;
+    // Show/hide tab buttons based on available content
+    const hasMap = !!current?.map_id;
+    const hasNews = s.newspapers.length > 0;
+    if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
+    if (tabButtons.newspaper) tabButtons.newspaper.style.display = hasNews ? '' : 'none';
+    // If active tab became hidden, fall back to clues
+    if ((activeTab === 'map' && !hasMap) || (activeTab === 'newspaper' && !hasNews)) {
+      switchTab('clues');
     }
-    mapBtn.style.display = current?.map_id ? '' : 'none';
-    newspaperBtn.style.display = s.newspapers.length ? '' : 'none';
   }
 
   function render(s: AppState): void {
     renderChrome(s);
-    renderDetail(s);
-    renderClues(s);
+    renderPanel(s);
     renderNotes(s);
   }
 
   const unsubscribe = store.subscribe(render);
   render(store.getState());
 
-  return {
-    element,
-    destroy() {
-      unsubscribe();
-    },
-  };
+  return { element, destroy() { unsubscribe(); } };
 }
