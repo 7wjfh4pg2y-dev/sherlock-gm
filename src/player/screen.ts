@@ -232,6 +232,7 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function renderMap(s: AppState): void {
+    (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup?.();
     clear(mapPanel);
     const current = selectors.currentCase(s);
     const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
@@ -239,17 +240,71 @@ export function createPlayerScreen(): ScreenHandle {
       mapPanel.append(h('div', { class: 'empty-state', text: 'No map attached to this case.' }));
       return;
     }
-    const expandBtn = h('button', {
-      class: 'btn btn-secondary btn-sm map-expand-btn',
-      text: '⤢ Open fullscreen',
+
+    // Pan/zoom state
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startTx = 0;
+    let startTy = 0;
+
+    const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name } });
+    const viewport = h('div', { class: 'player-map-viewport' }, img);
+
+    function applyTransform(): void {
+      img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    }
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      scale = Math.min(6, Math.max(0.5, scale + delta));
+      applyTransform();
+    }, { passive: false });
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTx = tx;
+      startTy = ty;
+      viewport.style.cursor = 'grabbing';
+    });
+
+    function onMouseMove(e: MouseEvent): void {
+      if (!dragging) return;
+      tx = startTx + (e.clientX - startX);
+      ty = startTy + (e.clientY - startY);
+      applyTransform();
+    }
+    function onMouseUp(): void {
+      if (!dragging) return;
+      dragging = false;
+      viewport.style.cursor = 'grab';
+    }
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    // Clean up window listeners when map panel is next cleared (tab switch / case change)
+    const origClear = mapPanel.dataset['cleanup'];
+    void origClear;
+    (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    const fullscreenBtn = h('button', {
+      class: 'player-map-fullscreen-btn',
+      text: '⤢',
+      attrs: { title: 'Open fullscreen' },
       on: { click: () => openMapViewer(map.url, map.name) },
     });
-    const img = h('img', {
-      class: 'player-map-img',
-      attrs: { src: map.url, alt: map.name },
-      on: { click: () => openMapViewer(map.url, map.name) },
-    });
-    mapPanel.append(h('div', { class: 'player-map-head' }, expandBtn), img);
+
+    mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, fullscreenBtn));
   }
 
   function renderPanel(s: AppState): void {
@@ -326,5 +381,11 @@ export function createPlayerScreen(): ScreenHandle {
   const unsubscribe = store.subscribe(render);
   render(store.getState());
 
-  return { element, destroy() { unsubscribe(); } };
+  return {
+    element,
+    destroy() {
+      unsubscribe();
+      (mapPanel as HTMLElement & { _mapCleanup?: () => void })._mapCleanup?.();
+    },
+  };
 }
