@@ -3,6 +3,8 @@
 // Returns a handle with reset() and a detach() that removes window listeners.
 
 export interface PanZoomHandle {
+  zoomIn(): void;
+  zoomOut(): void;
   reset(): void;
   detach(): void;
 }
@@ -61,7 +63,14 @@ export function attachPanZoom(
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
 
+  function bump(direction: 1 | -1): void {
+    scale = Math.min(max, Math.max(min, scale + direction * step * 2));
+    apply();
+  }
+
   return {
+    zoomIn()  { bump(1); },
+    zoomOut() { bump(-1); },
     reset() {
       scale = 1;
       tx = 0;

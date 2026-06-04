@@ -234,10 +234,23 @@
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }
 .map-viewer-stage { width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: grab; }
 .map-viewer-img { max-width: 92vw; max-height: 90vh; object-fit: contain; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); transform-origin: center center; user-select: none; pointer-events: none; }
-.map-viewer-close { position: fixed; top: 18px; right: 22px; font-size: 1.6rem; color: var(--fog); cursor: pointer; background: none; border: none; line-height: 1; z-index: 801; }
-.map-viewer-close:hover { color: var(--parchment); }
-.map-viewer-reset { position: fixed; top: 18px; right: 60px; font-size: 1.4rem; color: var(--fog); cursor: pointer; background: none; border: none; line-height: 1; z-index: 801; }
-.map-viewer-reset:hover { color: var(--parchment); }
+
+/* Shared map control bar — used inline and in the fullscreen overlay */
+.map-ctrl-bar {
+  display: flex; gap: 2px; align-items: center;
+  background: rgba(10,7,3,0.62); backdrop-filter: blur(6px);
+  border: 1px solid rgba(201,169,110,0.35); border-radius: 4px;
+  padding: 4px 6px;
+}
+.map-ctrl-btn {
+  background: none; border: none; color: var(--parchment); cursor: pointer;
+  font-size: 0.85rem; width: 28px; height: 28px; display: flex; align-items: center;
+  justify-content: center; border-radius: 3px; transition: background 0.12s;
+  font-family: inherit;
+}
+.map-ctrl-btn:hover { background: rgba(201,169,110,0.25); }
+/* Fullscreen: fixed top-right */
+.map-ctrl-bar--overlay { position: fixed; top: 16px; right: 16px; z-index: 801; }
 
 /* ── PDF viewer (PDF.js, in-world chrome) ── */
 .pdf-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.96); z-index: 800; display: flex; flex-direction: column; align-items: center; }

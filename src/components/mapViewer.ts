@@ -34,21 +34,21 @@ export function openMapViewer(url: string, name = 'Map'): void {
   const stage = h('div', { class: 'map-viewer-stage' }, img);
   const pz = attachPanZoom(stage, img);
 
-  const resetBtn = h('button', {
-    class: 'map-viewer-reset',
-    text: '⟲',
-    attrs: { title: 'Reset view' },
-    on: { click: (e) => { e.stopPropagation(); pz.reset(); } },
-  });
+  const stop = (e: MouseEvent): void => e.stopPropagation();
+  const ctrls = h('div', { class: 'map-ctrl-bar map-ctrl-bar--overlay', on: { click: stop } },
+    h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },  on: { click: () => pz.reset() } }),
+    h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },     on: { click: () => pz.zoomOut() } }),
+    h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },      on: { click: () => pz.zoomIn() } }),
+    h('button', { class: 'map-ctrl-btn', text: '✕', attrs: { title: 'Close' },        on: { click: () => close() } }),
+  );
 
   const overlay = h(
     'div',
     {
       class: 'map-viewer-overlay',
-      on: { click: (e) => { if (e.target === overlay) close(); } },
+      on: { click: (e) => { if (e.target === overlay || e.target === stage) close(); } },
     },
-    h('button', { class: 'map-viewer-close', text: '✕', on: { click: () => close() } }),
-    resetBtn,
+    ctrls,
     stage,
   );
 

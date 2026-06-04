@@ -253,23 +253,14 @@ export function createPlayerScreen(): ScreenHandle {
     const viewport = h('div', { class: 'player-map-viewport' }, img);
     mapPanZoom = attachPanZoom(viewport, img);
 
-    const resetBtn = h('button', {
-      class: 'player-map-ctrl-btn',
-      text: '⟲',
-      attrs: { title: 'Reset view' },
-      on: { click: () => mapPanZoom?.reset() },
-    });
-    const fullscreenBtn = h('button', {
-      class: 'player-map-ctrl-btn',
-      text: '⤢',
-      attrs: { title: 'Open fullscreen' },
-      on: { click: () => openMapViewer(map.url, map.name) },
-    });
+    const ctrls = h('div', { class: 'map-ctrl-bar' },
+      h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },   on: { click: () => mapPanZoom?.reset() } }),
+      h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },      on: { click: () => mapPanZoom?.zoomOut() } }),
+      h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },       on: { click: () => mapPanZoom?.zoomIn() } }),
+      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' },   on: { click: () => openMapViewer(map.url, map.name) } }),
+    );
 
-    mapPanel.append(h('div', { class: 'player-map-inlay' },
-      viewport,
-      h('div', { class: 'player-map-ctrls' }, resetBtn, fullscreenBtn),
-    ));
+    mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, ctrls));
   }
 
   function renderPanel(s: AppState): void {
