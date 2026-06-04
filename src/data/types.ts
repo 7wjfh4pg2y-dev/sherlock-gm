@@ -7,6 +7,9 @@ export interface CaseRow {
   name: string;
   description: string | null;
   map_id: string | null;
+  /** Chronological position in the campaign (1 = first mystery). Drives
+      cumulative newspaper unlocking: case N unlocks papers from cases 1..N. */
+  ordinal: number;
   created_at: string;
 }
 
@@ -47,8 +50,8 @@ export interface MapRow {
   created_at: string;
 }
 
-// A newspaper is a per-case collection of scanned page images, always visible
-// to players (handed out at case start in the physical game, not "revealed").
+// A newspaper is a per-case scanned image, always visible to players (handed
+// out at case start in the physical game, not "revealed").
 export interface NewspaperRow {
   id: string;
   case_id: string;
@@ -56,10 +59,15 @@ export interface NewspaperRow {
   image_url: string;
   position: number;
   created_at: string;
+  /** Player-side only: name + chronological order of the owning case. Joined
+      by the cumulative `listUnlocked` query so the reader can group papers by
+      mystery across earlier unlocked cases. Undefined on GM-managed rows. */
+  case_name?: string;
+  case_ordinal?: number;
 }
 
 // ── Insert payloads (server fills id/created_at/defaults) ──
-export type CaseInsert = { name: string; description?: string | null };
+export type CaseInsert = { name: string; description?: string | null; ordinal?: number };
 export type ClueInsert = {
   case_id: string;
   location_name: string;

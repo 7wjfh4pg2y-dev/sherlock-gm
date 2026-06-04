@@ -51,6 +51,22 @@ export function createGMScreen(): GMScreenHandle {
     text: 'Delete Case',
     on: { click: handleDeleteCase },
   });
+  // Chronological position in the campaign — drives cumulative newspaper unlock.
+  const caseOrderInput = h('input', {
+    class: 'gm-order-input',
+    attrs: { type: 'number', min: '0', title: 'Chronological order in the campaign (drives newspaper unlock)' },
+  }) as HTMLInputElement;
+  caseOrderInput.addEventListener('change', async () => {
+    const cur = selectors.currentCase(store.getState());
+    if (!cur) return;
+    const ordinal = parseInt(caseOrderInput.value, 10) || 0;
+    try {
+      await caseRepo.setOrdinal(cur.id, ordinal);
+      store.set({ cases: store.getState().cases.map((c) => c.id === cur.id ? { ...c, ordinal } : c) });
+      toast('Case order updated.');
+    } catch { toast('Could not update order.'); }
+  });
+  const caseOrderWrap = h('label', { class: 'gm-order-wrap' }, h('span', { text: 'Case #' }), caseOrderInput);
   const mapsBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: '🗺 Maps Library',
@@ -86,7 +102,7 @@ export function createGMScreen(): GMScreenHandle {
   const topBar = h(
     'div',
     { class: 'gm-topbar' },
-    h('div', { class: 'gm-case-row' }, caseSelect, newCaseBtn, deleteCaseBtn),
+    h('div', { class: 'gm-case-row' }, caseSelect, caseOrderWrap, newCaseBtn, deleteCaseBtn),
     h('div', { class: 'gm-toolbar' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn, logoutBtn),
     shareBlock,
   );
@@ -123,6 +139,10 @@ export function createGMScreen(): GMScreenHandle {
       class: 'gm-input',
       attrs: { type: 'text', placeholder: 'Case name' },
     }) as HTMLInputElement;
+    const orderInput = h('input', {
+      class: 'gm-input',
+      attrs: { type: 'number', min: '1', placeholder: 'Chronological order in the campaign (e.g. 1)' },
+    }) as HTMLInputElement;
     const descInput = h('textarea', {
       class: 'gm-input',
       attrs: { placeholder: 'Case briefing (optional)…', rows: '5' },
@@ -130,12 +150,16 @@ export function createGMScreen(): GMScreenHandle {
     const errEl = h('div', { class: 'form-error' });
     const saveBtn = h('button', { class: 'btn btn-primary', text: 'Create Case' });
     const { handle, body } = openTitledModal('New Case', {});
-    body.append(nameInput, descInput, errEl, saveBtn);
+    body.append(nameInput, orderInput, descInput, errEl, saveBtn);
     saveBtn.addEventListener('click', async () => {
       const name = nameInput.value.trim();
       if (!name) { errEl.textContent = 'Enter a case name.'; return; }
       try {
-        const c = await caseRepo.create({ name, description: descInput.value.trim() || null });
+        const c = await caseRepo.create({
+          name,
+          description: descInput.value.trim() || null,
+          ordinal: parseInt(orderInput.value, 10) || 0,
+        });
         store.set({ cases: [...store.getState().cases, c] });
         renderCaseSelect(store.getState());
         caseSelect.value = c.id;
@@ -387,6 +411,11 @@ export function createGMScreen(): GMScreenHandle {
       }),
     );
     deleteCaseBtn.style.display = s.currentCaseId ? '' : 'none';
+    const current = selectors.currentCase(s);
+    caseOrderWrap.style.display = current ? '' : 'none';
+    if (current && document.activeElement !== caseOrderInput) {
+      caseOrderInput.value = String(current.ordinal ?? 0);
+    }
   }
 
   function renderShareBlock(s: AppState): void {

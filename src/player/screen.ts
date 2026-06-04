@@ -5,7 +5,7 @@
 
 import { h, replaceChildren } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
-import type { ClueRow, NoteRow } from '../data/types';
+import type { ClueRow, NoteRow, NewspaperRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openTitledModal } from '../components/modal';
@@ -226,34 +226,46 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function openNewspaper(): void {
-    const pages = store.getState().newspapers;
-    if (!pages.length) {
-      toast('No newspaper for this case.');
+    const papers = store.getState().newspapers;
+    if (!papers.length) {
+      toast('No newspapers available yet.');
       return;
     }
-    // Single page → straight to the zoom viewer. Multiple → a picker grid.
-    if (pages.length === 1) {
-      openMapViewer(pages[0].image_url, pages[0].name);
+    // Single paper → straight to the zoom viewer.
+    if (papers.length === 1) {
+      openMapViewer(papers[0].image_url, papers[0].name);
       return;
     }
-    const grid = h(
-      'div',
-      { class: 'maps-grid' },
-      ...pages.map((p) =>
-        h(
-          'div',
-          { class: 'map-card' },
-          h('img', {
-            class: 'map-thumb',
-            attrs: { src: p.image_url, alt: p.name },
-            on: { click: () => openMapViewer(p.image_url, p.name) },
-          }),
-          h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })),
-        ),
-      ),
-    );
-    const { body } = openTitledModal('Newspaper', { contentClass: 'maps-library-modal' });
-    body.append(grid);
+
+    const thumb = (p: NewspaperRow): HTMLElement =>
+      h(
+        'div',
+        { class: 'map-card' },
+        h('img', {
+          class: 'map-thumb',
+          attrs: { src: p.image_url, alt: p.name },
+          on: { click: () => openMapViewer(p.image_url, p.name) },
+        }),
+        h('div', { class: 'map-card-body' }, h('span', { class: 'newspaper-page-label', text: p.name })),
+      );
+
+    // Group by owning case (chronological) so players can tell which mystery's
+    // paper is which. case_name/case_ordinal come from the listUnlocked join.
+    const groups = new Map<number, { name: string; items: NewspaperRow[] }>();
+    for (const p of papers) {
+      const ord = p.case_ordinal ?? 0;
+      if (!groups.has(ord)) groups.set(ord, { name: p.case_name ?? 'Newspapers', items: [] });
+      groups.get(ord)!.items.push(p);
+    }
+
+    const { body } = openTitledModal('Newspapers', { contentClass: 'maps-library-modal' });
+    const sorted = [...groups.entries()].sort((a, b) => a[0] - b[0]);
+    for (const [, g] of sorted) {
+      body.append(
+        h('h3', { class: 'newspaper-group-title', text: g.name }),
+        h('div', { class: 'maps-grid' }, ...g.items.map(thumb)),
+      );
+    }
   }
 
   function ownNoteActions(note: NoteRow): ReturnType<typeof noteCard> {

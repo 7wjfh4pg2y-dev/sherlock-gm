@@ -32,7 +32,10 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
 // ── Cases ──
 export const cases = {
   async list(): Promise<CaseRow[]> {
-    return unwrap(await sb.from('cases').select('*').order('created_at')) ?? [];
+    // Chronological order (ordinal) first, then creation order as a tiebreak.
+    return unwrap(
+      await sb.from('cases').select('*').order('ordinal').order('created_at'),
+    ) ?? [];
   },
   async get(id: string): Promise<CaseRow | null> {
     const rows = unwrap(await sb.from('cases').select('*').eq('id', id)) as CaseRow[] | null;
@@ -46,6 +49,9 @@ export const cases = {
   },
   async setMap(id: string, mapId: string | null): Promise<void> {
     unwrap(await sb.from('cases').update({ map_id: mapId }).eq('id', id).select());
+  },
+  async setOrdinal(id: string, ordinal: number): Promise<void> {
+    unwrap(await sb.from('cases').update({ ordinal }).eq('id', id).select());
   },
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('cases').delete().eq('id', id).select());
@@ -162,6 +168,33 @@ export const newspapers = {
     return unwrap(
       await sb.from('newspapers').select('*').eq('case_id', caseId).order('position'),
     ) ?? [];
+  },
+  // Cumulative unlock: every newspaper from cases at or before the given case's
+  // chronological position. Joins the owning case so the player reader can
+  // group papers by mystery. Ordered by case ordinal, then page position.
+  async listUnlocked(caseId: string): Promise<NewspaperRow[]> {
+    const cur = unwrap(
+      await sb.from('cases').select('ordinal').eq('id', caseId),
+    ) as { ordinal: number }[] | null;
+    const ordinal = cur?.[0]?.ordinal ?? 0;
+    const rows = (unwrap(
+      await sb
+        .from('newspapers')
+        .select('*, cases!inner(name, ordinal)')
+        .lte('cases.ordinal', ordinal)
+        .order('ordinal', { foreignTable: 'cases' })
+        .order('position'),
+    ) as (NewspaperRow & { cases: { name: string; ordinal: number } | null })[] | null) ?? [];
+    return rows.map((r) => ({
+      id: r.id,
+      case_id: r.case_id,
+      name: r.name,
+      image_url: r.image_url,
+      position: r.position,
+      created_at: r.created_at,
+      case_name: r.cases?.name,
+      case_ordinal: r.cases?.ordinal,
+    }));
   },
   async create(payload: NewspaperInsert): Promise<NewspaperRow> {
     return unwrap(await sb.from('newspapers').insert(payload).select().single());

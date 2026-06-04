@@ -42,7 +42,7 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
   const [revealed, allNotes, allNewspapers] = await Promise.all([
     clues.listRevealed(caseId),
     notes.listForCase(caseId),
-    newspapers.listForCase(caseId),
+    newspapers.listUnlocked(caseId), // cumulative: papers from cases 1..N
   ]);
 
   store.set({
@@ -62,7 +62,7 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
     subscribeToCase(caseId, {
       clues: () => void clues.listRevealed(caseId).then((c) => store.set({ clues: c })),
       notes: () => void notes.listForCase(caseId).then((n) => store.set({ notes: n })),
-      newspapers: () => void newspapers.listForCase(caseId).then((p) => store.set({ newspapers: p })),
+      newspapers: () => void newspapers.listUnlocked(caseId).then((p) => store.set({ newspapers: p })),
       players: () =>
         void players.kickedState(caseId, name).then((kicked) => {
           if (kicked) leaveCase();

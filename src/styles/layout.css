@@ -342,6 +342,26 @@ body::before {
   font-family: 'Courier Prime', 'Courier New', monospace;
   font-size: 0.72rem; letter-spacing: 0.04em; color: var(--parchment); text-align: center;
 }
+.newspaper-group-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem; font-style: italic; color: var(--parchment);
+  margin: 18px 0 8px; padding-bottom: 4px;
+  border-bottom: 1px solid rgba(201,169,110,0.25);
+}
+.newspaper-group-title:first-child { margin-top: 0; }
+
+/* GM case chronological-order input */
+.gm-order-wrap {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.7rem; letter-spacing: 0.06em; color: var(--fog);
+}
+.gm-order-input {
+  width: 56px; padding: 5px 6px;
+  background: rgba(20,14,6,0.5); color: var(--parchment);
+  border: 1px solid var(--parchment-darker);
+  font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.8rem;
+}
 .map-rename-input { font-size: 0.78rem; padding: 4px 6px; margin-bottom: 0; }
 .map-card-actions { display: flex; gap: 4px; }
 .map-card-actions .btn { font-size: 0.65rem; padding: 3px 7px; }

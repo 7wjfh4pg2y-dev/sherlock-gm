@@ -141,6 +141,13 @@ NOT bundled into logic.
   REPLICA IDENTITY FULL + added to the `supabase_realtime` publication, same as
   the other tables. Without it, the GM "📰 Newspaper" upload and the player
   reader will error.
+- **`cases.ordinal` column** must exist (run `db/002_case_ordinal.sql`).
+  Chronological position of a case in the campaign (1 = first mystery). Drives
+  cumulative newspaper unlocking: when a player is in the case at position N,
+  `newspapers.listUnlocked` returns papers from every case with ordinal ≤ N,
+  grouped by mystery in the player reader. GM sets it via the "Case #" input in
+  the topbar (or the New Case modal). Defaults to 0 for existing cases — set the
+  campaign order so the unlock cascade works.
 
 ## Things v1 got wrong — must NOT recreate
 
