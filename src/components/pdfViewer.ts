@@ -26,15 +26,27 @@ export interface InlinePdfHandle {
 }
 
 export function createInlinePdfViewer(url: string): InlinePdfHandle {
-  let zoom = 1;
+  let zoom = 1;        // target zoom the user is asking for (live)
+  let renderedZoom = 1; // zoom the canvases were last rasterized at
   let doc: pdfjsLib.PDFDocumentProxy | null = null;
   const loadingTask = pdfjsLib.getDocument({ url });
   const pagesEl = h('div', { class: 'pdf-inlay-pages' });
   const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
   const element = h('div', { class: 'pdf-inlay-scroll' }, status, pagesEl);
 
+  // Live, instant feedback: scale the already-rendered canvases via CSS so the
+  // zoom feels smooth (like the map's transform). The crisp re-raster happens
+  // afterwards, on a debounce, and resets this transform.
+  function applyPreview(): void {
+    const ratio = zoom / renderedZoom;
+    pagesEl.style.transform = ratio === 1 ? '' : `scale(${ratio})`;
+    pagesEl.style.transformOrigin = 'top center';
+  }
+
   async function renderPages(): Promise<void> {
     if (!doc) return;
+    renderedZoom = zoom;
+    pagesEl.style.transform = '';
     clear(pagesEl);
     const dpr = window.devicePixelRatio || 1;
     for (let n = 1; n <= doc.numPages; n++) {
@@ -59,27 +71,30 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     .then((d) => { doc = d; status.remove(); return renderPages(); })
     .catch(() => { status.textContent = 'Could not load this document.'; });
 
-  function bump(dir: 1 | -1): void {
-    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round((zoom + dir * ZOOM_STEP) * 100) / 100));
-    void renderPages();
+  let rerenderTimer: number | undefined;
+  function scheduleRaster(): void {
+    window.clearTimeout(rerenderTimer);
+    rerenderTimer = window.setTimeout(() => void renderPages(), 160);
   }
 
-  // Wheel-to-zoom (like the map inlay). Re-rendering is debounced so a fast
-  // scroll doesn't queue dozens of full-document renders.
-  let rerenderTimer: number | undefined;
+  function setZoom(z: number): void {
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 100) / 100));
+    applyPreview();    // instant
+    scheduleRaster();  // crisp, after the gesture settles
+  }
+
+  // Wheel-to-zoom (like the map inlay). Fine step + CSS preview = smooth.
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
-    const next = zoom + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
-    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(next * 100) / 100));
-    window.clearTimeout(rerenderTimer);
-    rerenderTimer = window.setTimeout(() => void renderPages(), 90);
+    const factor = e.deltaY > 0 ? 0.92 : 1.08;
+    setZoom(zoom * factor);
   }
   element.addEventListener('wheel', onWheel, { passive: false });
 
   return {
     element,
-    zoomIn()  { bump(1); },
-    zoomOut() { bump(-1); },
+    zoomIn()  { setZoom(zoom + ZOOM_STEP); },
+    zoomOut() { setZoom(zoom - ZOOM_STEP); },
     reset()   { zoom = 1; void renderPages(); },
     destroy() {
       element.removeEventListener('wheel', onWheel);
