@@ -26,27 +26,28 @@ export interface InlinePdfHandle {
 }
 
 export function createInlinePdfViewer(url: string): InlinePdfHandle {
-  let zoom = 1;        // target zoom the user is asking for (live)
+  let zoom = 1;         // zoom we want to rasterize at
   let renderedZoom = 1; // zoom the canvases were last rasterized at
+  let tx = 0, ty = 0;  // pan offsets in CSS pixels
+  let dragging = false;
+  let startX = 0, startY = 0, startTx = 0, startTy = 0;
+
   let doc: pdfjsLib.PDFDocumentProxy | null = null;
   const loadingTask = pdfjsLib.getDocument({ url });
   const pagesEl = h('div', { class: 'pdf-inlay-pages' });
   const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
   const element = h('div', { class: 'pdf-inlay-scroll' }, status, pagesEl);
 
-  // Live, instant feedback: scale the already-rendered canvases via CSS so the
-  // zoom feels smooth (like the map's transform). The crisp re-raster happens
-  // afterwards, on a debounce, and resets this transform.
-  function applyPreview(): void {
-    const ratio = zoom / renderedZoom;
-    pagesEl.style.transform = ratio === 1 ? '' : `scale(${ratio})`;
-    pagesEl.style.transformOrigin = 'top center';
+  // Single source of truth for the live visual transform.
+  function applyTransform(): void {
+    const s = zoom / renderedZoom;
+    pagesEl.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
   }
 
   async function renderPages(): Promise<void> {
     if (!doc) return;
     renderedZoom = zoom;
-    pagesEl.style.transform = '';
+    pagesEl.style.transform = `translate(${tx}px, ${ty}px)`;
     clear(pagesEl);
     const dpr = window.devicePixelRatio || 1;
     for (let n = 1; n <= doc.numPages; n++) {
@@ -71,33 +72,59 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     .then((d) => { doc = d; status.remove(); return renderPages(); })
     .catch(() => { status.textContent = 'Could not load this document.'; });
 
+  // Wheel: CSS-scale immediately for smoothness, re-raster when settled.
   let rerenderTimer: number | undefined;
-  function scheduleRaster(): void {
+  function onWheel(e: WheelEvent): void {
+    e.preventDefault();
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+    applyTransform();
     window.clearTimeout(rerenderTimer);
     rerenderTimer = window.setTimeout(() => void renderPages(), 160);
   }
 
-  function setZoom(z: number): void {
-    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(z * 100) / 100));
-    applyPreview();    // instant
-    scheduleRaster();  // crisp, after the gesture settles
+  // Drag-to-pan.
+  function onMouseDown(e: MouseEvent): void {
+    if (e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    startTx = tx; startTy = ty;
+    element.style.cursor = 'grabbing';
+  }
+  function onMouseMove(e: MouseEvent): void {
+    if (!dragging) return;
+    tx = startTx + (e.clientX - startX);
+    ty = startTy + (e.clientY - startY);
+    applyTransform();
+  }
+  function onMouseUp(): void {
+    if (!dragging) return;
+    dragging = false;
+    element.style.cursor = 'grab';
   }
 
-  // Wheel-to-zoom (like the map inlay). Fine step + CSS preview = smooth.
-  function onWheel(e: WheelEvent): void {
-    e.preventDefault();
-    const factor = e.deltaY > 0 ? 0.92 : 1.08;
-    setZoom(zoom * factor);
-  }
+  element.style.cursor = 'grab';
   element.addEventListener('wheel', onWheel, { passive: false });
+  element.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+
+  function setZoom(z: number): void {
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+    applyTransform();
+    window.clearTimeout(rerenderTimer);
+    rerenderTimer = window.setTimeout(() => void renderPages(), 160);
+  }
 
   return {
     element,
     zoomIn()  { setZoom(zoom + ZOOM_STEP); },
     zoomOut() { setZoom(zoom - ZOOM_STEP); },
-    reset()   { zoom = 1; void renderPages(); },
+    reset()   { zoom = 1; tx = 0; ty = 0; void renderPages(); },
     destroy() {
       element.removeEventListener('wheel', onWheel);
+      element.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
       window.clearTimeout(rerenderTimer);
       void loadingTask.destroy();
     },
