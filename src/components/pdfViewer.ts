@@ -64,12 +64,28 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     void renderPages();
   }
 
+  // Wheel-to-zoom (like the map inlay). Re-rendering is debounced so a fast
+  // scroll doesn't queue dozens of full-document renders.
+  let rerenderTimer: number | undefined;
+  function onWheel(e: WheelEvent): void {
+    e.preventDefault();
+    const next = zoom + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(next * 100) / 100));
+    window.clearTimeout(rerenderTimer);
+    rerenderTimer = window.setTimeout(() => void renderPages(), 90);
+  }
+  element.addEventListener('wheel', onWheel, { passive: false });
+
   return {
     element,
     zoomIn()  { bump(1); },
     zoomOut() { bump(-1); },
     reset()   { zoom = 1; void renderPages(); },
-    destroy() { void loadingTask.destroy(); },
+    destroy() {
+      element.removeEventListener('wheel', onWheel);
+      window.clearTimeout(rerenderTimer);
+      void loadingTask.destroy();
+    },
   };
 }
 
