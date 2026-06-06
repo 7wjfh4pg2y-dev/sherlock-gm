@@ -215,16 +215,44 @@ export function createGMScreen(): GMScreenHandle {
     } catch { toast('Could not delete clue.'); }
   }
 
+  const DISTRICTS = ['NW', 'WC', 'EC', 'SW', 'SE'] as const;
+
+  function buildLocationPicker(initial = ''): { el: HTMLElement; getValue(): string } {
+    // Parse an existing "NW 12" value back into parts.
+    const m = initial.match(/^(NW|WC|EC|SW|SE)\s*(\d+)$/i);
+    const initDistrict = m ? m[1].toUpperCase() : 'NW';
+    const initNum = m ? m[2] : '';
+
+    const districtSel = h('select', { class: 'gm-input gm-input--district' }) as HTMLSelectElement;
+    for (const d of DISTRICTS) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      if (d === initDistrict) opt.selected = true;
+      districtSel.append(opt);
+    }
+    const numInput = h('input', {
+      class: 'gm-input gm-input--clue-num',
+      attrs: { type: 'number', min: '1', max: '99', placeholder: '01', value: initNum },
+    }) as HTMLInputElement;
+
+    const el = h('div', { class: 'clue-location-picker' }, districtSel, numInput);
+    return {
+      el,
+      getValue() {
+        const n = numInput.value.trim().padStart(2, '0');
+        return `${districtSel.value} ${n}`;
+      },
+    };
+  }
+
   function showAddClueModal(): void {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return;
 
     let clueType: 'text' | 'image' = 'text';
 
-    const locationInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'text', placeholder: 'Location name' },
-    }) as HTMLInputElement;
+    const locationPicker = buildLocationPicker();
     const textInput = h('textarea', {
       class: 'gm-input',
       attrs: { placeholder: 'Clue text…', rows: '4' },
@@ -261,7 +289,7 @@ export function createGMScreen(): GMScreenHandle {
     const { handle: addClueHandle, body } = openTitledModal('Add Clue', {});
     body.append(
       h('div', { class: 'clue-type-toggle' }, imgBtn, textBtn),
-      locationInput,
+      locationPicker.el,
       imageField,
       textField,
       errEl,
@@ -269,8 +297,8 @@ export function createGMScreen(): GMScreenHandle {
     );
 
     addBtn.addEventListener('click', async () => {
-      const location_name = locationInput.value.trim();
-      if (!location_name) { errEl.textContent = 'Enter a location name.'; return; }
+      const location_name = locationPicker.getValue();
+      if (!location_name.match(/\d/)) { errEl.textContent = 'Enter a clue number.'; return; }
       const position = store.getState().clues.length + 1;
       addBtn.textContent = 'Saving…';
       addBtn.setAttribute('disabled', '');
@@ -296,10 +324,7 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   function showEditClueModal(clue: ClueRow): void {
-    const locationInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'text', value: clue.location_name },
-    }) as HTMLInputElement;
+    const locationPicker = buildLocationPicker(clue.location_name);
     const textInput = h('textarea', {
       class: 'gm-input',
       attrs: { rows: '4' },
@@ -309,7 +334,7 @@ export function createGMScreen(): GMScreenHandle {
     const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save' });
 
     const { handle: editClueHandle, body } = openTitledModal('Edit Clue', {});
-    const fields: (HTMLElement | null)[] = [locationInput];
+    const fields: (HTMLElement | null)[] = [locationPicker.el];
     if (clue.clue_text) fields.push(textInput);
     if (clue.image_url) {
       fields.push(h('p', { class: 'form-hint', text: 'Image clue — only location name is editable.' }));
@@ -318,8 +343,8 @@ export function createGMScreen(): GMScreenHandle {
     body.append(...fields.filter(Boolean) as HTMLElement[]);
 
     saveBtn.addEventListener('click', async () => {
-      const location_name = locationInput.value.trim();
-      if (!location_name) { errEl.textContent = 'Enter a location name.'; return; }
+      const location_name = locationPicker.getValue();
+      if (!location_name.match(/\d/)) { errEl.textContent = 'Enter a clue number.'; return; }
       try {
         await clueRepo.update(clue.id, {
           location_name,
