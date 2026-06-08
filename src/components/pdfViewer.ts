@@ -191,7 +191,7 @@ export function openPdfViewer(url: string, name = 'Document'): void {
     'div',
     {
       class: 'pdf-viewer-overlay',
-      on: { click: (e) => { if (e.target === overlay || e.target === stage) close(); } },
+      on: { click: (e) => { if (e.target === overlay) close(); } },
     },
     h('button', { class: 'map-viewer-close', text: '✕', on: { click: () => close() } }),
     toolbar,

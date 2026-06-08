@@ -46,7 +46,7 @@ export function openMapViewer(url: string, name = 'Map'): void {
     'div',
     {
       class: 'map-viewer-overlay',
-      on: { click: (e) => { if (e.target === overlay || e.target === stage) close(); } },
+      on: { click: (e) => { if (e.target === overlay) close(); } },
     },
     ctrls,
     stage,
