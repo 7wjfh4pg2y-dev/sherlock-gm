@@ -186,8 +186,10 @@ body::before {
   border: 1px solid var(--sepia); cursor: pointer; outline: none;
 }
 .gm-share-block {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  padding-top: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 0 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(139,105,20,0.25);
 }
 .gm-share-label {
   font-family: 'Courier Prime', 'Courier New', monospace;
@@ -196,10 +198,12 @@ body::before {
 }
 .gm-invite-code {
   font-family: 'Special Elite', 'Courier New', monospace;
-  font-size: 0.95rem; letter-spacing: 0.18em;
+  font-size: 1.05rem; letter-spacing: 0.18em;
   color: var(--sepia-light); background: rgba(244,232,206,0.06);
-  padding: 3px 10px; border: 1px solid rgba(139,105,20,0.4);
+  padding: 4px 10px; border: 1px solid rgba(139,105,20,0.4);
+  display: block;
 }
+.gm-share-block .btn { align-self: flex-start; }
 
 .gm-content { flex: 1; display: flex; gap: 24px; padding: 28px 32px; align-items: flex-start; }
 .gm-main { flex: 1; min-width: 0; }

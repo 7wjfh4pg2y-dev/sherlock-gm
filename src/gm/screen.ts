@@ -104,7 +104,6 @@ export function createGMScreen(): GMScreenHandle {
     { class: 'gm-topbar' },
     h('div', { class: 'gm-case-row' }, caseSelect, caseOrderWrap, newCaseBtn, deleteCaseBtn),
     h('div', { class: 'gm-toolbar' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn, logoutBtn),
-    shareBlock,
   );
 
   // ── Main area: briefing + clue grid ──
@@ -113,9 +112,9 @@ export function createGMScreen(): GMScreenHandle {
   const revealedSection = h('div', { class: 'gm-section' });
   const mainArea = h('div', { class: 'gm-main' }, briefingPanel, unrevealedSection, revealedSection);
 
-  // ── Right panel: players + notes badge ──
+  // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
-  const rightPanel = h('div', { class: 'gm-right-panel' }, playersPanel);
+  const rightPanel = h('div', { class: 'gm-right-panel' }, shareBlock, playersPanel);
 
   const empty = h('div', { class: 'empty-state', text: 'Select or create a case to begin.' });
   const content = h('div', { class: 'gm-content' }, empty);
