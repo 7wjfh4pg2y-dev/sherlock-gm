@@ -18,7 +18,7 @@ import {
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers } from './load';
-import { gmLogout, resetGMPassword } from './auth';
+import { gmLogout } from './auth';
 import { openMapsLibrary, openCaseMap } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
 import { openGMNotebook } from './notebookModal';
@@ -674,6 +674,3 @@ export function createGMScreen(): GMScreenHandle {
     },
   };
 }
-
-// Re-export for main.ts convenience.
-export { resetGMPassword };

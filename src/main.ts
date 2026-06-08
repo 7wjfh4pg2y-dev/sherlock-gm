@@ -2,14 +2,14 @@
 // One mount node (#app). The router reacts to store.role and a small local
 // `wantJoin` flag, mounting exactly one screen at a time. Mutations elsewhere
 // (login, joinCase, logout) flip store.role; the router does the rest.
+//
+// Screens are loaded with dynamic import() so the initial payload is just the
+// landing view (no Supabase, no GM/player code). Those chunks fetch on demand
+// the first time their view is shown.
 
 import './styles/index.css';
 import { store, type AppState } from './state/store';
 import { createLandingScreen } from './landing';
-import { createGMLoginScreen } from './gm/loginScreen';
-import { createGMScreen } from './gm/screen';
-import { createJoinScreen } from './player/joinScreen';
-import { createPlayerScreen } from './player/screen';
 
 const app = document.getElementById('app');
 
@@ -19,6 +19,8 @@ let wantJoin = false;
 let activeDestroy: (() => void) | null = null;
 // A signature of the last render so we don't re-mount needlessly.
 let lastKey = '';
+// Monotonic token so a slow dynamic import can't mount over a newer view.
+let mountToken = 0;
 
 // `?case=` deep-link: jump straight to the join screen with the code prefilled.
 const params = new URLSearchParams(location.search);
@@ -30,6 +32,15 @@ function mount(node: HTMLElement, destroy?: () => void): void {
   activeDestroy?.();
   activeDestroy = destroy ?? null;
   app.replaceChildren(node);
+}
+
+// Mount a screen produced by an async loader, ignoring the result if the view
+// changed again before the chunk finished loading.
+async function mountAsync(load: () => Promise<{ element: HTMLElement; destroy?: () => void }>): Promise<void> {
+  const token = ++mountToken;
+  const screen = await load();
+  if (token !== mountToken) { screen.destroy?.(); return; }
+  mount(screen.element, screen.destroy);
 }
 
 function viewKey(s: AppState): string {
@@ -46,24 +57,21 @@ function render(s: AppState): void {
   switch (key) {
     case 'landing':
       wantJoin = false;
+      mountToken++; // landing is synchronous — cancel any pending async mount
       mount(createLandingScreen(() => { wantJoin = true; lastKey = ''; render(store.getState()); }).element);
       break;
     case 'join':
-      mount(createJoinScreen(presetCase).element);
+      void mountAsync(() => import('./player/joinScreen').then((m) => m.createJoinScreen(presetCase)));
       break;
     case 'gm-login':
-      mount(createGMLoginScreen().element);
+      void mountAsync(() => import('./gm/loginScreen').then((m) => m.createGMLoginScreen()));
       break;
-    case 'gm': {
-      const screen = createGMScreen();
-      mount(screen.element, screen.destroy);
+    case 'gm':
+      void mountAsync(() => import('./gm/screen').then((m) => m.createGMScreen()));
       break;
-    }
-    case 'player': {
-      const screen = createPlayerScreen();
-      mount(screen.element, screen.destroy);
+    case 'player':
+      void mountAsync(() => import('./player/screen').then((m) => m.createPlayerScreen()));
       break;
-    }
   }
 }
 
