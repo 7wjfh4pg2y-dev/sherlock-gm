@@ -2,7 +2,7 @@
 // One generic overlay used by every dialog (login, new case, directory, map
 // viewer, confirm-delete, GM notebook). Caller supplies the inner content node.
 
-import { h, clear } from '../util/dom';
+import { h } from '../util/dom';
 
 export interface ModalHandle {
   readonly element: HTMLElement;
@@ -79,10 +79,4 @@ export function openTitledModal(
   });
   header.append(closeBtn);
   return { handle, body };
-}
-
-/** Replace a modal body's contents. */
-export function setBody(body: HTMLElement, ...nodes: Node[]): void {
-  clear(body);
-  for (const n of nodes) body.append(n);
 }

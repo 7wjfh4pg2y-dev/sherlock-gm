@@ -25,6 +25,34 @@ export interface InlinePdfHandle {
   destroy(): void;
 }
 
+// Rasterize every page of a doc into `target` at the given zoom, fitting
+// BASE_WIDTH and rendering at devicePixelRatio for sharpness. Shared by the
+// inline inlay and the fullscreen overlay.
+async function rasterizePages(
+  doc: pdfjsLib.PDFDocumentProxy,
+  target: HTMLElement,
+  zoom: number,
+): Promise<void> {
+  clear(target);
+  const dpr = window.devicePixelRatio || 1;
+  for (let n = 1; n <= doc.numPages; n++) {
+    const page = await doc.getPage(n);
+    const unscaled = page.getViewport({ scale: 1 });
+    const scale = (BASE_WIDTH / unscaled.width) * zoom;
+    const viewport = page.getViewport({ scale: scale * dpr });
+    const canvas = h('canvas', { class: 'pdf-viewer-page' }) as HTMLCanvasElement;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.width = viewport.width / dpr + 'px';
+    canvas.style.height = viewport.height / dpr + 'px';
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      target.append(canvas);
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    }
+  }
+}
+
 export function createInlinePdfViewer(url: string): InlinePdfHandle {
   let zoom = 1;         // zoom we want to rasterize at
   let renderedZoom = 1; // zoom the canvases were last rasterized at
@@ -48,24 +76,7 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     if (!doc) return;
     renderedZoom = zoom;
     pagesEl.style.transform = `translate(${tx}px, ${ty}px)`;
-    clear(pagesEl);
-    const dpr = window.devicePixelRatio || 1;
-    for (let n = 1; n <= doc.numPages; n++) {
-      const page = await doc.getPage(n);
-      const unscaled = page.getViewport({ scale: 1 });
-      const scale = (BASE_WIDTH / unscaled.width) * zoom;
-      const viewport = page.getViewport({ scale: scale * dpr });
-      const canvas = h('canvas', { class: 'pdf-viewer-page' }) as HTMLCanvasElement;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.width = viewport.width / dpr + 'px';
-      canvas.style.height = viewport.height / dpr + 'px';
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        pagesEl.append(canvas);
-        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-      }
-    }
+    await rasterizePages(doc, pagesEl, zoom);
   }
 
   loadingTask.promise
@@ -160,25 +171,7 @@ export function openPdfViewer(url: string, name = 'Document'): void {
 
   async function renderPages(): Promise<void> {
     if (!doc) return;
-    clear(pagesEl);
-    const dpr = window.devicePixelRatio || 1;
-    for (let n = 1; n <= doc.numPages; n++) {
-      const page = await doc.getPage(n);
-      const unscaled = page.getViewport({ scale: 1 });
-      // Fit BASE_WIDTH, then apply the user's zoom on top.
-      const scale = (BASE_WIDTH / unscaled.width) * zoom;
-      const viewport = page.getViewport({ scale: scale * dpr });
-      const canvas = h('canvas', { class: 'pdf-viewer-page' }) as HTMLCanvasElement;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.width = viewport.width / dpr + 'px';
-      canvas.style.height = viewport.height / dpr + 'px';
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        pagesEl.append(canvas);
-        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-      }
-    }
+    await rasterizePages(doc, pagesEl, zoom);
   }
 
   const zoomLabel = h('span', { class: 'pdf-viewer-zoom', text: '100%' });

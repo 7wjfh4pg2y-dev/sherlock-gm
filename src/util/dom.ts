@@ -57,10 +57,3 @@ export function replaceChildren(node: Element, ...children: Child[]): void {
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
-
-/** Escape for the rare case a raw HTML string is still needed. Prefer h(). */
-export function escapeHtml(str: string): string {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}

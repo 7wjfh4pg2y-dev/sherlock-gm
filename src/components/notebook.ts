@@ -96,12 +96,6 @@ export function noteCard(data: NoteCardData): HTMLElement {
   return h('div', { class: 'nb-note' }, meta, h('div', { class: 'nb-note-text', text: data.text }));
 }
 
-/** A feed of note cards, or an italic empty message. */
-export function noteFeed(cards: HTMLElement[], emptyText: string): HTMLElement {
-  if (!cards.length) return h('div', { class: 'nb-empty', text: emptyText });
-  return h('div', { class: 'nb-notes' }, ...cards);
-}
-
 /** Replace the contents of a feed/content node (preserves surrounding composer). */
 export function fillFeed(node: HTMLElement, cards: HTMLElement[], emptyText: string): void {
   if (!cards.length) {
