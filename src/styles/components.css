@@ -232,8 +232,16 @@
 
 /* ── Map viewer ── */
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }
-.map-viewer-stage { width: 100vw; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: grab; }
-.map-viewer-img { max-width: 92vw; max-height: 90vh; object-fit: contain; border: 2px solid var(--sepia); box-shadow: 0 0 80px rgba(122,92,18,0.35); transform-origin: center center; user-select: none; pointer-events: none; }
+.map-viewer-stage { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+/* Fixed, clipped window — the map pans/zooms inside; the frame stays put. */
+.map-viewer-frame {
+  width: 92vw; height: 90vh; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab;
+  border: 2px solid var(--sepia);
+  box-shadow: 0 0 80px rgba(122,92,18,0.35);
+}
+.map-viewer-img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; user-select: none; pointer-events: none; }
 
 /* Shared map control bar — used inline and in the fullscreen overlay */
 .map-ctrl-bar {

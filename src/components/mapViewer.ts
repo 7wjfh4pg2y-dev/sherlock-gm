@@ -31,8 +31,11 @@ export function openMapViewer(url: string, name = 'Map'): void {
     class: 'map-viewer-img',
     attrs: { src: url, alt: name },
   });
-  const stage = h('div', { class: 'map-viewer-stage' }, img);
-  const pz = attachPanZoom(stage, img);
+  // Fixed, clipped frame; the image pans/zooms *inside* it rather than the
+  // whole bordered image sliding around the screen.
+  const frame = h('div', { class: 'map-viewer-frame' }, img);
+  const stage = h('div', { class: 'map-viewer-stage' }, frame);
+  const pz = attachPanZoom(frame, img);
 
   const stop = (e: MouseEvent): void => e.stopPropagation();
   const ctrls = h('div', { class: 'map-ctrl-bar map-ctrl-bar--overlay', on: { click: stop } },
@@ -46,7 +49,7 @@ export function openMapViewer(url: string, name = 'Map'): void {
     'div',
     {
       class: 'map-viewer-overlay',
-      on: { click: (e) => { if (e.target === overlay) close(); } },
+      on: { click: (e) => { if (e.target === overlay || e.target === stage) close(); } },
     },
     ctrls,
     stage,
