@@ -99,27 +99,62 @@ export function createGMScreen(): GMScreenHandle {
   });
   const shareBlock = h('div', { class: 'gm-share-block' });
 
-  const topBar = h(
-    'div',
-    { class: 'gm-topbar' },
-    h('div', { class: 'gm-case-row' }, caseSelect, caseOrderWrap, newCaseBtn, deleteCaseBtn),
-    h('div', { class: 'gm-toolbar' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn, logoutBtn),
+  // ── Header: case title (select) + ordinal + global actions ──
+  const header = h('header', { class: 'gm-header' },
+    h('div', { class: 'gm-title-group' },
+      h('div', { class: 'gm-select-wrap' }, caseSelect),
+      caseOrderWrap,
+    ),
+    h('div', { class: 'gm-header-actions' }, newCaseBtn, deleteCaseBtn, logoutBtn),
   );
 
-  // ── Main area: briefing + clue grid ──
+  // ── Tab row: inline content tabs (left) + resource launchers (right) ──
+  type GMTab = 'clues' | 'briefing';
+  let activeTab: GMTab = 'clues';
+  const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
+  const tabBar = h('div', { class: 'gm-tab-bar' });
+  for (const { id, label } of [
+    { id: 'clues' as const, label: 'Clues' },
+    { id: 'briefing' as const, label: 'Case Brief' },
+  ]) {
+    const btn = h('button', {
+      class: 'gm-tab-btn' + (id === activeTab ? ' active' : ''),
+      text: label,
+      on: { click: () => switchTab(id) },
+    });
+    tabButtons[id] = btn;
+    tabBar.append(btn);
+  }
+  const toolsGroup = h('div', { class: 'gm-tools' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn);
+  const tabRow = h('div', { class: 'gm-tabrow' }, tabBar, toolsGroup);
+
+  // ── Panels (one shown at a time in panelEl) ──
   const briefingPanel = h('div', { class: 'gm-briefing' });
   const unrevealedSection = h('div', { class: 'gm-section' });
   const revealedSection = h('div', { class: 'gm-section' });
-  const mainArea = h('div', { class: 'gm-main' }, briefingPanel, unrevealedSection, revealedSection);
+  const cluesPanel = h('div', { class: 'gm-clues-panel' }, unrevealedSection, revealedSection);
+  const panelEl = h('div', { class: 'gm-panel' });
 
   // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
   const rightPanel = h('div', { class: 'gm-right-panel' }, shareBlock, playersPanel);
 
   const empty = h('div', { class: 'empty-state', text: 'Select or create a case to begin.' });
-  const content = h('div', { class: 'gm-content' }, empty);
 
-  const element = h('div', { class: 'gm-screen' }, topBar, content);
+  const element = h('div', { class: 'gm-screen' },
+    header,
+    tabRow,
+    h('div', { class: 'gm-body' },
+      h('div', { class: 'gm-main' }, panelEl),
+      rightPanel,
+    ),
+  );
+
+  function switchTab(id: GMTab): void {
+    activeTab = id;
+    for (const [tid, btn] of Object.entries(tabButtons)) btn?.classList.toggle('active', tid === id);
+    renderPanel(store.getState());
+  }
 
   // ── Case select wiring ──
   caseSelect.addEventListener('change', () => {
@@ -467,11 +502,10 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   let briefingEditing = false;
-  let briefingCollapsed = false;
 
   function renderBriefing(s: AppState): void {
     const current = selectors.currentCase(s);
-    if (!current) { briefingPanel.style.display = 'none'; briefingEditing = false; return; }
+    if (!current) { clear(briefingPanel); briefingEditing = false; return; }
 
     const desc = current.description?.trim() ?? '';
 
@@ -480,7 +514,7 @@ export function createGMScreen(): GMScreenHandle {
       { class: 'briefing-display' },
       desc
         ? h('p', { class: 'briefing-text', text: desc })
-        : h('span', { class: 'briefing-empty', text: 'No briefing set.' }),
+        : h('span', { class: 'briefing-empty', text: 'No briefing set for this case yet.' }),
       h('button', {
         class: 'btn btn-secondary btn-sm',
         text: '✏️ Edit Briefing',
@@ -490,7 +524,7 @@ export function createGMScreen(): GMScreenHandle {
 
     const textarea = h('textarea', {
       class: 'gm-input briefing-textarea',
-      attrs: { rows: '8', placeholder: 'Set the scene — the crime, the setting, what investigators know at the outset…' },
+      attrs: { rows: '12', placeholder: 'Set the scene — the crime, the setting, what investigators know at the outset…' },
     }) as HTMLTextAreaElement;
     textarea.value = desc;
     const saveBtn = h('button', {
@@ -514,26 +548,8 @@ export function createGMScreen(): GMScreenHandle {
     });
     const editView = h('div', { class: 'briefing-edit' }, textarea, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
 
-    const toggleHeader = h('button', {
-      class: 'briefing-toggle',
-      on: {
-        click: () => {
-          briefingCollapsed = !briefingCollapsed;
-          briefingPanel.classList.toggle('collapsed', briefingCollapsed);
-        },
-      },
-    },
-      h('span', { class: 'briefing-title', text: 'Case Briefing' }),
-      h('span', { class: 'briefing-chevron', text: '▾' }),
-    );
-
     clear(briefingPanel);
-    briefingPanel.style.display = '';
-    briefingPanel.classList.toggle('collapsed', briefingCollapsed);
-    briefingPanel.append(
-      toggleHeader,
-      h('div', { class: 'briefing-body' }, briefingEditing ? editView : displayView),
-    );
+    briefingPanel.append(briefingEditing ? editView : displayView);
   }
 
   function clueCard(c: ClueRow): HTMLElement {
@@ -568,11 +584,6 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   function renderClues(s: AppState): void {
-    if (!s.currentCaseId) {
-      replaceChildren(content, empty);
-      return;
-    }
-
     const unrevealed = selectors.hiddenClues(s);
     const revealed = selectors.revealedClues(s);
 
@@ -601,11 +612,17 @@ export function createGMScreen(): GMScreenHandle {
         h('div', { class: 'clues-grid' }, ...revealed.map(clueCard)),
       );
     }
+  }
 
-    replaceChildren(content, mainArea, rightPanel);
-    // Update map view button.
-    const current = selectors.currentCase(s);
-    mapViewBtn.style.display = current?.map_id ? '' : 'none';
+  function renderPanel(s: AppState): void {
+    if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
+    if (activeTab === 'briefing') {
+      renderBriefing(s);
+      replaceChildren(panelEl, briefingPanel);
+    } else {
+      renderClues(s);
+      replaceChildren(panelEl, cluesPanel);
+    }
   }
 
   function renderPlayers(s: AppState): void {
@@ -656,8 +673,13 @@ export function createGMScreen(): GMScreenHandle {
   function render(s: AppState): void {
     renderCaseSelect(s);
     renderShareBlock(s);
-    renderBriefing(s);
-    renderClues(s);
+    const hasCase = !!s.currentCaseId;
+    element.classList.toggle('no-case', !hasCase);
+    tabRow.style.display = hasCase ? '' : 'none';
+    rightPanel.style.display = hasCase ? '' : 'none';
+    const current = selectors.currentCase(s);
+    mapViewBtn.style.display = current?.map_id ? '' : 'none';
+    renderPanel(s);
     renderPlayers(s);
   }
 
