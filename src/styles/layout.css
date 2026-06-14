@@ -609,8 +609,9 @@ body::before {
 .informant-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .informant-name { font-family: 'Special Elite', 'Courier New', monospace; font-size: 1.05rem; color: var(--ink); letter-spacing: 0.02em; }
 .informant-loc {
-  font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
-  color: var(--ink); border: 1px solid var(--parchment-darker); padding: 2px 7px; white-space: nowrap;
+  font-family: 'Courier Prime', monospace; font-size: 0.92rem; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--paper); background: var(--sepia); border: 1px solid var(--parchment-darker);
+  padding: 3px 10px; white-space: nowrap;
 }
 .informant-desc { font-family: 'IM Fell English', Georgia, serif; font-size: 0.98rem; line-height: 1.55; color: var(--ink); margin: 0; }
 .gm-informants-panel, .player-informants-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
