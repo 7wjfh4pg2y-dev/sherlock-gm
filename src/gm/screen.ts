@@ -103,13 +103,13 @@ export function createGMScreen(): GMScreenHandle {
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
   for (const { id, label } of [
-    { id: 'clues' as const, label: 'Clues' },
     { id: 'briefing' as const, label: 'Case Brief' },
-    { id: 'questions' as const, label: 'Questions' },
-    { id: 'solution' as const, label: 'Solution' },
+    { id: 'clues' as const, label: 'Clues' },
+    { id: 'newspaper' as const, label: 'Newspaper' },
     { id: 'directory' as const, label: 'Directory' },
     { id: 'map' as const, label: 'Map' },
-    { id: 'newspaper' as const, label: 'Newspaper' },
+    { id: 'questions' as const, label: 'Questions' },
+    { id: 'solution' as const, label: 'Solution' },
     { id: 'notebook' as const, label: 'Notebook' },
   ]) {
     const btn = h('button', {

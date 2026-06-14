@@ -43,11 +43,11 @@ export function createPlayerScreen(): ScreenHandle {
   const TAB_DEFS: { id: TabId; label: string }[] = [
     { id: 'briefing',  label: 'Case Brief' },
     { id: 'clues',     label: 'Clues' },
-    { id: 'questions', label: 'Questions' },
-    { id: 'solution',  label: 'Solution' },
     { id: 'newspaper', label: 'Newspaper' },
     { id: 'directory', label: 'Directory' },
     { id: 'map',       label: 'Map' },
+    { id: 'questions', label: 'Questions' },
+    { id: 'solution',  label: 'Solution' },
   ];
 
   const tabButtons: Partial<Record<TabId, HTMLElement>> = {};
