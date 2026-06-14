@@ -89,7 +89,7 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
 
     const visibleBtn = h('button', {
       class: q.visible ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm',
-      text: q.visible ? '✓ Shown to players' : '👁 Show question',
+      text: q.visible ? '✓ Question revealed' : '👁 Reveal question',
       on: {
         click: async () => {
           try { await questionRepo.setVisible(q.id, !q.visible); await reload(); }
@@ -98,9 +98,9 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
       },
     });
     const revealBtn = h('button', {
-      class: q.revealed ? 'btn btn-secondary btn-sm' : 'btn btn-sm',
+      class: q.revealed ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm',
       text: q.revealed ? '✓ Answer revealed' : '🔓 Reveal answer',
-      attrs: q.visible ? {} : { disabled: '', title: 'Show question to players first' },
+      attrs: q.visible ? {} : { disabled: '', title: 'Reveal the question to players first' },
       on: {
         click: async () => {
           if (!q.visible) return;
