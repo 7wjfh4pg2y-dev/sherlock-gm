@@ -62,6 +62,9 @@ export interface QuestionRow {
   answer: string;
   points: number;
   position: number;
+  /** Whether the question prompt+points are visible to players (reveal #1). */
+  visible: boolean;
+  /** Whether the official answer is visible to players (reveal #2). */
   revealed: boolean;
   created_at: string;
 }

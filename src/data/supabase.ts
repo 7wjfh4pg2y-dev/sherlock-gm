@@ -224,18 +224,18 @@ export const questions = {
     if (res.error) return [];
     return (res.data as QuestionRow[]) ?? [];
   },
-  /** Player view: omit `answer` for unrevealed questions so it never hits the
-   *  wire; merge in answers only for revealed ones. */
+  /** Player view: only visible questions; omit `answer` until revealed. */
   async listForCasePlayer(caseId: string): Promise<QuestionRow[]> {
     const base = await sb
       .from('case_questions')
-      .select('id,case_id,prompt,points,position,revealed,created_at')
+      .select('id,case_id,prompt,points,position,visible,revealed,created_at')
       .eq('case_id', caseId)
+      .eq('visible', true)
       .order('position')
       .order('created_at');
     if (base.error) return [];
     const rows = (base.data as Omit<QuestionRow, 'answer'>[]) ?? [];
-    const rev = await sb.from('case_questions').select('id,answer').eq('case_id', caseId).eq('revealed', true);
+    const rev = await sb.from('case_questions').select('id,answer').eq('case_id', caseId).eq('visible', true).eq('revealed', true);
     const answers = new Map<string, string>();
     if (!rev.error) {
       for (const r of (rev.data as { id: string; answer: string }[]) ?? []) answers.set(r.id, r.answer);
@@ -247,6 +247,12 @@ export const questions = {
   },
   async update(id: string, patch: Partial<Pick<QuestionRow, 'prompt' | 'answer' | 'points' | 'position'>>): Promise<void> {
     unwrap(await sb.from('case_questions').update(patch).eq('id', id).select());
+  },
+  async setVisible(id: string, visible: boolean): Promise<void> {
+    unwrap(await sb.from('case_questions').update({ visible }).eq('id', id).select());
+  },
+  async setVisibleAll(caseId: string, visible: boolean): Promise<void> {
+    unwrap(await sb.from('case_questions').update({ visible }).eq('case_id', caseId).select());
   },
   async setRevealed(id: string, revealed: boolean): Promise<void> {
     unwrap(await sb.from('case_questions').update({ revealed }).eq('id', id).select());

@@ -87,11 +87,23 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
   function questionCard(q: QuestionRow, index: number): HTMLElement {
     const team = selectors.teamAnswerFor(store.getState(), q.id);
 
-    const revealBtn = h('button', {
-      class: q.revealed ? 'btn btn-secondary btn-sm map-attached' : 'btn btn-primary btn-sm',
-      text: q.revealed ? '✓ Answer revealed' : '👁 Reveal answer',
+    const visibleBtn = h('button', {
+      class: q.visible ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm',
+      text: q.visible ? '✓ Shown to players' : '👁 Show question',
       on: {
         click: async () => {
+          try { await questionRepo.setVisible(q.id, !q.visible); await reload(); }
+          catch { toast('Could not update.'); }
+        },
+      },
+    });
+    const revealBtn = h('button', {
+      class: q.revealed ? 'btn btn-secondary btn-sm' : 'btn btn-sm',
+      text: q.revealed ? '✓ Answer revealed' : '🔓 Reveal answer',
+      attrs: q.visible ? {} : { disabled: '', title: 'Show question to players first' },
+      on: {
+        click: async () => {
+          if (!q.visible) return;
           try { await questionRepo.setRevealed(q.id, !q.revealed); await reload(); }
           catch { toast('Could not update.'); }
         },
@@ -126,7 +138,7 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
               h('span', { class: 'gm-question-team-by', text: team.updated_by ? ` — ${team.updated_by}` : '' }))
           : h('p', { class: 'gm-question-team-empty', text: 'No answer submitted yet.' }),
       ),
-      h('div', { class: 'gm-question-actions' }, revealBtn, editBtn, delBtn),
+      h('div', { class: 'gm-question-actions' }, visibleBtn, revealBtn, editBtn, delBtn),
     );
   }
 
@@ -135,8 +147,21 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
     const s = store.getState();
     const qs = s.questions;
     const total = selectors.totalPoints(s);
+    const allVisible = qs.length > 0 && qs.every((q) => q.visible);
     const allRevealed = qs.length > 0 && qs.every((q) => q.revealed);
 
+    const showAllBtn = h('button', {
+      class: 'btn btn-secondary btn-sm',
+      text: allVisible ? 'Hide all questions' : 'Show all questions',
+      on: {
+        click: async () => {
+          const id = caseId();
+          if (!id || !qs.length) return;
+          try { await questionRepo.setVisibleAll(id, !allVisible); await reload(); }
+          catch { toast('Could not update.'); }
+        },
+      },
+    });
     const revealAllBtn = h('button', {
       class: 'btn btn-secondary btn-sm',
       text: allRevealed ? 'Hide all answers' : 'Reveal all answers',
@@ -157,7 +182,7 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
           h('span', { class: 'counter-badge', text: String(qs.length) }),
           qs.length ? h('span', { class: 'gm-points-total', text: `${total} pts total` }) : null,
         ),
-        qs.length ? revealAllBtn : null,
+        qs.length ? h('div', { class: 'gm-bulk-actions' }, showAllBtn, revealAllBtn) : null,
       ),
     );
 

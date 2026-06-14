@@ -645,6 +645,8 @@ body::before {
 .gm-question-team-empty, .gm-question-answer-text:empty { font-style: italic; color: var(--fog); }
 .gm-question-actions { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(139,105,20,0.2); padding-top: 10px; }
 .gm-question-add { max-width: 220px; }
+.gm-bulk-actions { display: flex; gap: 6px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .gm-solution-panel { display: flex; flex-direction: column; gap: 12px; }
 
 /* Player question cards */
