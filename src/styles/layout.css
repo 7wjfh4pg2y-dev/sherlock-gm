@@ -184,7 +184,7 @@ body::before {
 .gm-title-group { display: flex; align-items: baseline; gap: 16px; min-width: 0; }
 .gm-select-wrap { position: relative; min-width: 0; }
 .gm-case-select {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Special Elite', 'Courier New', monospace;
   font-size: 1.6rem; font-weight: 700; color: var(--parchment);
   background: transparent; border: none; cursor: pointer; outline: none;
   appearance: none; -webkit-appearance: none;

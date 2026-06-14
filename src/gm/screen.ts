@@ -105,7 +105,7 @@ export function createGMScreen(): GMScreenHandle {
       h('div', { class: 'gm-select-wrap' }, caseSelect),
       caseOrderWrap,
     ),
-    h('div', { class: 'gm-header-actions' }, newCaseBtn, deleteCaseBtn, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, deleteCaseBtn, logoutBtn),
   );
 
   // ── Tab row: inline content tabs (left) + resource launchers (right) ──
@@ -125,7 +125,7 @@ export function createGMScreen(): GMScreenHandle {
     tabButtons[id] = btn;
     tabBar.append(btn);
   }
-  const toolsGroup = h('div', { class: 'gm-tools' }, dirBtn, mapsBtn, newspaperBtn, mapViewBtn, notebookBtn);
+  const toolsGroup = h('div', { class: 'gm-tools' }, dirBtn, mapViewBtn, notebookBtn);
   const tabRow = h('div', { class: 'gm-tabrow' }, tabBar, toolsGroup);
 
   // ── Panels (one shown at a time in panelEl) ──
