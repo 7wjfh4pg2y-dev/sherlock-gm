@@ -463,8 +463,8 @@ body::before {
   gap: 16px; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 14px; margin-bottom: 0;
 }
 .screen-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1.8rem; color: var(--parchment); font-weight: 700;
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 1.6rem; color: var(--parchment); font-weight: 700;
 }
 .screen-meta {
   font-family: 'Courier Prime', 'Courier New', monospace;
