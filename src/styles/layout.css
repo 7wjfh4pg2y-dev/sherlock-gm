@@ -557,7 +557,21 @@ body::before {
 .player-directory-panel > div { display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .player-directory-panel .directory-results { flex: 1; min-height: 0; }
 
-/* Map panel */
+/* GM inline directory/map/newspaper panels */
+.gm-directory-panel {
+  background: var(--parchment);
+  padding: 16px 20px;
+  border: 1px solid var(--parchment-darker);
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.gm-directory-panel > div { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.gm-directory-panel .directory-results { flex: 1; min-height: 0; overflow-y: auto; }
+.gm-directory-panel .directory-modal-header { padding: 0 0 12px; }
+.gm-map-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
+.gm-newspaper-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.gm-notebook-inline { flex: 1; min-height: 0; overflow-y: auto; }
+
 .player-map-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
 .player-map-inlay {
   position: relative;

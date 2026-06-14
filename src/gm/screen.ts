@@ -4,7 +4,7 @@
 
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
-import type { ClueRow, PlayerRow, CaseRow } from '../data/types';
+import type { ClueRow, PlayerRow, CaseRow, NewspaperRow } from '../data/types';
 import {
   cases as caseRepo,
   clues as clueRepo,
@@ -28,6 +28,7 @@ import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
 import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
+import type { InlinePdfHandle } from '../components/pdfViewer';
 
 export interface GMScreenHandle {
   element: HTMLElement;
@@ -70,12 +71,12 @@ export function createGMScreen(): GMScreenHandle {
   const caseOrderWrap = h('label', { class: 'gm-order-wrap' }, h('span', { text: 'Case #' }), caseOrderInput);
   const mapsBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
-    text: '🗺 Maps Library',
+    text: '🗺 Cartographer',
     on: { click: openMapsLibrary },
   });
   const newspaperBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
-    text: '📰 Newspaper',
+    text: '📰 Printing Press',
     on: { click: openNewspaperModal },
   });
   const logoutBtn = h('button', {
@@ -95,7 +96,7 @@ export function createGMScreen(): GMScreenHandle {
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
-  type GMTab = 'clues' | 'briefing' | 'directory' | 'map' | 'notebook';
+  type GMTab = 'clues' | 'briefing' | 'directory' | 'map' | 'newspaper' | 'notebook';
   let activeTab: GMTab = 'clues';
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
@@ -104,6 +105,7 @@ export function createGMScreen(): GMScreenHandle {
     { id: 'briefing' as const, label: 'Case Brief' },
     { id: 'directory' as const, label: 'Directory' },
     { id: 'map' as const, label: 'Map' },
+    { id: 'newspaper' as const, label: 'Newspaper' },
     { id: 'notebook' as const, label: 'Notebook' },
   ]) {
     const btn = h('button', {
@@ -123,6 +125,7 @@ export function createGMScreen(): GMScreenHandle {
   const cluesPanel = h('div', { class: 'gm-clues-panel' }, unrevealedSection, revealedSection);
   const directoryPanel = h('div', { class: 'gm-directory-panel' });
   const mapPanel = h('div', { class: 'gm-map-panel' });
+  const newspaperPanel = h('div', { class: 'gm-newspaper-panel' });
   const gmNotebook = buildGMNotebook();
   const panelEl = h('div', { class: 'gm-panel' });
 
@@ -130,6 +133,9 @@ export function createGMScreen(): GMScreenHandle {
   let mapPanZoom: PanZoomHandle | null = null;
   let builtMapId: string | null = null;
   let directoryBuilt = false;
+  let builtNewspaperUrl: string | null = null;
+  let currentNewspaperUrl: string | null = null;
+  let newspaperPdfHandle: InlinePdfHandle | null = null;
 
   // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
@@ -642,10 +648,61 @@ export function createGMScreen(): GMScreenHandle {
     mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, ctrls));
   }
 
+  function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
+    if (paper.image_url === builtNewspaperUrl && newspaperPanel.childElementCount > 0) return;
+    newspaperPdfHandle?.destroy();
+    newspaperPdfHandle = null;
+    builtNewspaperUrl = paper.image_url;
+    clear(newspaperPanel);
+
+    if (allPapers.length > 1) {
+      const strip = h('div', { class: 'newspaper-selector' });
+      for (const p of allPapers) {
+        strip.append(h('button', {
+          class: 'newspaper-selector-btn' + (p.image_url === paper.image_url ? ' active' : ''),
+          text: p.name,
+          on: { click: () => { currentNewspaperUrl = p.image_url; builtNewspaperUrl = null; buildNewspaperInlay(p, allPapers); } },
+        }));
+      }
+      newspaperPanel.append(strip);
+    }
+
+    const scrollEl = h('div', { class: 'pdf-inlay-scroll' }, h('div', { class: 'pdf-viewer-status', text: 'Loading…' }));
+    let handle: InlinePdfHandle | null = null;
+    const ctrls = h('div', { class: 'map-ctrl-bar' },
+      h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },  on: { click: () => handle?.reset() } }),
+      h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },     on: { click: () => handle?.zoomOut() } }),
+      h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },      on: { click: () => handle?.zoomIn() } }),
+      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' },  on: { click: () => openMapViewer(paper.image_url, paper.name) } }),
+    );
+    newspaperPanel.append(h('div', { class: 'player-newspaper-inlay' }, scrollEl, ctrls));
+
+    void import('../components/pdfViewer').then((m) => {
+      const pdfHandle = m.createInlinePdfViewer(paper.image_url);
+      handle = pdfHandle;
+      newspaperPdfHandle = pdfHandle;
+      scrollEl.replaceChildren(pdfHandle.element);
+    });
+  }
+
+  function renderNewspaper(s: AppState): void {
+    const papers = s.newspapers;
+    if (!papers.length) {
+      clear(newspaperPanel);
+      newspaperPanel.append(h('div', { class: 'empty-state', text: 'No newspapers enabled for this case. Use Printing Press to add some.' }));
+      return;
+    }
+    if (!currentNewspaperUrl || !papers.find((p) => p.image_url === currentNewspaperUrl)) {
+      currentNewspaperUrl = papers[0].image_url;
+    }
+    buildNewspaperInlay(papers.find((p) => p.image_url === currentNewspaperUrl)!, papers);
+  }
+
   function renderPanel(s: AppState): void {
     if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
     // Tear down the map's window listeners whenever we're not on the map tab.
     if (activeTab !== 'map' && mapPanZoom) { mapPanZoom.detach(); mapPanZoom = null; builtMapId = null; }
+    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
@@ -655,6 +712,9 @@ export function createGMScreen(): GMScreenHandle {
     } else if (activeTab === 'map') {
       renderMap(s);
       replaceChildren(panelEl, mapPanel);
+    } else if (activeTab === 'newspaper') {
+      renderNewspaper(s);
+      replaceChildren(panelEl, newspaperPanel);
     } else if (activeTab === 'notebook') {
       gmNotebook.refresh();
       replaceChildren(panelEl, gmNotebook.element);
@@ -720,8 +780,10 @@ export function createGMScreen(): GMScreenHandle {
     // The Map tab only appears when a map is attached; fall back to Clues if it
     // vanishes while selected.
     const hasMap = !!current?.map_id;
+    const hasNews = s.newspapers.length > 0;
     if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
-    if (activeTab === 'map' && !hasMap) {
+    if (tabButtons.newspaper) tabButtons.newspaper.style.display = hasNews ? '' : 'none';
+    if ((activeTab === 'map' && !hasMap) || (activeTab === 'newspaper' && !hasNews)) {
       activeTab = 'clues';
       for (const [tid, btn] of Object.entries(tabButtons)) btn?.classList.toggle('active', tid === 'clues');
     }
@@ -744,6 +806,7 @@ export function createGMScreen(): GMScreenHandle {
     destroy() {
       teardownCase();
       mapPanZoom?.detach();
+      newspaperPdfHandle?.destroy();
       unsubscribe();
     },
   };
