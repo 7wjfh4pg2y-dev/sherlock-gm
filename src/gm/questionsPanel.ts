@@ -221,7 +221,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
 
     const revealToggle = h('button', {
       class: revealed ? 'btn btn-secondary btn-sm map-attached' : 'btn btn-primary btn-sm',
-      text: revealed ? '✓ Revealed to players' : '👁 Reveal to players',
+      text: revealed ? '✓ Solution revealed' : '👁 Reveal solution',
       on: {
         click: async () => {
           const id = caseId();
