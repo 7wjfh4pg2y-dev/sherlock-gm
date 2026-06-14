@@ -29,6 +29,7 @@ import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
 import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 import type { InlinePdfHandle } from '../components/pdfViewer';
+import { createDropdown } from '../components/dropdown';
 
 export interface GMScreenHandle {
   element: HTMLElement;
@@ -42,7 +43,7 @@ export function createGMScreen(): GMScreenHandle {
   let onlineSet = new Set<string>();
 
   // ── Top bar ──
-  const caseSelect = h('select', { class: 'gm-case-select' });
+  const caseDropdown = createDropdown({ className: 'gm-case-select', onChange: handleCaseChange });
   const newCaseBtn = h('button', {
     class: 'btn btn-primary btn-sm',
     text: '+ New Case',
@@ -89,7 +90,7 @@ export function createGMScreen(): GMScreenHandle {
   // ── Header: case title (select) + ordinal + global actions ──
   const header = h('header', { class: 'gm-header' },
     h('div', { class: 'gm-title-group' },
-      h('div', { class: 'gm-select-wrap' }, caseSelect),
+      h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
       caseOrderWrap,
     ),
     h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, deleteCaseBtn, logoutBtn),
@@ -159,15 +160,14 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   // ── Case select wiring ──
-  caseSelect.addEventListener('change', () => {
-    const id = caseSelect.value;
+  function handleCaseChange(id: string): void {
     if (!id) {
       teardownCase();
       store.set({ currentCaseId: null, clues: [], players: [], notes: [] });
       return;
     }
     void openCase(id);
-  });
+  }
 
   // ── Mutations: cases ──
   function showNewCaseModal(): void {
@@ -198,7 +198,7 @@ export function createGMScreen(): GMScreenHandle {
         });
         store.set({ cases: [...store.getState().cases, c] });
         renderCaseSelect(store.getState());
-        caseSelect.value = c.id;
+        caseDropdown.setValue(c.id);
         await openCase(c.id);
         handle.close();
       } catch {
@@ -467,15 +467,12 @@ export function createGMScreen(): GMScreenHandle {
 
   // ── Rendering ──
   function renderCaseSelect(s: AppState): void {
-    const caseList = s.cases;
-    replaceChildren(
-      caseSelect,
-      h('option', { attrs: { value: '' }, text: '— Select a Case —' }),
-      ...caseList.map((c: CaseRow) => {
-        const opt = h('option', { attrs: { value: c.id }, text: c.name });
-        if (c.id === s.currentCaseId) opt.setAttribute('selected', '');
-        return opt;
-      }),
+    caseDropdown.setOptions(
+      [
+        { value: '', label: '— Select a Case —' },
+        ...s.cases.map((c: CaseRow) => ({ value: c.id, label: c.name })),
+      ],
+      s.currentCaseId ?? '',
     );
     deleteCaseBtn.style.display = s.currentCaseId ? '' : 'none';
     const current = selectors.currentCase(s);

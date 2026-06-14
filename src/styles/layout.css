@@ -183,18 +183,47 @@ body::before {
 }
 .gm-title-group { display: flex; align-items: baseline; gap: 16px; min-width: 0; }
 .gm-select-wrap { position: relative; min-width: 0; }
-.gm-case-select {
+
+/* Custom case dropdown (replaces native <select> so the option list honours the
+   typewriter font — native option popups ignore font-family on macOS). */
+.gm-dropdown { position: relative; }
+.gm-dropdown-trigger.gm-case-select {
+  display: inline-flex; align-items: baseline; gap: 8px;
   font-family: 'Special Elite', 'Courier New', monospace;
   font-size: 1.6rem; font-weight: 700; color: var(--parchment);
   background: transparent; border: none; cursor: pointer; outline: none;
-  appearance: none; -webkit-appearance: none;
-  max-width: 480px; padding: 2px 32px 4px 4px;
+  max-width: 480px; padding: 2px 8px 4px 4px;
   border-bottom: 1px solid transparent; transition: border-color 0.15s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 6px center; background-size: 15px;
 }
-.gm-case-select:hover { border-bottom-color: rgba(201,169,110,0.45); }
-.gm-case-select option { color: var(--ink); background: var(--paper); font-size: 0.95rem; font-family: 'Special Elite', 'Courier New', monospace; }
+.gm-dropdown-trigger.gm-case-select::after {
+  content: ''; flex-shrink: 0; width: 15px; height: 15px; align-self: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+  transition: transform 0.15s;
+}
+.gm-dropdown-trigger.gm-case-select[aria-expanded="true"]::after { transform: rotate(180deg); }
+.gm-dropdown-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-dropdown-trigger.gm-case-select:hover { border-bottom-color: rgba(201,169,110,0.45); }
+
+.gm-dropdown-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+  min-width: 260px; max-width: 460px; max-height: 60vh; overflow-y: auto;
+  display: none; flex-direction: column;
+  background: #1c160d; border: 1px solid rgba(201,169,110,0.4);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+  padding: 6px;
+}
+.gm-dropdown-menu.show { display: flex; }
+.gm-dropdown-option {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 1.05rem; color: var(--parchment);
+  padding: 9px 12px; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; border-radius: 2px;
+  transition: background 0.12s, color 0.12s;
+}
+.gm-dropdown-option:hover { background: rgba(201,169,110,0.14); }
+.gm-dropdown-option.selected { color: var(--sepia-light); background: rgba(201,169,110,0.08); }
+
 .gm-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 /* Tab row: inline content tabs (left) + resource launchers (right) */
