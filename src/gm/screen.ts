@@ -28,6 +28,7 @@ import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
+import { buildInformants } from '../components/informants';
 import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 import type { InlinePdfHandle } from '../components/pdfViewer';
 import { createDropdown } from '../components/dropdown';
@@ -98,7 +99,7 @@ export function createGMScreen(): GMScreenHandle {
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
-  type GMTab = 'clues' | 'briefing' | 'questions' | 'solution' | 'directory' | 'map' | 'newspaper' | 'notebook';
+  type GMTab = 'clues' | 'briefing' | 'questions' | 'solution' | 'directory' | 'informants' | 'map' | 'newspaper' | 'notebook';
   let activeTab: GMTab = 'clues';
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
@@ -107,6 +108,7 @@ export function createGMScreen(): GMScreenHandle {
     { id: 'clues' as const, label: 'Clues' },
     { id: 'newspaper' as const, label: 'Newspaper' },
     { id: 'directory' as const, label: 'Directory' },
+    { id: 'informants' as const, label: 'Informants' },
     { id: 'map' as const, label: 'Map' },
     { id: 'questions' as const, label: 'Questions' },
     { id: 'solution' as const, label: 'Solution' },
@@ -128,6 +130,7 @@ export function createGMScreen(): GMScreenHandle {
   const revealedSection = h('div', { class: 'gm-section' });
   const cluesPanel = h('div', { class: 'gm-clues-panel' }, unrevealedSection, revealedSection);
   const directoryPanel = h('div', { class: 'gm-directory-panel' });
+  const informantsPanel = h('div', { class: 'gm-informants-panel' }, buildInformants());
   const mapPanel = h('div', { class: 'gm-map-panel' });
   const newspaperPanel = h('div', { class: 'gm-newspaper-panel' });
   const gmNotebook = buildGMNotebook();
@@ -720,6 +723,8 @@ export function createGMScreen(): GMScreenHandle {
     } else if (activeTab === 'directory') {
       renderDirectory();
       replaceChildren(panelEl, directoryPanel);
+    } else if (activeTab === 'informants') {
+      replaceChildren(panelEl, informantsPanel);
     } else if (activeTab === 'map') {
       renderMap(s);
       replaceChildren(panelEl, mapPanel);

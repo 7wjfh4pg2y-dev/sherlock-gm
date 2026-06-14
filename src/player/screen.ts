@@ -10,6 +10,7 @@ import { notes as noteRepo, questionAnswers } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
+import { buildInformants } from '../components/informants';
 import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
@@ -20,7 +21,7 @@ export interface ScreenHandle {
   destroy(): void;
 }
 
-type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'directory' | 'map';
+type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'directory' | 'informants' | 'map';
 
 export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
@@ -45,6 +46,7 @@ export function createPlayerScreen(): ScreenHandle {
     { id: 'clues',     label: 'Clues' },
     { id: 'newspaper', label: 'Newspaper' },
     { id: 'directory', label: 'Directory' },
+    { id: 'informants', label: 'Informants' },
     { id: 'map',       label: 'Map' },
     { id: 'questions', label: 'Questions' },
     { id: 'solution',  label: 'Solution' },
@@ -91,6 +93,9 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Directory panel (inline; built once, retains search state) ──
   const directoryPanel = h('div', { class: 'player-directory-panel' });
+
+  // ── Informants panel (inline; static reference, built once) ──
+  const informantsPanel = h('div', { class: 'player-informants-panel' }, buildInformants());
 
   // ── Map panel (inline image + expand-to-overlay) ──
   const mapPanel = h('div', { class: 'player-map-panel' });
@@ -434,6 +439,8 @@ export function createPlayerScreen(): ScreenHandle {
     } else if (activeTab === 'directory') {
       renderDirectory();
       replaceChildren(panelEl, directoryPanel);
+    } else if (activeTab === 'informants') {
+      replaceChildren(panelEl, informantsPanel);
     } else if (activeTab === 'map') {
       renderMap(s);
       replaceChildren(panelEl, mapPanel);
