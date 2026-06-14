@@ -19,14 +19,15 @@ import {
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers } from './load';
 import { gmLogout } from './auth';
-import { openMapsLibrary, openCaseMap } from './mapsLibrary';
+import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
-import { openGMNotebook } from './notebookModal';
+import { buildGMNotebook } from './notebookModal';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
-import { openDirectoryModal } from '../components/directory';
+import { buildDirectory } from '../components/directory';
+import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 
 export interface GMScreenHandle {
   element: HTMLElement;
@@ -77,21 +78,6 @@ export function createGMScreen(): GMScreenHandle {
     text: '📰 Newspaper',
     on: { click: openNewspaperModal },
   });
-  const dirBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '📖 Directory',
-    on: { click: () => openDirectoryModal(true) },
-  });
-  const notebookBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '📓 Notebook',
-    on: { click: openGMNotebook },
-  });
-  const mapViewBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
-    text: '🗺 Map',
-    on: { click: openCaseMap },
-  });
   const logoutBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: 'Logout',
@@ -108,14 +94,17 @@ export function createGMScreen(): GMScreenHandle {
     h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, deleteCaseBtn, logoutBtn),
   );
 
-  // ── Tab row: inline content tabs (left) + resource launchers (right) ──
-  type GMTab = 'clues' | 'briefing';
+  // ── Tab bar: all case content lives in inline tabs (like the player view) ──
+  type GMTab = 'clues' | 'briefing' | 'directory' | 'map' | 'notebook';
   let activeTab: GMTab = 'clues';
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
   for (const { id, label } of [
     { id: 'clues' as const, label: 'Clues' },
     { id: 'briefing' as const, label: 'Case Brief' },
+    { id: 'directory' as const, label: 'Directory' },
+    { id: 'map' as const, label: 'Map' },
+    { id: 'notebook' as const, label: 'Notebook' },
   ]) {
     const btn = h('button', {
       class: 'gm-tab-btn' + (id === activeTab ? ' active' : ''),
@@ -125,15 +114,22 @@ export function createGMScreen(): GMScreenHandle {
     tabButtons[id] = btn;
     tabBar.append(btn);
   }
-  const toolsGroup = h('div', { class: 'gm-tools' }, dirBtn, mapViewBtn, notebookBtn);
-  const tabRow = h('div', { class: 'gm-tabrow' }, tabBar, toolsGroup);
+  const tabRow = h('div', { class: 'gm-tabrow' }, tabBar);
 
   // ── Panels (one shown at a time in panelEl) ──
   const briefingPanel = h('div', { class: 'gm-briefing' });
   const unrevealedSection = h('div', { class: 'gm-section' });
   const revealedSection = h('div', { class: 'gm-section' });
   const cluesPanel = h('div', { class: 'gm-clues-panel' }, unrevealedSection, revealedSection);
+  const directoryPanel = h('div', { class: 'gm-directory-panel' });
+  const mapPanel = h('div', { class: 'gm-map-panel' });
+  const gmNotebook = buildGMNotebook();
   const panelEl = h('div', { class: 'gm-panel' });
+
+  // Map pan/zoom lifecycle (mirrors the player map tab).
+  let mapPanZoom: PanZoomHandle | null = null;
+  let builtMapId: string | null = null;
+  let directoryBuilt = false;
 
   // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
@@ -614,11 +610,54 @@ export function createGMScreen(): GMScreenHandle {
     }
   }
 
+  function renderDirectory(): void {
+    if (!directoryBuilt) {
+      replaceChildren(directoryPanel, buildDirectory(true));
+      directoryBuilt = true;
+    }
+  }
+
+  function renderMap(s: AppState): void {
+    const current = selectors.currentCase(s);
+    const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
+    // Don't rebuild (and lose zoom/pan) if the same map is already mounted.
+    if ((map?.id ?? null) === builtMapId && mapPanel.childElementCount > 0) return;
+    builtMapId = map?.id ?? null;
+    mapPanZoom?.detach();
+    mapPanZoom = null;
+    clear(mapPanel);
+    if (!map) {
+      mapPanel.append(h('div', { class: 'empty-state', text: 'No map attached. Use Maps Library to attach one to this case.' }));
+      return;
+    }
+    const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name } });
+    const viewport = h('div', { class: 'player-map-viewport' }, img);
+    mapPanZoom = attachPanZoom(viewport, img);
+    const ctrls = h('div', { class: 'map-ctrl-bar' },
+      h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' }, on: { click: () => mapPanZoom?.reset() } }),
+      h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' }, on: { click: () => mapPanZoom?.zoomOut() } }),
+      h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' }, on: { click: () => mapPanZoom?.zoomIn() } }),
+      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(map.url, map.name) } }),
+    );
+    mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, ctrls));
+  }
+
   function renderPanel(s: AppState): void {
     if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
+    // Tear down the map's window listeners whenever we're not on the map tab.
+    if (activeTab !== 'map' && mapPanZoom) { mapPanZoom.detach(); mapPanZoom = null; builtMapId = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
+    } else if (activeTab === 'directory') {
+      renderDirectory();
+      replaceChildren(panelEl, directoryPanel);
+    } else if (activeTab === 'map') {
+      renderMap(s);
+      replaceChildren(panelEl, mapPanel);
+    } else if (activeTab === 'notebook') {
+      gmNotebook.refresh();
+      replaceChildren(panelEl, gmNotebook.element);
     } else {
       renderClues(s);
       replaceChildren(panelEl, cluesPanel);
@@ -678,7 +717,14 @@ export function createGMScreen(): GMScreenHandle {
     tabRow.style.display = hasCase ? '' : 'none';
     rightPanel.style.display = hasCase ? '' : 'none';
     const current = selectors.currentCase(s);
-    mapViewBtn.style.display = current?.map_id ? '' : 'none';
+    // The Map tab only appears when a map is attached; fall back to Clues if it
+    // vanishes while selected.
+    const hasMap = !!current?.map_id;
+    if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
+    if (activeTab === 'map' && !hasMap) {
+      activeTab = 'clues';
+      for (const [tid, btn] of Object.entries(tabButtons)) btn?.classList.toggle('active', tid === 'clues');
+    }
     renderPanel(s);
     renderPlayers(s);
   }
@@ -697,6 +743,7 @@ export function createGMScreen(): GMScreenHandle {
     element,
     destroy() {
       teardownCase();
+      mapPanZoom?.detach();
       unsubscribe();
     },
   };

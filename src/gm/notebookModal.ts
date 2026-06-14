@@ -24,6 +24,63 @@ async function handleDeleteNote(id: string): Promise<void> {
   } catch { toast('Could not delete note.'); }
 }
 
+/** Builds the case notebook as a standalone element for inline embedding (a tab
+ *  in the GM screen). Returns the element plus a refresh() that rebuilds only
+ *  when the set of notes actually changes, so the active sub-tab is preserved. */
+export function buildGMNotebook(): { element: HTMLElement; refresh(): void } {
+  const element = h('div', { class: 'gm-notebook-inline' });
+  let lastSig = '';
+
+  function build(state: AppState): void {
+    const sig = state.notes.map((n) => `${n.id}:${n.is_private ? 1 : 0}`).join(',');
+    if (sig === lastSig && element.childElementCount) return;
+    lastSig = sig;
+    renderNotebookInto(element, state);
+  }
+
+  build(store.getState());
+  return { element, refresh: () => build(store.getState()) };
+}
+
+/** Shared renderer: clears `target` and builds the grouped notebook into it. */
+function renderNotebookInto(target: HTMLElement, state: AppState): void {
+  clear(target);
+  const allNotes = state.notes;
+  const sharedNotes = allNotes.filter((n) => !n.is_private);
+  const playerNames = [...new Set(allNotes.map((n) => n.player_name))];
+
+  const sharedFeed = h('div', { class: 'nb-notes' });
+  const sharedContent = h('div', {}, sharedFeed);
+
+  fillFeed(sharedFeed, sharedNotes.map((n) => noteCard({
+    name: n.player_name,
+    color: n.player_color,
+    time: n.created_at,
+    text: n.content,
+    actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
+  })), 'No shared notes yet.');
+
+  const tabs: NotebookTab[] = [{ id: 'shared', label: 'Shared', content: sharedContent }];
+
+  for (const name of playerNames) {
+    const feed = h('div', { class: 'nb-notes' });
+    const color = allNotes.find((n) => n.player_name === name)?.player_color ?? '#888';
+    tabs.push({ id: `player-${name}`, label: name, dotColor: color, content: h('div', {}, feed) });
+    const playerNotes = allNotes.filter((n) => n.player_name === name);
+    fillFeed(feed, playerNotes.map((n) => noteCard({
+      name: n.player_name,
+      color: n.player_color,
+      time: n.created_at,
+      text: n.content,
+      badge: n.is_private ? 'Private' : undefined,
+      actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
+    })), 'No notes for this player.');
+  }
+
+  const nb = createNotebook(tabs);
+  target.append(nb.element);
+}
+
 export function openGMNotebook(): void {
   const s = store.getState();
   const { body } = openTitledModal('Case Notebook', { contentClass: 'gm-notebook-modal' }); // handle not needed

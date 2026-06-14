@@ -194,7 +194,7 @@ body::before {
   background-repeat: no-repeat; background-position: right 6px center; background-size: 15px;
 }
 .gm-case-select:hover { border-bottom-color: rgba(201,169,110,0.45); }
-.gm-case-select option { color: var(--ink); background: var(--paper); font-size: 0.9rem; }
+.gm-case-select option { color: var(--ink); background: var(--paper); font-size: 0.95rem; font-family: 'Special Elite', 'Courier New', monospace; }
 .gm-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 /* Tab row: inline content tabs (left) + resource launchers (right) */
