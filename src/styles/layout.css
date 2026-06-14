@@ -648,7 +648,7 @@ body::before {
 .gm-bulk-actions { display: flex; gap: 6px; }
 .gm-question-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 14px 2px 6px; padding-bottom: 4px; border-bottom: 1px solid rgba(139,105,20,0.35); }
 .gm-question-group-title { font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.95rem; color: var(--brass, #c8a951); letter-spacing: 0.04em; }
-.player-question-group-head { font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.95rem; letter-spacing: 0.04em; margin: 16px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(60,40,20,0.25); }
+.player-question-group-head { font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.95rem; letter-spacing: 0.04em; color: var(--brass, #c8a951); margin: 16px 2px 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(200,169,81,0.35); }
 .btn:disabled { opacity: 0.65; cursor: not-allowed; }
 .gm-solution-panel { display: flex; flex-direction: column; gap: 12px; }
 
