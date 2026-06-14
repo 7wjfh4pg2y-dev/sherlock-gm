@@ -1,7 +1,7 @@
-// ── GM Newspaper modal ──
-// Manage the scanned newspaper pages for the current case: upload, rename,
-// delete, click to zoom. Always visible to players once added. Self-contained:
-// reads/writes the store + Supabase directly. Extracted like mapsLibrary.
+// ── GM Newspaper Library modal ──
+// A shared library (like Maps Library): the GM uploads PDFs/images once, then
+// toggles which are enabled for the current case. Enabled papers are always
+// visible to that case's players. Self-contained: reads/writes store + Supabase.
 
 import { h, clear } from '../util/dom';
 import { store } from '../state/store';
@@ -14,9 +14,6 @@ import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
 
 export function openNewspaperModal(): void {
-  const caseId = store.getState().currentCaseId;
-  if (!caseId) { toast('Select a case first.'); return; }
-
   const grid = h('div', { class: 'maps-grid' });
   const nameInput = h('input', {
     class: 'gm-input',
@@ -31,17 +28,38 @@ export function openNewspaperModal(): void {
     if (fileInput.files?.[0]) fileLabel.textContent = '📄 ' + fileInput.files[0].name;
   });
   const uploadErr = h('div', { class: 'form-error' });
-  const uploadBtn = h('button', { class: 'btn btn-primary btn-sm', text: 'Add Page' });
+  const uploadBtn = h('button', { class: 'btn btn-primary btn-sm', text: 'Add to Library' });
 
-  const { body } = openTitledModal('Newspaper', { contentClass: 'maps-library-modal' }); // handle not needed; × button suffices
+  const { body } = openTitledModal('Newspaper Library', { contentClass: 'maps-library-modal' });
 
-  function renderGrid(rows: NewspaperRow[]): void {
+  function refresh(): void {
+    const s = store.getState();
+    renderGrid(s.newspapers, new Set(s.caseNewspaperIds));
+  }
+
+  function renderGrid(rows: NewspaperRow[], enabled: Set<string>): void {
     clear(grid);
     if (!rows.length) {
-      grid.append(h('p', { class: 'empty-state', text: 'No newspapers added yet. Add as many as the case requires.' }));
+      grid.append(h('p', { class: 'empty-state', text: 'No newspapers uploaded yet.' }));
       return;
     }
+    const caseId = store.getState().currentCaseId;
     for (const p of rows) {
+      const isEnabled = !!caseId && enabled.has(p.id);
+      const toggleBtn = !caseId
+        ? h('button', { class: 'btn btn-secondary btn-sm', text: 'Use in this case', attrs: { disabled: '', title: 'Select a case first' } })
+        : isEnabled
+        ? h('button', {
+            class: 'btn btn-secondary btn-sm map-attached',
+            text: '✓ In this case',
+            on: { click: () => void toggle(p.id, false) },
+          })
+        : h('button', {
+            class: 'btn btn-primary btn-sm',
+            text: 'Use in this case',
+            on: { click: () => void toggle(p.id, true) },
+          });
+
       const renameInput = h('input', {
         class: 'gm-input map-rename-input',
         attrs: { type: 'text', value: p.name },
@@ -55,10 +73,9 @@ export function openNewspaperModal(): void {
             if (!name) { toast('Enter a label first.'); return; }
             try {
               await paperRepo.rename(p.id, name);
-              await loadGMNewspapers(caseId!);
-              toast('Page renamed.');
-              renderGrid(store.getState().newspapers);
-            } catch { toast('Could not rename page.'); }
+              await reload();
+              toast('Newspaper renamed.');
+            } catch { toast('Could not rename newspaper.'); }
           },
         },
       });
@@ -67,13 +84,12 @@ export function openNewspaperModal(): void {
         text: '🗑',
         on: {
           click: async () => {
-            if (!(await confirmDelete('Remove this newspaper page?'))) return;
+            if (!(await confirmDelete('Remove this newspaper from the library? It will be removed from every case.'))) return;
             try {
               await paperRepo.remove(p.id);
-              await loadGMNewspapers(caseId!);
-              toast('Page removed.');
-              renderGrid(store.getState().newspapers);
-            } catch { toast('Could not delete page.'); }
+              await reload();
+              toast('Newspaper removed.');
+            } catch { toast('Could not delete newspaper.'); }
           },
         },
       });
@@ -94,11 +110,12 @@ export function openNewspaperModal(): void {
       grid.append(
         h(
           'div',
-          { class: 'map-card' },
+          { class: isEnabled ? 'map-card map-card-attached' : 'map-card' },
           preview,
           h(
             'div',
             { class: 'map-card-body' },
+            toggleBtn,
             renameInput,
             h('div', { class: 'map-card-actions' }, renameBtn, deleteBtn),
           ),
@@ -107,26 +124,44 @@ export function openNewspaperModal(): void {
     }
   }
 
-  renderGrid(store.getState().newspapers);
+  async function reload(): Promise<void> {
+    const caseId = store.getState().currentCaseId;
+    if (caseId) await loadGMNewspapers(caseId);
+    else store.set({ newspapers: await paperRepo.list() });
+    refresh();
+  }
+
+  async function toggle(newspaperId: string, on: boolean): Promise<void> {
+    const caseId = store.getState().currentCaseId;
+    if (!caseId) return;
+    try {
+      if (on) await paperRepo.enable(caseId, newspaperId);
+      else await paperRepo.disable(caseId, newspaperId);
+      await loadGMNewspapers(caseId);
+      refresh();
+      toast(on ? 'Newspaper enabled for this case.' : 'Newspaper removed from this case.');
+    } catch { toast('Could not update newspaper.'); }
+  }
+
+  refresh();
 
   uploadBtn.addEventListener('click', async () => {
     const file = fileInput.files?.[0];
-    if (!file) { uploadErr.textContent = 'Select a scan image.'; return; }
+    if (!file) { uploadErr.textContent = 'Select a scan or PDF.'; return; }
     const name = nameInput.value.trim() || `Newspaper ${store.getState().newspapers.length + 1}`;
     uploadErr.textContent = 'Uploading…';
     uploadBtn.setAttribute('disabled', '');
     try {
       const url = await storage.uploadNewspaperImage(file);
       const position = store.getState().newspapers.length + 1;
-      await paperRepo.create({ case_id: caseId!, name, image_url: url, position });
-      await loadGMNewspapers(caseId!);
+      await paperRepo.create({ name, image_url: url, position });
+      await reload();
       nameInput.value = '';
       fileInput.value = '';
-      fileLabel.textContent = 'Click to select scan';
+      fileLabel.textContent = 'Click to select newspaper scan (image or PDF)';
       uploadErr.textContent = '';
       uploadBtn.removeAttribute('disabled');
-      toast('Newspaper page added!');
-      renderGrid(store.getState().newspapers);
+      toast('Newspaper added to library!');
     } catch {
       uploadErr.textContent = 'Upload failed.';
       uploadBtn.removeAttribute('disabled');
@@ -136,7 +171,7 @@ export function openNewspaperModal(): void {
   body.append(
     grid,
     h('div', { class: 'maps-upload-form' },
-      h('h3', { class: 'form-section-title', text: 'Add Newspaper' }),
+      h('h3', { class: 'form-section-title', text: 'Add Newspaper to Library' }),
       nameInput,
       fileLabel,
       uploadErr,

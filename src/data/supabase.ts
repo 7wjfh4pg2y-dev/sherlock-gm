@@ -166,39 +166,37 @@ export const maps = {
 };
 
 // ── Newspapers ──
-// Per-case scanned pages, always visible to players (no reveal flag).
+// A shared, case-independent library (like maps). Papers are enabled for cases
+// via the case_newspapers join table. Always visible to players (no reveal).
 export const newspapers = {
-  async listForCase(caseId: string): Promise<NewspaperRow[]> {
+  /** The full library (GM). */
+  async list(): Promise<NewspaperRow[]> {
     return unwrap(
-      await sb.from('newspapers').select('*').eq('case_id', caseId).order('position'),
+      await sb.from('newspapers').select('*').order('position').order('created_at'),
     ) ?? [];
   },
-  // Cumulative unlock: every newspaper from cases at or before the given case's
-  // chronological position. Joins the owning case so the player reader can
-  // group papers by mystery. Ordered by case ordinal, then page position.
-  async listUnlocked(caseId: string): Promise<NewspaperRow[]> {
-    const cur = await sb.from('cases').select('ordinal').eq('id', caseId);
-    // No `ordinal` column yet (db/002 not run) → fall back to this case only.
-    if (cur.error) return this.listForCase(caseId);
-    const ordinal = (cur.data as { ordinal: number }[] | null)?.[0]?.ordinal ?? 0;
-    const res = await sb
-      .from('newspapers')
-      .select('*, cases!inner(name, ordinal)')
-      .lte('cases.ordinal', ordinal)
-      .order('ordinal', { foreignTable: 'cases' })
-      .order('position');
-    if (res.error) return this.listForCase(caseId);
-    const rows = (res.data as (NewspaperRow & { cases: { name: string; ordinal: number } | null })[] | null) ?? [];
-    return rows.map((r) => ({
-      id: r.id,
-      case_id: r.case_id,
-      name: r.name,
-      image_url: r.image_url,
-      position: r.position,
-      created_at: r.created_at,
-      case_name: r.cases?.name,
-      case_ordinal: r.cases?.ordinal,
-    }));
+  /** Papers enabled for a case (player view + GM display), in library order. */
+  async listForCase(caseId: string): Promise<NewspaperRow[]> {
+    const rows = unwrap(
+      await sb.from('case_newspapers').select('newspapers(*)').eq('case_id', caseId),
+    ) as unknown as { newspapers: NewspaperRow | null }[] | null;
+    return (rows ?? [])
+      .map((r) => r.newspapers)
+      .filter((p): p is NewspaperRow => !!p)
+      .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
+  },
+  /** Just the enabled newspaper ids for a case (GM library toggles). */
+  async enabledIds(caseId: string): Promise<string[]> {
+    const rows = unwrap(
+      await sb.from('case_newspapers').select('newspaper_id').eq('case_id', caseId),
+    ) as { newspaper_id: string }[] | null;
+    return (rows ?? []).map((r) => r.newspaper_id);
+  },
+  async enable(caseId: string, newspaperId: string): Promise<void> {
+    unwrap(await sb.from('case_newspapers').insert({ case_id: caseId, newspaper_id: newspaperId }).select());
+  },
+  async disable(caseId: string, newspaperId: string): Promise<void> {
+    unwrap(await sb.from('case_newspapers').delete().eq('case_id', caseId).eq('newspaper_id', newspaperId).select());
   },
   async create(payload: NewspaperInsert): Promise<NewspaperRow> {
     return unwrap(await sb.from('newspapers').insert(payload).select().single());
@@ -262,7 +260,11 @@ export const storage = {
 // One channel per case carrying clues/players/notes changes. Callers pass a
 // single handler invoked (debounced upstream if desired) on any change to the
 // named table. This is the ONLY thing that should drive store updates.
-type TableName = 'clues' | 'players' | 'notes' | 'newspapers';
+type TableName = 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers';
+
+// `newspapers` is now a global library (no case_id), so it can't be filtered per
+// case — we listen to all of its changes. Everything else is per-case.
+const GLOBAL_TABLES = new Set<TableName>(['newspapers']);
 
 export function subscribeToCase(
   caseId: string,
@@ -270,11 +272,10 @@ export function subscribeToCase(
 ): RealtimeChannel {
   let channel = sb.channel(`case-${caseId}`);
   (Object.keys(handlers) as TableName[]).forEach((table) => {
-    channel = channel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table, filter: `case_id=eq.${caseId}` },
-      () => handlers[table]?.(),
-    );
+    const opts = GLOBAL_TABLES.has(table)
+      ? { event: '*' as const, schema: 'public', table }
+      : { event: '*' as const, schema: 'public', table, filter: `case_id=eq.${caseId}` };
+    channel = channel.on('postgres_changes', opts, () => handlers[table]?.());
   });
   channel.subscribe();
   return channel;

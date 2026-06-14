@@ -50,20 +50,16 @@ export interface MapRow {
   created_at: string;
 }
 
-// A newspaper is a per-case scanned image, always visible to players (handed
-// out at case start in the physical game, not "revealed").
+// A newspaper is a scanned image/PDF in a shared, case-independent library
+// (like maps). It's enabled for any number of cases via the case_newspapers
+// join table, and is always visible to players (handed out at case start in the
+// physical game, not "revealed").
 export interface NewspaperRow {
   id: string;
-  case_id: string;
   name: string;
   image_url: string;
   position: number;
   created_at: string;
-  /** Player-side only: name + chronological order of the owning case. Joined
-      by the cumulative `listUnlocked` query so the reader can group papers by
-      mystery across earlier unlocked cases. Undefined on GM-managed rows. */
-  case_name?: string;
-  case_ordinal?: number;
 }
 
 // ── Insert payloads (server fills id/created_at/defaults) ──
@@ -88,12 +84,7 @@ export type NoteInsert = {
   is_private: boolean;
 };
 export type MapInsert = { name: string; url: string };
-export type NewspaperInsert = {
-  case_id: string;
-  name: string;
-  image_url: string;
-  position: number;
-};
+export type NewspaperInsert = { name: string; image_url: string; position?: number };
 
 // ── App-level (non-DB) types ──
 export interface DirectoryEntry {

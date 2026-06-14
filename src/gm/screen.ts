@@ -51,10 +51,10 @@ export function createGMScreen(): GMScreenHandle {
     text: 'Delete Case',
     on: { click: handleDeleteCase },
   });
-  // Chronological position in the campaign — drives cumulative newspaper unlock.
+  // Chronological position in the campaign (orders cases in the dropdown).
   const caseOrderInput = h('input', {
     class: 'gm-order-input',
-    attrs: { type: 'number', min: '0', title: 'Chronological order in the campaign (drives newspaper unlock)' },
+    attrs: { type: 'number', min: '0', title: 'Chronological order in the campaign' },
   }) as HTMLInputElement;
   caseOrderInput.addEventListener('change', async () => {
     const cur = selectors.currentCase(store.getState());
@@ -406,6 +406,7 @@ export function createGMScreen(): GMScreenHandle {
         players: () => void loadGMRightPanel(caseId),
         notes: () => void loadGMRightPanel(caseId),
         newspapers: () => void loadGMNewspapers(caseId),
+        case_newspapers: () => void loadGMNewspapers(caseId),
       }),
     );
     presenceChannel = watchPresence(caseId, (online) => {

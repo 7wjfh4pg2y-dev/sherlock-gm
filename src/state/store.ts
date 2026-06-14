@@ -24,7 +24,11 @@ export interface AppState {
   players: PlayerRow[];
   notes: NoteRow[];
   maps: MapRow[];
+  // GM: the full shared newspaper library. Player: the papers enabled for the
+  // joined case (players never see the whole library).
   newspapers: NewspaperRow[];
+  // GM only: ids of library newspapers enabled for the current case.
+  caseNewspaperIds: string[];
   // Player identity (player role only).
   identity: Identity | null;
 }
@@ -39,6 +43,7 @@ const initialState: AppState = {
   notes: [],
   maps: [],
   newspapers: [],
+  caseNewspaperIds: [],
   identity: null,
 };
 
@@ -73,6 +78,7 @@ function createStore(initial: AppState) {
       players: [],
       notes: [],
       newspapers: [],
+      caseNewspaperIds: [],
       identity: null,
     });
   }

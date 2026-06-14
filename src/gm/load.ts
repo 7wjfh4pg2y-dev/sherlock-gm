@@ -8,13 +8,14 @@ import { store } from '../state/store';
 import type { MapRow } from '../data/types';
 
 export async function loadGMCase(caseId: string): Promise<void> {
-  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers] = await Promise.all([
+  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds] = await Promise.all([
     cases.get(caseId),
     clues.listForCase(caseId),
     players.listForCase(caseId),
     notes.listForCase(caseId),
     maps.list(),
-    newspapers.listForCase(caseId),
+    newspapers.list(),
+    newspapers.enabledIds(caseId),
   ]);
 
   const mapList: MapRow[] = allMaps;
@@ -28,12 +29,17 @@ export async function loadGMCase(caseId: string): Promise<void> {
     notes: allNotes,
     maps: mapList,
     newspapers: allNewspapers,
+    caseNewspaperIds: enabledIds,
   });
 }
 
-/** Reload only newspapers (used by the newspapers realtime handler). */
+/** Reload the newspaper library + which are enabled for this case. */
 export async function loadGMNewspapers(caseId: string): Promise<void> {
-  store.set({ newspapers: await newspapers.listForCase(caseId) });
+  const [list, enabledIds] = await Promise.all([
+    newspapers.list(),
+    newspapers.enabledIds(caseId),
+  ]);
+  store.set({ newspapers: list, caseNewspaperIds: enabledIds });
 }
 
 export async function loadGMMaps(): Promise<void> {
