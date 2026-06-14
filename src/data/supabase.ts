@@ -10,6 +10,8 @@ import type {
   NoteRow, NoteInsert,
   MapRow, MapInsert,
   NewspaperRow, NewspaperInsert,
+  QuestionRow, QuestionInsert,
+  QuestionAnswerRow, SolutionRow,
   DirectoryOverrides,
 } from './types';
 
@@ -211,6 +213,104 @@ export const newspapers = {
   },
 };
 
+// ── Questions ──
+// GM-authored end-of-case questions. Reads degrade to [] / null on error (e.g.
+// db/004 not run yet) so a missing table never blocks the rest of a case.
+// Mutations still throw so the GM sees a real failure.
+export const questions = {
+  /** GM view: every column, including the hidden official answer. */
+  async listForCase(caseId: string): Promise<QuestionRow[]> {
+    const res = await sb.from('case_questions').select('*').eq('case_id', caseId).order('position').order('created_at');
+    if (res.error) return [];
+    return (res.data as QuestionRow[]) ?? [];
+  },
+  /** Player view: omit `answer` for unrevealed questions so it never hits the
+   *  wire; merge in answers only for revealed ones. */
+  async listForCasePlayer(caseId: string): Promise<QuestionRow[]> {
+    const base = await sb
+      .from('case_questions')
+      .select('id,case_id,prompt,points,position,revealed,created_at')
+      .eq('case_id', caseId)
+      .order('position')
+      .order('created_at');
+    if (base.error) return [];
+    const rows = (base.data as Omit<QuestionRow, 'answer'>[]) ?? [];
+    const rev = await sb.from('case_questions').select('id,answer').eq('case_id', caseId).eq('revealed', true);
+    const answers = new Map<string, string>();
+    if (!rev.error) {
+      for (const r of (rev.data as { id: string; answer: string }[]) ?? []) answers.set(r.id, r.answer);
+    }
+    return rows.map((r) => ({ ...r, answer: answers.get(r.id) ?? '' }));
+  },
+  async create(payload: QuestionInsert): Promise<QuestionRow> {
+    return unwrap(await sb.from('case_questions').insert(payload).select().single());
+  },
+  async update(id: string, patch: Partial<Pick<QuestionRow, 'prompt' | 'answer' | 'points' | 'position'>>): Promise<void> {
+    unwrap(await sb.from('case_questions').update(patch).eq('id', id).select());
+  },
+  async setRevealed(id: string, revealed: boolean): Promise<void> {
+    unwrap(await sb.from('case_questions').update({ revealed }).eq('id', id).select());
+  },
+  async setRevealedAll(caseId: string, revealed: boolean): Promise<void> {
+    unwrap(await sb.from('case_questions').update({ revealed }).eq('case_id', caseId).select());
+  },
+  async remove(id: string): Promise<void> {
+    unwrap(await sb.from('case_questions').delete().eq('id', id).select());
+  },
+};
+
+// ── Question team answers (one shared answer per question) ──
+export const questionAnswers = {
+  async listForCase(caseId: string): Promise<QuestionAnswerRow[]> {
+    const res = await sb.from('question_answers').select('*').eq('case_id', caseId);
+    if (res.error) return [];
+    return (res.data as QuestionAnswerRow[]) ?? [];
+  },
+  async save(caseId: string, questionId: string, content: string, name: string, color: string): Promise<void> {
+    unwrap(
+      await sb
+        .from('question_answers')
+        .upsert(
+          { question_id: questionId, case_id: caseId, content, updated_by: name, updated_color: color, updated_at: new Date().toISOString() },
+          { onConflict: 'question_id' },
+        )
+        .select(),
+    );
+  },
+};
+
+// ── Solution (one per case) ──
+export const solutions = {
+  /** GM view: full row regardless of reveal state. */
+  async getForGM(caseId: string): Promise<SolutionRow | null> {
+    const res = await sb.from('case_solutions').select('*').eq('case_id', caseId);
+    if (res.error) return null;
+    return ((res.data as SolutionRow[]) ?? [])[0] ?? null;
+  },
+  /** Player view: only returns a row once the solution is revealed. */
+  async getForPlayer(caseId: string): Promise<SolutionRow | null> {
+    const res = await sb.from('case_solutions').select('*').eq('case_id', caseId).eq('revealed', true);
+    if (res.error) return null;
+    return ((res.data as SolutionRow[]) ?? [])[0] ?? null;
+  },
+  async save(caseId: string, content: string): Promise<void> {
+    unwrap(
+      await sb
+        .from('case_solutions')
+        .upsert({ case_id: caseId, content, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
+        .select(),
+    );
+  },
+  async setRevealed(caseId: string, revealed: boolean): Promise<void> {
+    unwrap(
+      await sb
+        .from('case_solutions')
+        .upsert({ case_id: caseId, revealed, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
+        .select(),
+    );
+  },
+};
+
 // ── Storage ──
 export const storage = {
   async uploadImage(file: File): Promise<string> {
@@ -262,7 +362,9 @@ export const storage = {
 // One channel per case carrying clues/players/notes changes. Callers pass a
 // single handler invoked (debounced upstream if desired) on any change to the
 // named table. This is the ONLY thing that should drive store updates.
-type TableName = 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers';
+type TableName =
+  | 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers'
+  | 'case_questions' | 'question_answers' | 'case_solutions';
 
 // `newspapers` is now a global library (no case_id), so it can't be filtered per
 // case — we listen to all of its changes. Everything else is per-case.

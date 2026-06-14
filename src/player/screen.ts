@@ -5,8 +5,8 @@
 
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
-import type { ClueRow, NoteRow, NewspaperRow } from '../data/types';
-import { notes as noteRepo } from '../data/supabase';
+import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
+import { notes as noteRepo, questionAnswers } from '../data/supabase';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
@@ -20,11 +20,13 @@ export interface ScreenHandle {
   destroy(): void;
 }
 
-type TabId = 'briefing' | 'clues' | 'newspaper' | 'directory' | 'map';
+type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'directory' | 'map';
 
 export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
   let selectedClueId: string | null = null;
+  let editingAnswerId: string | null = null;
+  let answerDraft = '';
   let activeTab: TabId = 'clues';
   let mapPanZoom: PanZoomHandle | null = null;
   let builtMapId: string | null = null;
@@ -41,6 +43,8 @@ export function createPlayerScreen(): ScreenHandle {
   const TAB_DEFS: { id: TabId; label: string }[] = [
     { id: 'briefing',  label: 'Case Brief' },
     { id: 'clues',     label: 'Clues' },
+    { id: 'questions', label: 'Questions' },
+    { id: 'solution',  label: 'Solution' },
     { id: 'newspaper', label: 'Newspaper' },
     { id: 'directory', label: 'Directory' },
     { id: 'map',       label: 'Map' },
@@ -77,6 +81,10 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Briefing panel ──
   const briefingPanel = h('div', { class: 'player-briefing-panel' });
+
+  // ── Questions + Solution panels ──
+  const questionsPanel = h('div', { class: 'player-questions-panel' });
+  const solutionPanel = h('div', { class: 'player-solution-panel' });
 
   // ── Newspaper panel (inline PDF.js) ──
   const newspaperPanel = h('div', { class: 'player-newspaper-panel' });
@@ -198,6 +206,96 @@ export function createPlayerScreen(): ScreenHandle {
     }
   }
 
+  async function saveTeamAnswer(q: QuestionRow): Promise<void> {
+    const caseId = store.getState().currentCaseId;
+    const me = store.getState().identity;
+    if (!caseId || !me) return;
+    const content = answerDraft.trim();
+    editingAnswerId = null;
+    try {
+      await questionAnswers.save(caseId, q.id, content, me.name, me.color);
+      // Optimistic local update so the answer shows immediately (realtime confirms).
+      const others = store.getState().questionAnswers.filter((a) => a.question_id !== q.id);
+      store.set({
+        questionAnswers: [
+          ...others,
+          { question_id: q.id, case_id: caseId, content, updated_by: me.name, updated_color: me.color, updated_at: new Date().toISOString() },
+        ],
+      });
+    } catch {
+      toast('Could not save the team answer.');
+      renderPanel(store.getState());
+    }
+  }
+
+  function questionCard(q: QuestionRow, index: number, s: AppState): HTMLElement {
+    const team = selectors.teamAnswerFor(s, q.id);
+    const head = h('div', { class: 'player-question-head' },
+      h('span', { class: 'player-question-num', text: `Q${index + 1}` }),
+      h('span', { class: 'player-question-prompt', text: q.prompt }),
+      h('span', { class: 'points-badge', text: `${q.points} pts` }),
+    );
+
+    let answerBlock: HTMLElement;
+    if (editingAnswerId === q.id) {
+      const textarea = h('textarea', {
+        class: 'gm-input player-answer-textarea',
+        attrs: { rows: '3', placeholder: 'Type the team’s answer…' },
+        on: { input: (e: Event) => { answerDraft = (e.target as HTMLTextAreaElement).value; } },
+      }) as HTMLTextAreaElement;
+      textarea.value = answerDraft;
+      const saveBtn = h('button', { class: 'btn btn-primary btn-sm', text: 'Save', on: { click: () => void saveTeamAnswer(q) } });
+      const cancelBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel', on: { click: () => { editingAnswerId = null; renderPanel(store.getState()); } } });
+      answerBlock = h('div', { class: 'player-answer-edit' }, textarea, h('div', { class: 'player-answer-edit-row' }, saveBtn, cancelBtn));
+      setTimeout(() => textarea.focus(), 0);
+    } else {
+      const editBtn = h('button', {
+        class: 'btn btn-secondary btn-sm',
+        text: team?.content ? '✏️ Edit team answer' : '✎ Add team answer',
+        on: { click: () => { editingAnswerId = q.id; answerDraft = team?.content ?? ''; renderPanel(store.getState()); } },
+      });
+      answerBlock = h('div', { class: 'player-answer-display' },
+        h('span', { class: 'player-answer-label', text: 'Team answer' }),
+        team?.content
+          ? h('p', { class: 'player-answer-text' }, team.content,
+              h('span', { class: 'player-answer-by', text: team.updated_by ? ` — ${team.updated_by}` : '' }))
+          : h('p', { class: 'player-answer-empty', text: 'No answer yet — agree on one as a team and record it here.' }),
+        editBtn,
+      );
+    }
+
+    const children: (HTMLElement | null)[] = [head, answerBlock];
+    if (q.revealed && q.answer) {
+      children.push(h('div', { class: 'player-official-answer' },
+        h('span', { class: 'player-answer-label', text: 'Official answer' }),
+        h('p', { class: 'player-official-answer-text', text: q.answer }),
+      ));
+    }
+    return h('div', { class: 'player-question-card' }, ...children.filter(Boolean) as HTMLElement[]);
+  }
+
+  function renderQuestions(s: AppState): void {
+    const qs = s.questions;
+    if (!qs.length) {
+      replaceChildren(questionsPanel, h('div', { class: 'empty-state', text: 'No questions have been set for this case yet.' }));
+      return;
+    }
+    replaceChildren(
+      questionsPanel,
+      h('p', { class: 'player-questions-intro', text: `Answer the case questions together — ${selectors.totalPoints(s)} points in play.` }),
+      ...qs.map((q, i) => questionCard(q, i, s)),
+    );
+  }
+
+  function renderSolution(s: AppState): void {
+    const sol = s.solution;
+    if (sol?.revealed && sol.content) {
+      replaceChildren(solutionPanel, h('p', { class: 'briefing-text', text: sol.content }));
+    } else {
+      replaceChildren(solutionPanel, h('div', { class: 'empty-state', text: 'Sherlock has not revealed his solution yet.' }));
+    }
+  }
+
   function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
     // Don't rebuild if the same paper is already displayed.
     if (paper.image_url === builtNewspaperUrl && newspaperPanel.childElementCount > 0) return;
@@ -315,6 +413,12 @@ export function createPlayerScreen(): ScreenHandle {
       renderDetail(s);
       renderClues(s);
       replaceChildren(panelEl, cluesPanel);
+    } else if (activeTab === 'questions') {
+      renderQuestions(s);
+      replaceChildren(panelEl, questionsPanel);
+    } else if (activeTab === 'solution') {
+      renderSolution(s);
+      replaceChildren(panelEl, solutionPanel);
     } else if (activeTab === 'newspaper') {
       renderNewspaper(s);
       replaceChildren(panelEl, newspaperPanel);
@@ -364,10 +468,15 @@ export function createPlayerScreen(): ScreenHandle {
     // Show/hide tab buttons based on available content
     const hasMap = !!current?.map_id;
     const hasNews = s.newspapers.length > 0;
+    const hasQuestions = s.questions.length > 0;
+    const hasSolution = !!s.solution?.revealed && !!s.solution.content;
     if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
     if (tabButtons.newspaper) tabButtons.newspaper.style.display = hasNews ? '' : 'none';
+    if (tabButtons.questions) tabButtons.questions.style.display = hasQuestions ? '' : 'none';
+    if (tabButtons.solution) tabButtons.solution.style.display = hasSolution ? '' : 'none';
     // If active tab became hidden, fall back to clues
-    if ((activeTab === 'map' && !hasMap) || (activeTab === 'newspaper' && !hasNews)) {
+    if ((activeTab === 'map' && !hasMap) || (activeTab === 'newspaper' && !hasNews) ||
+        (activeTab === 'questions' && !hasQuestions) || (activeTab === 'solution' && !hasSolution)) {
       switchTab('clues');
     }
   }

@@ -2,21 +2,25 @@
 // Called when a case is selected (or re-selected after realtime events).
 // Fetches all case data in parallel and pushes it into the store.
 
-import { cases, clues, players, notes, maps, newspapers } from '../data/supabase';
+import { cases, clues, players, notes, maps, newspapers, questions, questionAnswers, solutions } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
 import { store } from '../state/store';
 import type { MapRow } from '../data/types';
 
 export async function loadGMCase(caseId: string): Promise<void> {
-  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds] = await Promise.all([
-    cases.get(caseId),
-    clues.listForCase(caseId),
-    players.listForCase(caseId),
-    notes.listForCase(caseId),
-    maps.list(),
-    newspapers.list(),
-    newspapers.enabledIds(caseId),
-  ]);
+  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds, allQuestions, allAnswers, solution] =
+    await Promise.all([
+      cases.get(caseId),
+      clues.listForCase(caseId),
+      players.listForCase(caseId),
+      notes.listForCase(caseId),
+      maps.list(),
+      newspapers.list(),
+      newspapers.enabledIds(caseId),
+      questions.listForCase(caseId),
+      questionAnswers.listForCase(caseId),
+      solutions.getForGM(caseId),
+    ]);
 
   const mapList: MapRow[] = allMaps;
   await loadDirectory(caseId);
@@ -30,7 +34,24 @@ export async function loadGMCase(caseId: string): Promise<void> {
     maps: mapList,
     newspapers: allNewspapers,
     caseNewspaperIds: enabledIds,
+    questions: allQuestions,
+    questionAnswers: allAnswers,
+    solution,
   });
+}
+
+/** Reload the GM's questions + team answers (questions realtime handler). */
+export async function loadGMQuestions(caseId: string): Promise<void> {
+  const [allQuestions, allAnswers] = await Promise.all([
+    questions.listForCase(caseId),
+    questionAnswers.listForCase(caseId),
+  ]);
+  store.set({ questions: allQuestions, questionAnswers: allAnswers });
+}
+
+/** Reload the GM's view of the solution (solution realtime handler). */
+export async function loadGMSolution(caseId: string): Promise<void> {
+  store.set({ solution: await solutions.getForGM(caseId) });
 }
 
 /** Reload the newspaper library + which are enabled for this case. */

@@ -601,6 +601,86 @@ body::before {
 .gm-newspaper-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .gm-notebook-inline { flex: 1; min-height: 0; overflow-y: auto; }
 
+/* ── Questions + Solution (shared bits) ── */
+.points-badge {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sepia-light); background: rgba(201,169,110,0.14);
+  border: 1px solid rgba(201,169,110,0.4); border-radius: 2px;
+  padding: 2px 7px; white-space: nowrap; flex-shrink: 0; align-self: flex-start;
+}
+.form-label {
+  display: block; font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fog); margin: 10px 0 4px;
+}
+.gm-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.gm-points-total {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.7rem; letter-spacing: 0.06em; color: var(--fog); margin-left: 10px; text-transform: none;
+}
+
+/* GM question cards — parchment index-card look so the ink answers read well. */
+.gm-questions-panel { display: flex; flex-direction: column; }
+.gm-question-card {
+  background: var(--parchment); color: var(--ink);
+  border: 1px solid var(--parchment-darker); box-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.gm-question-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.gm-question-num {
+  font-family: 'Special Elite', 'Courier New', monospace; font-weight: 700;
+  color: var(--sepia); flex-shrink: 0;
+}
+.gm-question-prompt { font-family: 'IM Fell English', Georgia, serif; font-size: 1.05rem; color: var(--ink); flex: 1; }
+.gm-question-label {
+  display: block; font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--sepia); margin-bottom: 3px;
+}
+.gm-question-answer, .gm-question-team { margin-bottom: 10px; }
+.gm-question-answer-text { font-family: 'IM Fell English', Georgia, serif; color: var(--ink); white-space: pre-wrap; }
+.gm-question-team-text { font-family: 'Caveat', cursive; font-size: 1.15rem; color: #2a2118; white-space: pre-wrap; }
+.gm-question-team-by { font-family: 'Courier Prime', monospace; font-size: 0.62rem; color: var(--fog); }
+.gm-question-team-empty, .gm-question-answer-text:empty { font-style: italic; color: var(--fog); }
+.gm-question-actions { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(139,105,20,0.2); padding-top: 10px; }
+.gm-question-add { max-width: 220px; }
+.gm-solution-panel { display: flex; flex-direction: column; gap: 12px; }
+
+/* Player question cards */
+.player-questions-panel { display: flex; flex-direction: column; }
+.player-questions-intro {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  color: var(--fog); margin-bottom: 14px;
+}
+.player-question-card {
+  background: var(--parchment); color: var(--ink);
+  border: 1px solid var(--parchment-darker); box-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.player-question-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.player-question-num {
+  font-family: 'Special Elite', 'Courier New', monospace; font-weight: 700; color: var(--sepia); flex-shrink: 0;
+}
+.player-question-prompt { font-family: 'IM Fell English', Georgia, serif; font-size: 1.05rem; color: var(--ink); flex: 1; }
+.player-answer-label {
+  display: block; font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--sepia); margin-bottom: 4px;
+}
+.player-answer-display { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.player-answer-text { font-family: 'Caveat', cursive; font-size: 1.2rem; color: #2a2118; white-space: pre-wrap; }
+.player-answer-by { font-family: 'Courier Prime', monospace; font-size: 0.62rem; color: var(--fog); }
+.player-answer-empty { font-family: 'IM Fell English', Georgia, serif; font-style: italic; color: var(--fog); }
+.player-answer-edit { display: flex; flex-direction: column; gap: 8px; }
+.player-answer-textarea { width: 100%; box-sizing: border-box; }
+.player-answer-edit-row { display: flex; gap: 8px; }
+.player-official-answer {
+  margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(139,105,20,0.4);
+}
+.player-official-answer-text { font-family: 'IM Fell English', Georgia, serif; color: #3a2d1a; white-space: pre-wrap; }
+.player-solution-panel { font-family: 'IM Fell English', Georgia, serif; }
+
 .player-map-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
 .player-map-inlay {
   position: relative;

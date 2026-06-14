@@ -17,11 +17,12 @@ import {
   removeChannel,
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers } from './load';
+import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution } from './load';
 import { gmLogout } from './auth';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
 import { buildGMNotebook } from './notebookModal';
+import { buildGMQuestionsPanel, buildGMSolutionPanel } from './questionsPanel';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
@@ -97,13 +98,15 @@ export function createGMScreen(): GMScreenHandle {
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
-  type GMTab = 'clues' | 'briefing' | 'directory' | 'map' | 'newspaper' | 'notebook';
+  type GMTab = 'clues' | 'briefing' | 'questions' | 'solution' | 'directory' | 'map' | 'newspaper' | 'notebook';
   let activeTab: GMTab = 'clues';
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
   for (const { id, label } of [
     { id: 'clues' as const, label: 'Clues' },
     { id: 'briefing' as const, label: 'Case Brief' },
+    { id: 'questions' as const, label: 'Questions' },
+    { id: 'solution' as const, label: 'Solution' },
     { id: 'directory' as const, label: 'Directory' },
     { id: 'map' as const, label: 'Map' },
     { id: 'newspaper' as const, label: 'Newspaper' },
@@ -128,6 +131,8 @@ export function createGMScreen(): GMScreenHandle {
   const mapPanel = h('div', { class: 'gm-map-panel' });
   const newspaperPanel = h('div', { class: 'gm-newspaper-panel' });
   const gmNotebook = buildGMNotebook();
+  const gmQuestions = buildGMQuestionsPanel();
+  const gmSolution = buildGMSolutionPanel();
   const panelEl = h('div', { class: 'gm-panel' });
 
   // Map pan/zoom lifecycle (mirrors the player map tab).
@@ -449,6 +454,9 @@ export function createGMScreen(): GMScreenHandle {
         notes: () => void loadGMRightPanel(caseId),
         newspapers: () => void loadGMNewspapers(caseId),
         case_newspapers: () => void loadGMNewspapers(caseId),
+        case_questions: () => void loadGMQuestions(caseId),
+        question_answers: () => void loadGMQuestions(caseId),
+        case_solutions: () => void loadGMSolution(caseId),
       }),
     );
     presenceChannel = watchPresence(caseId, (online) => {
@@ -703,6 +711,12 @@ export function createGMScreen(): GMScreenHandle {
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
+    } else if (activeTab === 'questions') {
+      gmQuestions.refresh();
+      replaceChildren(panelEl, gmQuestions.element);
+    } else if (activeTab === 'solution') {
+      gmSolution.refresh();
+      replaceChildren(panelEl, gmSolution.element);
     } else if (activeTab === 'directory') {
       renderDirectory();
       replaceChildren(panelEl, directoryPanel);

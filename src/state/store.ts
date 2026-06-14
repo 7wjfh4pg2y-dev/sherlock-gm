@@ -3,7 +3,10 @@
 // imperatively. Mutations write to Supabase; realtime events call the setters
 // here; setters notify subscribers. That loop is the whole point of v2.
 
-import type { CaseRow, ClueRow, PlayerRow, NoteRow, MapRow, NewspaperRow } from '../data/types';
+import type {
+  CaseRow, ClueRow, PlayerRow, NoteRow, MapRow, NewspaperRow,
+  QuestionRow, QuestionAnswerRow, SolutionRow,
+} from '../data/types';
 
 export type Role = 'landing' | 'gm' | 'player';
 
@@ -29,6 +32,12 @@ export interface AppState {
   newspapers: NewspaperRow[];
   // GM only: ids of library newspapers enabled for the current case.
   caseNewspaperIds: string[];
+  // End-of-case questions, the team's collective answers, and the solution.
+  // Players only receive an answer for a revealed question, and the solution
+  // only once it is revealed.
+  questions: QuestionRow[];
+  questionAnswers: QuestionAnswerRow[];
+  solution: SolutionRow | null;
   // Player identity (player role only).
   identity: Identity | null;
 }
@@ -44,6 +53,9 @@ const initialState: AppState = {
   maps: [],
   newspapers: [],
   caseNewspaperIds: [],
+  questions: [],
+  questionAnswers: [],
+  solution: null,
   identity: null,
 };
 
@@ -79,6 +91,9 @@ function createStore(initial: AppState) {
       notes: [],
       newspapers: [],
       caseNewspaperIds: [],
+      questions: [],
+      questionAnswers: [],
+      solution: null,
       identity: null,
     });
   }
@@ -113,5 +128,12 @@ export const selectors = {
   // All notes for one player (GM per-player tab): private + shared.
   notesForPlayer(s: AppState, playerName: string): NoteRow[] {
     return s.notes.filter((n) => n.player_name === playerName);
+  },
+  // The team's collective answer to a question, if any.
+  teamAnswerFor(s: AppState, questionId: string): QuestionAnswerRow | null {
+    return s.questionAnswers.find((a) => a.question_id === questionId) ?? null;
+  },
+  totalPoints(s: AppState): number {
+    return s.questions.reduce((sum, q) => sum + q.points, 0);
   },
 };

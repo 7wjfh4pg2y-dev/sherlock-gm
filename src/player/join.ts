@@ -6,6 +6,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { MapRow } from '../data/types';
 import {
   cases, players, clues, notes, maps, newspapers,
+  questions, questionAnswers, solutions,
   subscribeToCase, trackPresence, removeChannel,
 } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
@@ -39,10 +40,13 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
   }
 
   await loadDirectory(caseId);
-  const [revealed, allNotes, allNewspapers] = await Promise.all([
+  const [revealed, allNotes, allNewspapers, allQuestions, allAnswers, solution] = await Promise.all([
     clues.listRevealed(caseId),
     notes.listForCase(caseId),
     newspapers.listForCase(caseId), // papers the GM enabled for this case
+    questions.listForCasePlayer(caseId),
+    questionAnswers.listForCase(caseId),
+    solutions.getForPlayer(caseId),
   ]);
 
   store.set({
@@ -54,6 +58,9 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
     notes: allNotes,
     maps: mapList,
     newspapers: allNewspapers,
+    questions: allQuestions,
+    questionAnswers: allAnswers,
+    solution,
     players: [],
   });
 
@@ -64,6 +71,9 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
       notes: () => void notes.listForCase(caseId).then((n) => store.set({ notes: n })),
       newspapers: () => void newspapers.listForCase(caseId).then((p) => store.set({ newspapers: p })),
       case_newspapers: () => void newspapers.listForCase(caseId).then((p) => store.set({ newspapers: p })),
+      case_questions: () => void questions.listForCasePlayer(caseId).then((q) => store.set({ questions: q })),
+      question_answers: () => void questionAnswers.listForCase(caseId).then((a) => store.set({ questionAnswers: a })),
+      case_solutions: () => void solutions.getForPlayer(caseId).then((sol) => store.set({ solution: sol })),
       players: () =>
         void players.kickedState(caseId, name).then((kicked) => {
           if (kicked) leaveCase();

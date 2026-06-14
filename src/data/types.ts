@@ -50,6 +50,41 @@ export interface MapRow {
   created_at: string;
 }
 
+// ── End-of-case questions + solution ──
+
+// A GM-authored question. `answer` is the official answer, hidden from players
+// (the client query omits it) until `revealed` is set. `points` is shown next to
+// the question for both roles.
+export interface QuestionRow {
+  id: string;
+  case_id: string;
+  prompt: string;
+  answer: string;
+  points: number;
+  position: number;
+  revealed: boolean;
+  created_at: string;
+}
+
+// The team's single collective answer to a question (shared answer sheet).
+export interface QuestionAnswerRow {
+  question_id: string;
+  case_id: string;
+  content: string;
+  updated_by: string;
+  updated_color: string;
+  updated_at: string;
+}
+
+// Sherlock's solution narrative for a case (one per case). Players only ever
+// receive this once `revealed` is true.
+export interface SolutionRow {
+  case_id: string;
+  content: string;
+  revealed: boolean;
+  updated_at: string;
+}
+
 // A newspaper is a scanned image/PDF in a shared, case-independent library
 // (like maps). It's enabled for any number of cases via the case_newspapers
 // join table, and is always visible to players (handed out at case start in the
@@ -85,6 +120,13 @@ export type NoteInsert = {
 };
 export type MapInsert = { name: string; url: string };
 export type NewspaperInsert = { name: string; image_url: string; position?: number };
+export type QuestionInsert = {
+  case_id: string;
+  prompt: string;
+  answer: string;
+  points: number;
+  position: number;
+};
 
 // ── App-level (non-DB) types ──
 export interface DirectoryEntry {
