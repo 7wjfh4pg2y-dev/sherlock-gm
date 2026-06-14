@@ -55,6 +55,8 @@ export interface MapRow {
 // A GM-authored question. `answer` is the official answer, hidden from players
 // (the client query omits it) until `revealed` is set. `points` is shown next to
 // the question for both roles.
+export type QuestionCategory = 'main' | 'additional';
+
 export interface QuestionRow {
   id: string;
   case_id: string;
@@ -62,6 +64,9 @@ export interface QuestionRow {
   answer: string;
   points: number;
   position: number;
+  /** 'main' = central-mystery questions scored against Holmes;
+      'additional' = secondary "other questions" about side leads. */
+  category: QuestionCategory;
   /** Whether the question prompt+points are visible to players (reveal #1). */
   visible: boolean;
   /** Whether the official answer is visible to players (reveal #2). */
@@ -129,6 +134,7 @@ export type QuestionInsert = {
   answer: string;
   points: number;
   position: number;
+  category?: QuestionCategory;
 };
 
 // ── App-level (non-DB) types ──

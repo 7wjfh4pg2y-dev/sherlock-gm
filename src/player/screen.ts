@@ -280,11 +280,20 @@ export function createPlayerScreen(): ScreenHandle {
       replaceChildren(questionsPanel, h('div', { class: 'empty-state', text: 'No questions have been set for this case yet.' }));
       return;
     }
-    replaceChildren(
-      questionsPanel,
+    const children: (HTMLElement | null)[] = [
       h('p', { class: 'player-questions-intro', text: `Answer the case questions together — ${selectors.totalPoints(s)} points in play.` }),
-      ...qs.map((q, i) => questionCard(q, i, s)),
-    );
+    ];
+    const groups: { key: 'main' | 'additional'; label: string }[] = [
+      { key: 'main', label: 'Main Questions' },
+      { key: 'additional', label: 'Additional Questions' },
+    ];
+    for (const g of groups) {
+      const items = qs.filter((q) => (q.category === 'additional') === (g.key === 'additional'));
+      if (!items.length) continue;
+      children.push(h('div', { class: 'player-question-group-head', text: g.label }));
+      items.forEach((q, i) => children.push(questionCard(q, i, s)));
+    }
+    replaceChildren(questionsPanel, ...children);
   }
 
   function renderSolution(s: AppState): void {

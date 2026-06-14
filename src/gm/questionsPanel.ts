@@ -6,7 +6,7 @@
 
 import { h, clear } from '../util/dom';
 import { store, selectors } from '../state/store';
-import type { QuestionRow } from '../data/types';
+import type { QuestionRow, QuestionCategory } from '../data/types';
 import { questions as questionRepo, solutions as solutionRepo } from '../data/supabase';
 import { loadGMQuestions, loadGMSolution } from './load';
 import { openTitledModal } from '../components/modal';
@@ -43,16 +43,22 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
       class: 'gm-input',
       attrs: { type: 'number', min: '0', placeholder: 'Points (e.g. 100)' },
     }) as HTMLInputElement;
+    const categorySelect = h('select', { class: 'gm-input' },
+      h('option', { attrs: { value: 'main' }, text: 'Main question (scored against Holmes)' }),
+      h('option', { attrs: { value: 'additional' }, text: 'Additional question (side leads)' }),
+    ) as HTMLSelectElement;
     if (existing) {
       promptInput.value = existing.prompt;
       answerInput.value = existing.answer;
       pointsInput.value = String(existing.points);
+      categorySelect.value = existing.category;
     }
     const errEl = h('div', { class: 'form-error' });
     const saveBtn = h('button', { class: 'btn btn-primary', text: existing ? 'Save' : 'Add Question' });
 
     const { handle, body } = openTitledModal(existing ? 'Edit Question' : 'New Question', {});
     body.append(
+      h('label', { class: 'form-label', text: 'Type' }), categorySelect,
       h('label', { class: 'form-label', text: 'Question' }), promptInput,
       h('label', { class: 'form-label', text: 'Official answer' }), answerInput,
       h('label', { class: 'form-label', text: 'Points' }), pointsInput,
@@ -65,14 +71,15 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
       if (!prompt) { errEl.textContent = 'Enter the question.'; return; }
       const points = parseInt(pointsInput.value, 10) || 0;
       const answer = answerInput.value.trim();
+      const category = categorySelect.value === 'additional' ? 'additional' : 'main';
       saveBtn.setAttribute('disabled', '');
       try {
         if (existing) {
-          await questionRepo.update(existing.id, { prompt, answer, points });
+          await questionRepo.update(existing.id, { prompt, answer, points, category });
           toast('Question updated.');
         } else {
           const position = store.getState().questions.length + 1;
-          await questionRepo.create({ case_id: id, prompt, answer, points, position });
+          await questionRepo.create({ case_id: id, prompt, answer, points, position, category });
           toast('Question added.');
         }
         await reload();
@@ -189,7 +196,23 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
     if (!qs.length) {
       element.append(h('p', { class: 'empty-state', text: 'No questions yet. Add the case’s end questions for players to answer.' }));
     } else {
-      qs.forEach((q, i) => element.append(questionCard(q, i)));
+      // Group by category, preserving overall numbering within each group.
+      const groups: { key: QuestionCategory; label: string }[] = [
+        { key: 'main', label: 'Main Questions' },
+        { key: 'additional', label: 'Additional Questions' },
+      ];
+      for (const g of groups) {
+        const items = qs.filter((q) => (q.category === 'additional') === (g.key === 'additional'));
+        if (!items.length) continue;
+        const pts = items.reduce((sum, q) => sum + q.points, 0);
+        element.append(
+          h('div', { class: 'gm-question-group-head' },
+            h('span', { class: 'gm-question-group-title', text: g.label }),
+            h('span', { class: 'gm-points-total', text: `${pts} pts` }),
+          ),
+        );
+        items.forEach((q, i) => element.append(questionCard(q, i)));
+      }
     }
 
     element.append(h('div', { class: 'clue-add-card gm-question-add', on: { click: () => showQuestionModal() } },

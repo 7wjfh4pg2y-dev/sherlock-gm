@@ -228,7 +228,7 @@ export const questions = {
   async listForCasePlayer(caseId: string): Promise<QuestionRow[]> {
     const base = await sb
       .from('case_questions')
-      .select('id,case_id,prompt,points,position,visible,revealed,created_at')
+      .select('id,case_id,prompt,points,position,category,visible,revealed,created_at')
       .eq('case_id', caseId)
       .eq('visible', true)
       .order('position')
@@ -245,7 +245,7 @@ export const questions = {
   async create(payload: QuestionInsert): Promise<QuestionRow> {
     return unwrap(await sb.from('case_questions').insert(payload).select().single());
   },
-  async update(id: string, patch: Partial<Pick<QuestionRow, 'prompt' | 'answer' | 'points' | 'position'>>): Promise<void> {
+  async update(id: string, patch: Partial<Pick<QuestionRow, 'prompt' | 'answer' | 'points' | 'position' | 'category'>>): Promise<void> {
     unwrap(await sb.from('case_questions').update(patch).eq('id', id).select());
   },
   async setVisible(id: string, visible: boolean): Promise<void> {
