@@ -169,17 +169,19 @@ export const maps = {
 // A shared, case-independent library (like maps). Papers are enabled for cases
 // via the case_newspapers join table. Always visible to players (no reveal).
 export const newspapers = {
+  // Reads degrade to [] on error (e.g. db/003 not run yet) so a newspaper hiccup
+  // never blocks the rest of a case from loading. Mutations still throw.
   /** The full library (GM). */
   async list(): Promise<NewspaperRow[]> {
-    return unwrap(
-      await sb.from('newspapers').select('*').order('position').order('created_at'),
-    ) ?? [];
+    const res = await sb.from('newspapers').select('*').order('position').order('created_at');
+    if (res.error) return [];
+    return (res.data as NewspaperRow[]) ?? [];
   },
   /** Papers enabled for a case (player view + GM display), in library order. */
   async listForCase(caseId: string): Promise<NewspaperRow[]> {
-    const rows = unwrap(
-      await sb.from('case_newspapers').select('newspapers(*)').eq('case_id', caseId),
-    ) as unknown as { newspapers: NewspaperRow | null }[] | null;
+    const res = await sb.from('case_newspapers').select('newspapers(*)').eq('case_id', caseId);
+    if (res.error) return [];
+    const rows = res.data as unknown as { newspapers: NewspaperRow | null }[] | null;
     return (rows ?? [])
       .map((r) => r.newspapers)
       .filter((p): p is NewspaperRow => !!p)
@@ -187,9 +189,9 @@ export const newspapers = {
   },
   /** Just the enabled newspaper ids for a case (GM library toggles). */
   async enabledIds(caseId: string): Promise<string[]> {
-    const rows = unwrap(
-      await sb.from('case_newspapers').select('newspaper_id').eq('case_id', caseId),
-    ) as { newspaper_id: string }[] | null;
+    const res = await sb.from('case_newspapers').select('newspaper_id').eq('case_id', caseId);
+    if (res.error) return [];
+    const rows = res.data as { newspaper_id: string }[] | null;
     return (rows ?? []).map((r) => r.newspaper_id);
   },
   async enable(caseId: string, newspaperId: string): Promise<void> {

@@ -398,7 +398,12 @@ export function createGMScreen(): GMScreenHandle {
   // ── Case open / teardown ──
   async function openCase(caseId: string): Promise<void> {
     teardownCase();
-    await loadGMCase(caseId);
+    try {
+      await loadGMCase(caseId);
+    } catch {
+      toast('Could not load this case.');
+      return;
+    }
 
     caseChannels.push(
       subscribeToCase(caseId, {
