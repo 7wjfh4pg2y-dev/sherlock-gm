@@ -6,6 +6,9 @@ export interface PanZoomHandle {
   zoomIn(): void;
   zoomOut(): void;
   reset(): void;
+  /** Suspend/resume drag-to-pan (wheel zoom stays active). Used when a drawing
+   *  tool takes over the pointer so dragging draws instead of panning. */
+  setPanEnabled(enabled: boolean): void;
   detach(): void;
 }
 
@@ -21,6 +24,7 @@ export function attachPanZoom(
   let scale = 1;
   let tx = 0;
   let ty = 0;
+  let panEnabled = true;
   let dragging = false;
   let startX = 0;
   let startY = 0;
@@ -37,7 +41,7 @@ export function attachPanZoom(
     apply();
   }
   function onMouseDown(e: MouseEvent): void {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || !panEnabled) return;
     dragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -76,6 +80,10 @@ export function attachPanZoom(
       tx = 0;
       ty = 0;
       apply();
+    },
+    setPanEnabled(enabled: boolean) {
+      panEnabled = enabled;
+      viewport.style.cursor = enabled ? 'grab' : 'default';
     },
     detach() {
       viewport.removeEventListener('wheel', onWheel);

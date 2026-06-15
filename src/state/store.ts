@@ -5,7 +5,7 @@
 
 import type {
   CaseRow, ClueRow, PlayerRow, NoteRow, MapRow, NewspaperRow,
-  QuestionRow, QuestionAnswerRow, SolutionRow,
+  QuestionRow, QuestionAnswerRow, SolutionRow, MapStrokeRow,
 } from '../data/types';
 
 export type Role = 'landing' | 'gm' | 'player';
@@ -38,6 +38,8 @@ export interface AppState {
   questions: QuestionRow[];
   questionAnswers: QuestionAnswerRow[];
   solution: SolutionRow | null;
+  // Collaborative markings on the case map (freehand strokes + pins).
+  mapStrokes: MapStrokeRow[];
   // Player identity (player role only).
   identity: Identity | null;
 }
@@ -56,6 +58,7 @@ const initialState: AppState = {
   questions: [],
   questionAnswers: [],
   solution: null,
+  mapStrokes: [],
   identity: null,
 };
 
@@ -94,6 +97,7 @@ function createStore(initial: AppState) {
       questions: [],
       questionAnswers: [],
       solution: null,
+      mapStrokes: [],
       identity: null,
     });
   }

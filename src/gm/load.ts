@@ -2,13 +2,13 @@
 // Called when a case is selected (or re-selected after realtime events).
 // Fetches all case data in parallel and pushes it into the store.
 
-import { cases, clues, players, notes, maps, newspapers, questions, questionAnswers, solutions } from '../data/supabase';
+import { cases, clues, players, notes, maps, newspapers, questions, questionAnswers, solutions, mapStrokes } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
 import { store } from '../state/store';
 import type { MapRow } from '../data/types';
 
 export async function loadGMCase(caseId: string): Promise<void> {
-  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds, allQuestions, allAnswers, solution] =
+  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds, allQuestions, allAnswers, solution, strokes] =
     await Promise.all([
       cases.get(caseId),
       clues.listForCase(caseId),
@@ -20,6 +20,7 @@ export async function loadGMCase(caseId: string): Promise<void> {
       questions.listForCase(caseId),
       questionAnswers.listForCase(caseId),
       solutions.getForGM(caseId),
+      mapStrokes.listForCase(caseId),
     ]);
 
   const mapList: MapRow[] = allMaps;
@@ -37,7 +38,13 @@ export async function loadGMCase(caseId: string): Promise<void> {
     questions: allQuestions,
     questionAnswers: allAnswers,
     solution,
+    mapStrokes: strokes,
   });
+}
+
+/** Reload the collaborative map markings (map_strokes realtime handler). */
+export async function loadGMMapStrokes(caseId: string): Promise<void> {
+  store.set({ mapStrokes: await mapStrokes.listForCase(caseId) });
 }
 
 /** Reload the GM's questions + team answers (questions realtime handler). */

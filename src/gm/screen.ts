@@ -17,7 +17,7 @@ import {
   removeChannel,
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution } from './load';
+import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution, loadGMMapStrokes } from './load';
 import { gmLogout } from './auth';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
@@ -29,7 +29,7 @@ import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
-import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
+import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
 import type { InlinePdfHandle } from '../components/pdfViewer';
 import { createDropdown } from '../components/dropdown';
 
@@ -139,7 +139,7 @@ export function createGMScreen(): GMScreenHandle {
   const panelEl = h('div', { class: 'gm-panel' });
 
   // Map pan/zoom lifecycle (mirrors the player map tab).
-  let mapPanZoom: PanZoomHandle | null = null;
+  let mapInlay: MapInlayHandle | null = null;
   let builtMapId: string | null = null;
   let directoryBuilt = false;
   let builtNewspaperUrl: string | null = null;
@@ -460,6 +460,7 @@ export function createGMScreen(): GMScreenHandle {
         case_questions: () => void loadGMQuestions(caseId),
         question_answers: () => void loadGMQuestions(caseId),
         case_solutions: () => void loadGMSolution(caseId),
+        map_strokes: () => void loadGMMapStrokes(caseId),
       }),
     );
     presenceChannel = watchPresence(caseId, (online) => {
@@ -637,23 +638,15 @@ export function createGMScreen(): GMScreenHandle {
     // Don't rebuild (and lose zoom/pan) if the same map is already mounted.
     if ((map?.id ?? null) === builtMapId && mapPanel.childElementCount > 0) return;
     builtMapId = map?.id ?? null;
-    mapPanZoom?.detach();
-    mapPanZoom = null;
+    mapInlay?.detach();
+    mapInlay = null;
     clear(mapPanel);
     if (!map) {
       mapPanel.append(h('div', { class: 'empty-state', text: 'No map attached. Use Maps Library to attach one to this case.' }));
       return;
     }
-    const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name } });
-    const viewport = h('div', { class: 'player-map-viewport' }, img);
-    mapPanZoom = attachPanZoom(viewport, img);
-    const ctrls = h('div', { class: 'map-ctrl-bar' },
-      h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' }, on: { click: () => mapPanZoom?.reset() } }),
-      h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' }, on: { click: () => mapPanZoom?.zoomOut() } }),
-      h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' }, on: { click: () => mapPanZoom?.zoomIn() } }),
-      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(map.url, map.name) } }),
-    );
-    mapPanel.append(h('div', { class: 'player-map-inlay' }, viewport, ctrls));
+    mapInlay = buildMapInlay({ map, isGM: true, author: { name: 'Game Master', color: '#e8c34a' } });
+    mapPanel.append(mapInlay.element);
   }
 
   function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
@@ -709,7 +702,7 @@ export function createGMScreen(): GMScreenHandle {
   function renderPanel(s: AppState): void {
     if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
     // Tear down the map's window listeners whenever we're not on the map tab.
-    if (activeTab !== 'map' && mapPanZoom) { mapPanZoom.detach(); mapPanZoom = null; builtMapId = null; }
+    if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
     if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
@@ -821,7 +814,7 @@ export function createGMScreen(): GMScreenHandle {
     element,
     destroy() {
       teardownCase();
-      mapPanZoom?.detach();
+      mapInlay?.detach();
       newspaperPdfHandle?.destroy();
       unsubscribe();
     },

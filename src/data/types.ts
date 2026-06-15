@@ -50,6 +50,32 @@ export interface MapRow {
   created_at: string;
 }
 
+// A point in normalised map coordinates (0..1 of the image's width/height).
+export interface MapStrokePoint {
+  x: number;
+  y: number;
+}
+
+// A collaborative map marking: a freehand 'stroke' (polyline) or a 'pin'
+// (single point). Carries its author so only they (or the GM) can erase it.
+export interface MapStrokeRow {
+  id: string;
+  case_id: string;
+  player_name: string;
+  player_color: string;
+  kind: 'stroke' | 'pin';
+  points: MapStrokePoint[];
+  created_at: string;
+}
+
+export type MapStrokeInsert = {
+  case_id: string;
+  player_name: string;
+  player_color: string;
+  kind: 'stroke' | 'pin';
+  points: MapStrokePoint[];
+};
+
 // ── End-of-case questions + solution ──
 
 // A GM-authored question. `answer` is the official answer, hidden from players

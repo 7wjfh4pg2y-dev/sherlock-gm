@@ -12,6 +12,7 @@ import type {
   NewspaperRow, NewspaperInsert,
   QuestionRow, QuestionInsert,
   QuestionAnswerRow, SolutionRow,
+  MapStrokeRow, MapStrokeInsert,
   DirectoryOverrides,
 } from './types';
 
@@ -317,6 +318,24 @@ export const solutions = {
   },
 };
 
+// ── Map strokes (collaborative map markings) ──
+export const mapStrokes = {
+  async listForCase(caseId: string): Promise<MapStrokeRow[]> {
+    const res = await sb.from('map_strokes').select('*').eq('case_id', caseId).order('created_at');
+    if (res.error) return [];
+    return (res.data as MapStrokeRow[]) ?? [];
+  },
+  async create(payload: MapStrokeInsert): Promise<MapStrokeRow> {
+    return unwrap(await sb.from('map_strokes').insert(payload).select().single());
+  },
+  async remove(id: string): Promise<void> {
+    unwrap(await sb.from('map_strokes').delete().eq('id', id).select());
+  },
+  async clearForCase(caseId: string): Promise<void> {
+    unwrap(await sb.from('map_strokes').delete().eq('case_id', caseId).select());
+  },
+};
+
 // ── Storage ──
 export const storage = {
   async uploadImage(file: File): Promise<string> {
@@ -370,7 +389,7 @@ export const storage = {
 // named table. This is the ONLY thing that should drive store updates.
 type TableName =
   | 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers'
-  | 'case_questions' | 'question_answers' | 'case_solutions';
+  | 'case_questions' | 'question_answers' | 'case_solutions' | 'map_strokes';
 
 // `newspapers` is now a global library (no case_id), so it can't be filtered per
 // case — we listen to all of its changes. Everything else is per-case.
