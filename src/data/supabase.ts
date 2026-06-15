@@ -125,6 +125,12 @@ export const players = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('players').delete().eq('id', id).select());
   },
+  async updateColor(caseId: string, playerName: string, color: string): Promise<void> {
+    unwrap(
+      await sb.from('players').update({ player_color: color })
+        .eq('case_id', caseId).eq('player_name', playerName).select(),
+    );
+  },
 };
 
 // ── Notes ──
@@ -333,6 +339,16 @@ export const mapStrokes = {
   },
   async clearForCase(caseId: string): Promise<void> {
     unwrap(await sb.from('map_strokes').delete().eq('case_id', caseId).select());
+  },
+  async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+    unwrap(
+      await sb.from('map_strokes')
+        .update({ player_color: newColor })
+        .eq('case_id', caseId)
+        .eq('player_name', playerName)
+        .eq('player_color', oldColor)
+        .select(),
+    );
   },
 };
 

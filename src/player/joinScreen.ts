@@ -5,6 +5,7 @@
 
 import { h } from '../util/dom';
 import { cases } from '../data/supabase';
+import { PLAYER_COLORS } from '../data/colors';
 import { joinCase } from './join';
 
 export interface JoinScreenHandle {
@@ -42,6 +43,25 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
   const errEl = h('div', { class: 'form-error' });
   const joinBtn = h('button', { class: 'btn btn-primary btn-full', text: 'Enter the Case Room' });
 
+  // ── Color picker ──
+  let selectedColor = PLAYER_COLORS[0]!.value;
+  const colorSwatches = PLAYER_COLORS.map(({ label, value }) => {
+    const swatch = h('button', {
+      class: 'color-swatch' + (value === selectedColor ? ' selected' : ''),
+      attrs: { type: 'button', title: label, 'aria-label': label, 'data-color': value },
+    }) as HTMLButtonElement;
+    swatch.style.background = value;
+    swatch.addEventListener('click', () => {
+      selectedColor = value;
+      for (const s of colorSwatchWrap.querySelectorAll<HTMLElement>('.color-swatch')) {
+        s.classList.toggle('selected', s.dataset['color'] === value);
+      }
+    });
+    return swatch;
+  });
+  const colorSwatchWrap = h('div', { class: 'color-picker-row' }, ...colorSwatches);
+  const colorPickerLabel = h('div', { class: 'color-picker-label', text: 'Choose your colour:' });
+
   async function submit(): Promise<void> {
     const name = nameInput.value.trim();
     if (!name) { errEl.textContent = 'Enter your name.'; return; }
@@ -50,7 +70,7 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     try {
       const caseId = await resolveCaseId(codeInput.value);
       if (!caseId) { errEl.textContent = 'No case found for that code.'; joinBtn.removeAttribute('disabled'); return; }
-      const result = await joinCase(name, caseId);
+      const result = await joinCase(name, caseId, selectedColor);
       if (!result.ok) {
         errEl.textContent = result.error ?? 'Could not join.';
         joinBtn.removeAttribute('disabled');
@@ -74,6 +94,8 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     h('div', { class: 'landing-divider' }, h('span', { class: 'landing-divider-ornament', text: '— ✦ —' })),
     codeInput,
     nameInput,
+    colorPickerLabel,
+    colorSwatchWrap,
     errEl,
     joinBtn,
   );

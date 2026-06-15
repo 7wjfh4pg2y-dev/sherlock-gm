@@ -20,7 +20,7 @@ export interface JoinResult {
   error?: string;
 }
 
-export async function joinCase(rawName: string, caseId: string): Promise<JoinResult> {
+export async function joinCase(rawName: string, caseId: string, chosenColor?: string): Promise<JoinResult> {
   const name = rawName.trim();
   if (!name) return { ok: false, error: 'Enter your name.' };
 
@@ -30,7 +30,7 @@ export async function joinCase(rawName: string, caseId: string): Promise<JoinRes
     return { ok: false, error: 'You have been removed from this case by the Game Master.' };
   }
 
-  const color = nameToColor(name);
+  const color = chosenColor ?? nameToColor(name);
   await players.join({ case_id: caseId, player_name: name, player_color: color });
 
   const mapList: MapRow[] = [];

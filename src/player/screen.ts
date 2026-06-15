@@ -6,7 +6,8 @@
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
+import { PLAYER_COLORS } from '../data/colors';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
@@ -35,10 +36,77 @@ export function createPlayerScreen(): ScreenHandle {
   let builtNewspaperUrl: string | null = null;
   let currentNewspaperUrl: string | null = null;
 
-  // ── Header (slim — just title + leave) ──
+  // ── Header (slim — title + color picker + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
+
+  // Color picker popup
+  let colorPopupOpen = false;
+  const colorPopup = h('div', { class: 'color-popup hidden' });
+  for (const { label, value } of PLAYER_COLORS) {
+    const sw = h('button', {
+      class: 'color-swatch',
+      attrs: { type: 'button', title: label, 'aria-label': label, 'data-color': value },
+    }) as HTMLButtonElement;
+    sw.style.background = value;
+    sw.addEventListener('click', () => void changeColor(value));
+    colorPopup.append(sw);
+  }
+
+  async function changeColor(newColor: string): Promise<void> {
+    const state = store.getState();
+    const me = state.identity;
+    const caseId = state.currentCaseId;
+    if (!me || !caseId || newColor === me.color) { closeColorPopup(); return; }
+    const oldColor = me.color;
+    // Optimistic: update all owned strokes in the store and identity.
+    store.set({
+      identity: { ...me, color: newColor },
+      mapStrokes: state.mapStrokes.map((m) =>
+        m.player_name === me.name && m.player_color === oldColor ? { ...m, player_color: newColor } : m,
+      ),
+    });
+    closeColorPopup();
+    try {
+      await Promise.all([
+        strokeRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
+        playersRepo.updateColor(caseId, me.name, newColor),
+      ]);
+    } catch {
+      // Revert on failure.
+      const cur = store.getState();
+      store.set({
+        identity: { ...cur.identity!, color: oldColor },
+        mapStrokes: cur.mapStrokes.map((m) =>
+          m.player_name === me.name && m.player_color === newColor ? { ...m, player_color: oldColor } : m,
+        ),
+      });
+      toast('Could not change colour.');
+    }
+  }
+
+  function openColorPopup(): void {
+    colorPopupOpen = true;
+    // Mark current color selected
+    const me = store.getState().identity;
+    for (const sw of colorPopup.querySelectorAll<HTMLElement>('.color-swatch')) {
+      sw.classList.toggle('selected', sw.dataset['color'] === me?.color);
+    }
+    colorPopup.classList.remove('hidden');
+  }
+  function closeColorPopup(): void {
+    colorPopupOpen = false;
+    colorPopup.classList.add('hidden');
+  }
+
+  const colorDot = h('button', {
+    class: 'btn btn-secondary btn-sm color-dot-btn',
+    attrs: { type: 'button', title: 'Change your colour' },
+    on: { click: () => (colorPopupOpen ? closeColorPopup() : openColorPopup()) },
+  });
+  const colorBtnWrap = h('div', { class: 'color-btn-wrap' }, colorDot, colorPopup);
+
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const header = h('header', { class: 'player-header' }, caseTitle, leaveBtn);
+  const header = h('header', { class: 'player-header' }, caseTitle, colorBtnWrap, leaveBtn);
 
   // ── Tab bar ──
   const TAB_DEFS: { id: TabId; label: string }[] = [
@@ -471,6 +539,8 @@ export function createPlayerScreen(): ScreenHandle {
   function renderChrome(s: AppState): void {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
+    // Sync color dot to identity color.
+    if (s.identity) colorDot.style.background = s.identity.color;
     // Show/hide tab buttons based on available content
     const hasMap = !!current?.map_id;
     const hasNews = s.newspapers.length > 0;

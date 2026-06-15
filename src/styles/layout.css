@@ -841,3 +841,66 @@ body::before {
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }
 }
+
+/* ── Color picker (join screen + mid-session) ── */
+.color-picker-label {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--sepia); margin: 14px 0 8px; opacity: 0.85;
+}
+.color-picker-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+}
+.color-swatch {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  outline: none; flex-shrink: 0;
+}
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.selected {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.7), 0 0 0 4px currentColor;
+}
+
+/* Color dot button in the player header */
+.color-dot-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  padding: 0; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.5);
+  transition: transform 0.12s, border-color 0.12s;
+}
+.color-dot-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.9); }
+.color-btn-wrap { position: relative; display: flex; align-items: center; }
+
+/* Floating color popup from the header dot */
+.color-popup {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--parchment);
+  border: 1.5px solid rgba(139,105,20,0.5);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 10px;
+  width: 192px;
+  z-index: 200;
+}
+.color-popup.hidden { display: none; }
+
+/* Pin label prompt (shown above map controls) */
+.map-label-prompt {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: rgba(20,14,6,0.82);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+.map-label-prompt.hidden { display: none; }
+.map-label-input {
+  flex: 1; min-width: 0;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px; color: #fff; font-size: 0.82rem;
+  padding: 4px 8px; outline: none;
+}
+.map-label-input::placeholder { color: rgba(255,255,255,0.4); }
+.map-label-input:focus { border-color: rgba(255,255,255,0.55); }

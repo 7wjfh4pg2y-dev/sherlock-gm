@@ -41,6 +41,44 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   const pz = attachPanZoom(viewport, layers);
   const ctx = canvas.getContext('2d')!;
 
+  // ── Label prompt overlay ──
+  let pendingPinPoint: MapStrokePoint | null = null;
+  const labelInput = h('input', {
+    class: 'map-label-input',
+    attrs: { type: 'text', placeholder: 'Pin label (optional)', maxlength: '40' },
+  }) as HTMLInputElement;
+  const labelConfirm = h('button', { class: 'btn btn-primary btn-sm', text: 'Place' });
+  const labelCancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
+  const labelPrompt = h('div', { class: 'map-label-prompt hidden' },
+    labelInput, labelConfirm, labelCancel,
+  );
+
+  function showLabelPrompt(p: MapStrokePoint): void {
+    pendingPinPoint = p;
+    labelInput.value = '';
+    labelPrompt.classList.remove('hidden');
+    setTimeout(() => labelInput.focus(), 0);
+  }
+
+  function hideLabelPrompt(): void {
+    pendingPinPoint = null;
+    labelPrompt.classList.add('hidden');
+  }
+
+  async function confirmLabel(): Promise<void> {
+    const p = pendingPinPoint;
+    if (!p) return;
+    hideLabelPrompt();
+    await addMarking('pin', [p], labelInput.value.trim());
+  }
+
+  labelConfirm.addEventListener('click', () => void confirmLabel());
+  labelCancel.addEventListener('click', hideLabelPrompt);
+  labelInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') void confirmLabel();
+    if (e.key === 'Escape') hideLabelPrompt();
+  });
+
   // ── Canvas sizing: backing store matches the image's natural pixels. ──
   function sizeCanvas(): void {
     const w = img.naturalWidth || img.width;
@@ -71,29 +109,65 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     ctx.stroke();
   }
 
-  function drawPin(p: MapStrokePoint, color: string): void {
-    const x = p.x * canvas.width;
-    const y = p.y * canvas.height;
-    const r = Math.max(7, canvas.width * 0.009);
+  // Google Maps-style teardrop pin: filled balloon with a downward point.
+  function drawPin(p: MapStrokePoint, color: string, label: string): void {
+    const cx = p.x * canvas.width;
+    const cy = p.y * canvas.height;
+    const r = Math.max(8, canvas.width * 0.011);
+    const tipY = cy + r * 2.2; // tip of the teardrop below the centre
+
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    // Circle top
+    ctx.arc(cx, cy - r * 0.4, r, Math.PI * 0.18, Math.PI * 0.82, false);
+    // Bezier to tip
+    ctx.bezierCurveTo(cx + r * 1.1, cy + r * 1.2, cx + r * 0.35, tipY - r * 0.4, cx, tipY);
+    ctx.bezierCurveTo(cx - r * 0.35, tipY - r * 0.4, cx - r * 1.1, cy + r * 1.2, cx, cy - r * 0.4 - r * Math.sin(Math.PI * 0.18));
+    ctx.closePath();
+
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.lineWidth = Math.max(1.5, r * 0.28);
-    ctx.strokeStyle = 'rgba(20,14,6,0.85)';
+    ctx.lineWidth = Math.max(1.5, r * 0.2);
+    ctx.strokeStyle = 'rgba(20,14,6,0.75)';
     ctx.stroke();
-    // White centre dot for a "marker" look.
+
+    // White centre dot
     ctx.beginPath();
-    ctx.arc(x, y, r * 0.34, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.arc(cx, cy - r * 0.4, r * 0.38, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
     ctx.fill();
+    ctx.restore();
+
+    // Label to the right
+    if (label) {
+      const fontSize = Math.max(11, canvas.width * 0.013);
+      ctx.save();
+      ctx.font = `bold ${fontSize}px Georgia, serif`;
+      ctx.textBaseline = 'middle';
+      const textX = cx + r * 1.5;
+      const textY = cy - r * 0.4;
+      // Background pill
+      const metrics = ctx.measureText(label);
+      const pad = fontSize * 0.35;
+      ctx.fillStyle = 'rgba(20,14,6,0.72)';
+      ctx.beginPath();
+      const bx = textX - pad;
+      const by = textY - fontSize * 0.6 - pad;
+      const bw = metrics.width + pad * 2;
+      const bh = fontSize * 1.2 + pad * 2;
+      ctx.roundRect(bx, by, bw, bh, [4]);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(label, textX, textY);
+      ctx.restore();
+    }
   }
 
   function draw(): void {
     if (!canvas.width || !canvas.height) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const m of caseStrokes()) {
-      if (m.kind === 'pin') drawPin(m.points[0] ?? { x: 0.5, y: 0.5 }, m.player_color);
+      if (m.kind === 'pin') drawPin(m.points[0] ?? { x: 0.5, y: 0.5 }, m.player_color, m.label ?? '');
       else drawStroke(m.points, m.player_color);
     }
     if (drawing && current.length) drawStroke(current, author.color);
@@ -107,18 +181,18 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   // ── Persistence (optimistic, reconciled by id; realtime keeps others fresh) ──
-  async function addMarking(kind: 'stroke' | 'pin', points: MapStrokePoint[]): Promise<void> {
+  async function addMarking(kind: 'stroke' | 'pin', points: MapStrokePoint[], label = ''): Promise<void> {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return;
     const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: MapStrokeRow = {
       id: tempId, case_id: caseId, player_name: author.name, player_color: author.color,
-      kind, points, created_at: new Date().toISOString(),
+      kind, points, label, created_at: new Date().toISOString(),
     };
     store.set({ mapStrokes: [...store.getState().mapStrokes, optimistic] });
     try {
       const saved = await strokeRepo.create({
-        case_id: caseId, player_name: author.name, player_color: author.color, kind, points,
+        case_id: caseId, player_name: author.name, player_color: author.color, kind, points, label,
       });
       store.set({ mapStrokes: store.getState().mapStrokes.map((m) => (m.id === tempId ? saved : m)) });
     } catch {
@@ -175,7 +249,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     e.stopPropagation();
     e.preventDefault();
     const p = toNorm(e);
-    if (tool === 'pin') { void addMarking('pin', [p]); return; }
+    if (tool === 'pin') { showLabelPrompt(p); return; }
     if (tool === 'erase') { void eraseAt(p); return; }
     // draw
     drawing = true;
@@ -242,7 +316,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   const unsub = store.subscribe(() => draw());
   draw();
 
-  const element = h('div', { class: 'player-map-inlay' }, viewport, ctrls);
+  const element = h('div', { class: 'player-map-inlay' }, viewport, ctrls, labelPrompt);
 
   return {
     element,

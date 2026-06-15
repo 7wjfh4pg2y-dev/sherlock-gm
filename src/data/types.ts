@@ -65,6 +65,7 @@ export interface MapStrokeRow {
   player_color: string;
   kind: 'stroke' | 'pin';
   points: MapStrokePoint[];
+  label: string;
   created_at: string;
 }
 
@@ -74,6 +75,7 @@ export type MapStrokeInsert = {
   player_color: string;
   kind: 'stroke' | 'pin';
   points: MapStrokePoint[];
+  label?: string;
 };
 
 // ── End-of-case questions + solution ──
