@@ -38,46 +38,53 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   const canvas = h('canvas', { class: 'map-draw-canvas' }) as HTMLCanvasElement;
   const layers = h('div', { class: 'map-layers' }, img, canvas);
   const viewport = h('div', { class: 'player-map-viewport' }, layers);
+  // labelBox is appended to the viewport after it's declared below.
   const pz = attachPanZoom(viewport, layers);
   const ctx = canvas.getContext('2d')!;
 
-  // ── Label prompt overlay ──
-  let pendingPinPoint: MapStrokePoint | null = null;
+  // ── Inline label editor ──
+  // After a pin is dropped, a small text box appears on the map at the pin so
+  // the player can optionally name it. Positioned in viewport pixels at drop time.
+  let labelTargetId: string | null = null;
   const labelInput = h('input', {
     class: 'map-label-input',
-    attrs: { type: 'text', placeholder: 'Pin label (optional)', maxlength: '40' },
+    attrs: { type: 'text', placeholder: 'Label this pin…', maxlength: '40' },
   }) as HTMLInputElement;
-  const labelConfirm = h('button', { class: 'btn btn-primary btn-sm', text: 'Place' });
-  const labelCancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
-  const labelPrompt = h('div', { class: 'map-label-prompt hidden' },
-    labelInput, labelConfirm, labelCancel,
-  );
+  const labelBox = h('div', { class: 'map-label-box hidden' }, labelInput);
+  viewport.append(labelBox);
 
-  function showLabelPrompt(p: MapStrokePoint): void {
-    pendingPinPoint = p;
+  function showLabelEditor(vx: number, vy: number, strokeId: string): void {
+    labelTargetId = strokeId;
     labelInput.value = '';
-    labelPrompt.classList.remove('hidden');
+    labelBox.style.left = `${vx}px`;
+    labelBox.style.top = `${vy}px`;
+    labelBox.classList.remove('hidden');
     setTimeout(() => labelInput.focus(), 0);
   }
 
-  function hideLabelPrompt(): void {
-    pendingPinPoint = null;
-    labelPrompt.classList.add('hidden');
+  function hideLabelEditor(): void {
+    labelTargetId = null;
+    labelBox.classList.add('hidden');
   }
 
-  async function confirmLabel(): Promise<void> {
-    const p = pendingPinPoint;
-    if (!p) return;
-    hideLabelPrompt();
-    await addMarking('pin', [p], labelInput.value.trim());
+  async function commitLabel(): Promise<void> {
+    const id = labelTargetId;
+    if (!id) return;
+    const label = labelInput.value.trim();
+    hideLabelEditor();
+    if (!label) return;
+    // Optimistic store update so the label renders immediately.
+    store.set({ mapStrokes: store.getState().mapStrokes.map((m) => (m.id === id ? { ...m, label } : m)) });
+    if (id.startsWith('tmp-')) return; // not yet persisted; skip
+    try { await strokeRepo.setLabel(id, label); }
+    catch { toast('Could not save label.'); }
   }
 
-  labelConfirm.addEventListener('click', () => void confirmLabel());
-  labelCancel.addEventListener('click', hideLabelPrompt);
   labelInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') void confirmLabel();
-    if (e.key === 'Escape') hideLabelPrompt();
+    if (e.key === 'Enter') void commitLabel();
+    if (e.key === 'Escape') hideLabelEditor();
   });
+  labelInput.addEventListener('blur', () => void commitLabel());
 
   // ── Canvas sizing: backing store matches the image's natural pixels. ──
   function sizeCanvas(): void {
@@ -181,9 +188,10 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   // ── Persistence (optimistic, reconciled by id; realtime keeps others fresh) ──
-  async function addMarking(kind: 'stroke' | 'pin', points: MapStrokePoint[], label = ''): Promise<void> {
+  // Returns the persisted row's id, or null if the save failed.
+  async function addMarking(kind: 'stroke' | 'pin', points: MapStrokePoint[], label = ''): Promise<string | null> {
     const caseId = store.getState().currentCaseId;
-    if (!caseId) return;
+    if (!caseId) return null;
     const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: MapStrokeRow = {
       id: tempId, case_id: caseId, player_name: author.name, player_color: author.color,
@@ -195,10 +203,18 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
         case_id: caseId, player_name: author.name, player_color: author.color, kind, points, label,
       });
       store.set({ mapStrokes: store.getState().mapStrokes.map((m) => (m.id === tempId ? saved : m)) });
+      return saved.id;
     } catch {
       store.set({ mapStrokes: store.getState().mapStrokes.filter((m) => m.id !== tempId) });
       toast('Could not save marking.');
+      return null;
     }
+  }
+
+  // Drop a pin immediately, then open the inline label editor over it.
+  async function placePin(p: MapStrokePoint, vx: number, vy: number): Promise<void> {
+    const id = await addMarking('pin', [p]);
+    if (id) showLabelEditor(vx, vy, id);
   }
 
   function canErase(m: MapStrokeRow): boolean {
@@ -249,7 +265,11 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     e.stopPropagation();
     e.preventDefault();
     const p = toNorm(e);
-    if (tool === 'pin') { showLabelPrompt(p); return; }
+    if (tool === 'pin') {
+      const vrect = viewport.getBoundingClientRect();
+      void placePin(p, e.clientX - vrect.left, e.clientY - vrect.top);
+      return;
+    }
     if (tool === 'erase') { void eraseAt(p); return; }
     // draw
     drawing = true;
@@ -316,7 +336,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   const unsub = store.subscribe(() => draw());
   draw();
 
-  const element = h('div', { class: 'player-map-inlay' }, viewport, ctrls, labelPrompt);
+  const element = h('div', { class: 'player-map-inlay' }, viewport, ctrls);
 
   return {
     element,

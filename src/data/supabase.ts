@@ -337,6 +337,9 @@ export const mapStrokes = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('map_strokes').delete().eq('id', id).select());
   },
+  async setLabel(id: string, label: string): Promise<void> {
+    unwrap(await sb.from('map_strokes').update({ label }).eq('id', id).select());
+  },
   async clearForCase(caseId: string): Promise<void> {
     unwrap(await sb.from('map_strokes').delete().eq('case_id', caseId).select());
   },

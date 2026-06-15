@@ -718,7 +718,7 @@ body::before {
 }
 .player-map-viewport {
   width: 100%; height: 100%;
-  cursor: grab; overflow: hidden;
+  cursor: grab; overflow: hidden; position: relative;
   display: flex; align-items: center; justify-content: center;
 }
 /* Map layers: the canvas is the in-flow, intrinsically-sized element (its width/
@@ -887,20 +887,22 @@ body::before {
 }
 .color-popup.hidden { display: none; }
 
-/* Pin label prompt (shown above map controls) */
-.map-label-prompt {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 10px;
-  background: rgba(20,14,6,0.82);
-  border-top: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0;
+/* Inline pin label editor — floats on the map at the dropped pin */
+.map-label-box {
+  position: absolute;
+  /* left/top set inline at drop time; nudge right of the pin tip */
+  transform: translate(14px, -10px);
+  z-index: 150;
 }
-.map-label-prompt.hidden { display: none; }
+.map-label-box.hidden { display: none; }
 .map-label-input {
-  flex: 1; min-width: 0;
-  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 4px; color: #fff; font-size: 0.82rem;
-  padding: 4px 8px; outline: none;
+  background: rgba(20,14,6,0.88);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 5px; color: #fff; font-size: 0.82rem;
+  font-family: Georgia, serif;
+  padding: 5px 9px; outline: none;
+  width: 150px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
 }
-.map-label-input::placeholder { color: rgba(255,255,255,0.4); }
-.map-label-input:focus { border-color: rgba(255,255,255,0.55); }
+.map-label-input::placeholder { color: rgba(255,255,255,0.45); }
+.map-label-input:focus { border-color: rgba(255,255,255,0.7); }
