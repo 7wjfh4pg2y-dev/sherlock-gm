@@ -42,6 +42,14 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   const pz = attachPanZoom(viewport, layers);
   const ctx = canvas.getContext('2d')!;
 
+  // The acting author, read live so a mid-session colour/name change is honoured
+  // (the inlay isn't rebuilt on store updates, so the captured `author` goes stale).
+  function currentAuthor(): MapAuthor {
+    if (isGM) return author;
+    const id = store.getState().identity;
+    return id ? { name: id.name, color: id.color } : author;
+  }
+
   // ── Inline label editor ──
   // After a pin is dropped, a small text box appears on the map at the pin so
   // the player can optionally name it. Positioned in viewport pixels at drop time.
@@ -177,7 +185,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
       if (m.kind === 'pin') drawPin(m.points[0] ?? { x: 0.5, y: 0.5 }, m.player_color, m.label ?? '');
       else drawStroke(m.points, m.player_color);
     }
-    if (drawing && current.length) drawStroke(current, author.color);
+    if (drawing && current.length) drawStroke(current, currentAuthor().color);
   }
 
   // ── Pointer → normalised coordinates ──
@@ -192,15 +200,16 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   async function addMarking(kind: 'stroke' | 'pin', points: MapStrokePoint[], label = ''): Promise<string | null> {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return null;
+    const me = currentAuthor();
     const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: MapStrokeRow = {
-      id: tempId, case_id: caseId, player_name: author.name, player_color: author.color,
+      id: tempId, case_id: caseId, player_name: me.name, player_color: me.color,
       kind, points, label, created_at: new Date().toISOString(),
     };
     store.set({ mapStrokes: [...store.getState().mapStrokes, optimistic] });
     try {
       const saved = await strokeRepo.create({
-        case_id: caseId, player_name: author.name, player_color: author.color, kind, points, label,
+        case_id: caseId, player_name: me.name, player_color: me.color, kind, points, label,
       });
       store.set({ mapStrokes: store.getState().mapStrokes.map((m) => (m.id === tempId ? saved : m)) });
       return saved.id;
@@ -218,7 +227,8 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   function canErase(m: MapStrokeRow): boolean {
-    return isGM || (m.player_name === author.name && m.player_color === author.color);
+    const me = currentAuthor();
+    return isGM || (m.player_name === me.name && m.player_color === me.color);
   }
 
   function distToSegment(p: MapStrokePoint, a: MapStrokePoint, b: MapStrokePoint): number {
