@@ -871,6 +871,7 @@ body::before {
   transition: transform 0.12s, border-color 0.12s;
 }
 .color-dot-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.9); }
+.player-header-right { display: flex; align-items: center; gap: 8px; }
 .color-btn-wrap { position: relative; display: flex; align-items: center; }
 
 /* ── Presence indicator (player header) ── */

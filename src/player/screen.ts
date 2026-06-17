@@ -146,7 +146,8 @@ export function createPlayerScreen(): ScreenHandle {
 
 
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const header = h('header', { class: 'player-header' }, caseTitle, colorBtnWrap, presenceWrap, leaveBtn);
+  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, leaveBtn);
+  const header = h('header', { class: 'player-header' }, caseTitle, headerRight);
 
   // ── Tab bar ──
   const TAB_DEFS: { id: TabId; label: string }[] = [
