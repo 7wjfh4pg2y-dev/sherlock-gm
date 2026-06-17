@@ -147,8 +147,19 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
 
+  // ── Leads counter ──
+  const leadsTooltip = h('div', { class: 'leads-tooltip hidden' });
+  const leadsIcon = h('span', { class: 'leads-icon', text: '🔍' });
+  const leadsNum = h('span', { class: 'leads-num', text: '0' });
+  const leadsWrap = h('div', { class: 'leads-wrap' },
+    h('div', { class: 'leads-btn' }, leadsIcon, leadsNum),
+    leadsTooltip,
+  );
+  leadsWrap.addEventListener('mouseenter', () => leadsTooltip.classList.remove('hidden'));
+  leadsWrap.addEventListener('mouseleave', () => leadsTooltip.classList.add('hidden'));
+
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, leaveBtn);
+  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, leadsWrap, presenceWrap, leaveBtn);
   const header = h('header', { class: 'player-header' }, caseTitle, headerRight);
 
   // ── Tab bar ──
@@ -583,6 +594,9 @@ export function createPlayerScreen(): ScreenHandle {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
     if (s.identity) colorDot.style.background = s.identity.color;
+    const leadCount = selectors.revealedClues(s).length;
+    leadsNum.textContent = String(leadCount);
+    leadsTooltip.textContent = `${leadCount} lead${leadCount === 1 ? '' : 's'} followed up on`;
     // Wire up presence sync once (idempotent — setPresenceSync is safe to call repeatedly).
     if (s.currentCaseId) setPresenceSync(updatePresence);
     // Show/hide tab buttons based on available content

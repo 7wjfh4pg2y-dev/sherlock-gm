@@ -912,6 +912,43 @@ body::before {
   font-size: 0.78rem; color: var(--fog); font-style: italic;
 }
 
+/* ── Leads counter (player header) ── */
+.leads-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.leads-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid rgba(201,169,110,0.35);
+  border-radius: 4px;
+  cursor: default;
+  font-size: 0.78rem; letter-spacing: 0.04em;
+  color: var(--fog);
+  transition: border-color 0.15s, color 0.15s;
+}
+.leads-wrap:hover .leads-btn {
+  border-color: var(--parchment-darker);
+  color: var(--parchment);
+}
+.leads-icon { font-size: 0.9rem; line-height: 1; }
+.leads-num  { font-family: 'Courier Prime', 'Courier New', monospace; font-weight: 700; }
+.leads-tooltip {
+  position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: #1c1507;
+  border: 1px solid var(--parchment-darker);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.75), inset 0 1px 0 rgba(201,169,110,0.12);
+  padding: 7px 14px;
+  white-space: nowrap;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.78rem; letter-spacing: 0.04em;
+  color: var(--parchment);
+  pointer-events: none;
+  z-index: 200;
+}
+.leads-tooltip.hidden { display: none; }
+
 /* ── Map control: GM danger button ── */
 .map-ctrl-danger { color: #ff6b6b; }
 .map-ctrl-danger:hover { background: rgba(255,80,80,0.18); color: #ff4444; }
