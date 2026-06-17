@@ -35,20 +35,22 @@ function mount(node: HTMLElement, destroy?: () => void): void {
 }
 
 // Mount a screen produced by an async loader, ignoring the result if the view
-// changed again before the chunk finished loading.
-async function mountAsync(load: () => Promise<{ element: HTMLElement; destroy?: () => void }>): Promise<void> {
+// changed again before the chunk finished loading. Returns false if load failed.
+async function mountAsync(
+  load: () => Promise<{ element: HTMLElement; destroy?: () => void }>,
+): Promise<boolean> {
   const token = ++mountToken;
   let screen: { element: HTMLElement; destroy?: () => void };
   try {
     screen = await load();
   } catch (err) {
     console.error('[router] screen load failed:', err);
-    // Reset the key so the next state change attempts a remount.
     lastKey = '';
-    return;
+    return false;
   }
-  if (token !== mountToken) { screen.destroy?.(); return; }
+  if (token !== mountToken) { screen.destroy?.(); return true; }
   mount(screen.element, screen.destroy);
+  return true;
 }
 
 function viewKey(s: AppState): string {
@@ -78,7 +80,11 @@ function render(s: AppState): void {
       void mountAsync(() => import('./gm/screen').then((m) => m.createGMScreen()));
       break;
     case 'player':
-      void mountAsync(() => import('./player/screen').then((m) => m.createPlayerScreen()));
+      // If the player screen fails to build, reset to landing so the user
+      // isn't left staring at a frozen disabled join button.
+      void mountAsync(() => import('./player/screen').then((m) => m.createPlayerScreen())).then((ok) => {
+        if (!ok) store.reset();
+      });
       break;
   }
 }

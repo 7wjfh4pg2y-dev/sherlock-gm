@@ -74,8 +74,16 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
       if (!result.ok) {
         errEl.textContent = result.error ?? 'Could not join.';
         joinBtn.removeAttribute('disabled');
+        return;
       }
       // On success, joinCase sets store.role='player' → router swaps the screen.
+      // Safety net: if the screen hasn't swapped after 15 s, re-enable the button.
+      setTimeout(() => {
+        if (joinBtn.disabled) {
+          errEl.textContent = 'Something went wrong loading the case room. Please try again.';
+          joinBtn.removeAttribute('disabled');
+        }
+      }, 15_000);
     } catch (err) {
       console.error('[join] error:', err);
       const msg = err instanceof Error ? err.message : String(err);
