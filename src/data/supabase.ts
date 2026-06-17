@@ -444,19 +444,37 @@ export interface PresenceMeta {
   player_color: string;
 }
 
-export function trackPresence(caseId: string, meta: PresenceMeta): RealtimeChannel {
+// Single presence channel that both tracks the local player AND notifies on
+// sync events. All listeners must be added before .subscribe() — Supabase
+// throws if you call .on() on an already-subscribed channel.
+// `onSync` can be updated later via the returned setter.
+export function joinPresence(
+  caseId: string,
+  meta: PresenceMeta,
+  onSync: (online: PresenceMeta[]) => void,
+): { channel: RealtimeChannel; setOnSync: (cb: (online: PresenceMeta[]) => void) => void } {
+  let syncCb = onSync;
   const channel = sb.channel(`presence-${caseId}`);
-  channel.subscribe((status) => {
-    if (status === 'SUBSCRIBED') void channel.track(meta);
-  });
-  return channel;
+  channel
+    .on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState<PresenceMeta>();
+      const seen = new Map<string, PresenceMeta>();
+      for (const entries of Object.values(state))
+        for (const e of entries) seen.set(`${e.player_name}|${e.player_color}`, e);
+      syncCb([...seen.values()]);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') void channel.track(meta);
+    });
+  return { channel, setOnSync: (cb) => { syncCb = cb; } };
 }
 
+// GM-only watcher: does not track a player, just observes presence.
 export function watchPresence(
   caseId: string,
   onSync: (online: PresenceMeta[]) => void,
 ): RealtimeChannel {
-  const channel = sb.channel(`presence-${caseId}`);
+  const channel = sb.channel(`presence-watch-${caseId}`);
   channel
     .on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<PresenceMeta>();

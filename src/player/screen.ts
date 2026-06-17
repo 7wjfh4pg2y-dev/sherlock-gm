@@ -6,9 +6,9 @@
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo, watchPresence, removeChannel } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
 import type { PresenceMeta } from '../data/supabase';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import { setPresenceSync } from './join';
 import { PLAYER_COLORS } from '../data/colors';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
@@ -29,7 +29,6 @@ type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'di
 export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
   let selectedClueId: string | null = null;
-  let presenceChannel: RealtimeChannel | null = null;
   let onlinePlayers: PresenceMeta[] = [];
   let presencePopupOpen = false;
   let editingAnswerId: string | null = null;
@@ -145,10 +144,6 @@ export function createPlayerScreen(): ScreenHandle {
     if (presencePopupOpen) renderPresencePopup();
   }
 
-  function startPresenceWatch(caseId: string): void {
-    if (presenceChannel) { removeChannel(presenceChannel); presenceChannel = null; }
-    presenceChannel = watchPresence(caseId, updatePresence);
-  }
 
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
   const header = h('header', { class: 'player-header' }, caseTitle, colorBtnWrap, presenceWrap, leaveBtn);
@@ -585,8 +580,8 @@ export function createPlayerScreen(): ScreenHandle {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
     if (s.identity) colorDot.style.background = s.identity.color;
-    // Start presence watching once we have a case id (idempotent via channel check).
-    if (s.currentCaseId && !presenceChannel) startPresenceWatch(s.currentCaseId);
+    // Wire up presence sync once (idempotent — setPresenceSync is safe to call repeatedly).
+    if (s.currentCaseId) setPresenceSync(updatePresence);
     // Show/hide tab buttons based on available content
     const hasMap = !!current?.map_id;
     const hasNews = s.newspapers.length > 0;
@@ -616,9 +611,9 @@ export function createPlayerScreen(): ScreenHandle {
     element,
     destroy() {
       unsubscribe();
+      setPresenceSync(() => {});
       mapInlay?.detach();
       newspaperPdfHandle?.destroy();
-      if (presenceChannel) { removeChannel(presenceChannel); presenceChannel = null; }
     },
   };
 }

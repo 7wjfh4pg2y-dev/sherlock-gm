@@ -4,16 +4,22 @@
 
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { MapRow } from '../data/types';
+import type { PresenceMeta } from '../data/supabase';
 import {
   cases, players, clues, notes, maps, newspapers,
   questions, questionAnswers, solutions, mapStrokes,
-  subscribeToCase, trackPresence, removeChannel,
+  subscribeToCase, joinPresence, removeChannel,
 } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
 import { store } from '../state/store';
 import { nameToColor } from '../data/colors';
 
 let channels: RealtimeChannel[] = [];
+// Mutable sync callback — updated by the player screen once mounted.
+let presenceSyncCb: (list: PresenceMeta[]) => void = () => {};
+export function setPresenceSync(cb: (list: PresenceMeta[]) => void): void {
+  presenceSyncCb = cb;
+}
 
 export interface JoinResult {
   ok: boolean;
@@ -83,12 +89,18 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
         }),
     }),
   );
-  channels.push(trackPresence(caseId, { player_name: name, player_color: color }));
+  const { channel: presenceCh } = joinPresence(
+    caseId,
+    { player_name: name, player_color: color },
+    (list) => presenceSyncCb(list),
+  );
+  channels.push(presenceCh);
 
   return { ok: true };
 }
 
 export function leaveCase(): void {
+  presenceSyncCb = () => {};
   channels.forEach(removeChannel);
   channels = [];
   store.reset();
