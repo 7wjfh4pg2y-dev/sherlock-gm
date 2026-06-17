@@ -12,7 +12,7 @@ import type {
   NewspaperRow, NewspaperInsert,
   QuestionRow, QuestionInsert,
   QuestionAnswerRow, SolutionRow,
-  MapStrokeRow, MapStrokeInsert,
+  MapStrokeRow, MapStrokeInsert, MapStrokePoint,
   DirectoryOverrides,
 } from './types';
 
@@ -339,6 +339,9 @@ export const mapStrokes = {
   },
   async setLabel(id: string, label: string): Promise<void> {
     unwrap(await sb.from('map_strokes').update({ label }).eq('id', id).select());
+  },
+  async move(id: string, points: MapStrokePoint[]): Promise<void> {
+    unwrap(await sb.from('map_strokes').update({ points }).eq('id', id).select());
   },
   async clearForCase(caseId: string): Promise<void> {
     unwrap(await sb.from('map_strokes').delete().eq('case_id', caseId).select());

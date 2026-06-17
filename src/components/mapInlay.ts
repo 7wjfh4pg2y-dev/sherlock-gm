@@ -116,6 +116,11 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   if (img.complete) sizeCanvas();
   img.addEventListener('load', () => { sizeCanvas(); draw(); });
 
+  // ── Pin drag state ──
+  let draggingPin: MapStrokeRow | null = null;
+  let dragCurrent: MapStrokePoint | null = null;
+  let dragOrigin: MapStrokePoint | null = null; // pointer-down position, to detect tap vs drag
+
   // ── Drawing ──
   function caseStrokes(): MapStrokeRow[] {
     const s = store.getState();
@@ -188,8 +193,13 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     if (!canvas.width || !canvas.height) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const m of caseStrokes()) {
-      if (m.kind === 'pin') drawPin(m.points[0] ?? { x: 0.5, y: 0.5 }, m.player_color, m.label ?? '');
-      else drawStroke(m.points, m.player_color);
+      if (m.kind === 'pin') {
+        const pt = (draggingPin?.id === m.id && dragCurrent) ? dragCurrent : (m.points[0] ?? { x: 0.5, y: 0.5 });
+        // Suppress label while dragging so it doesn't trail across the map.
+        drawPin(pt, m.player_color, draggingPin?.id === m.id ? '' : (m.label ?? ''));
+      } else {
+        drawStroke(m.points, m.player_color);
+      }
     }
     if (drawing && current.length) drawStroke(current, currentAuthor().color);
   }
@@ -226,14 +236,16 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     }
   }
 
+  async function movePin(m: MapStrokeRow, newPoint: MapStrokePoint): Promise<void> {
+    const prev = store.getState().mapStrokes;
+    store.set({ mapStrokes: prev.map((s) => s.id === m.id ? { ...s, points: [newPoint] } : s) });
+    if (m.id.startsWith('tmp-')) return;
+    try { await strokeRepo.move(m.id, [newPoint]); }
+    catch { store.set({ mapStrokes: prev }); toast('Could not move pin.'); }
+  }
+
   // Drop a pin immediately, then open the inline label editor over it.
-  // If the click lands on an existing own pin, edit its label instead.
-  async function placeOrEditPin(p: MapStrokePoint, vx: number, vy: number): Promise<void> {
-    const existing = hitMarking(p);
-    if (existing?.kind === 'pin' && canErase(existing)) {
-      showLabelEditor(vx, vy, existing.id, existing.label ?? '');
-      return;
-    }
+  async function placePinAndEdit(p: MapStrokePoint, vx: number, vy: number): Promise<void> {
     const id = await addMarking('pin', [p]);
     if (id) showLabelEditor(vx, vy, id);
   }
@@ -282,30 +294,80 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   // ── Pointer handlers (active only when a tool is selected) ──
+  // Threshold for distinguishing a drag from a tap (normalised units).
+  const DRAG_MIN = 0.008;
+
   function onPointerDown(e: PointerEvent): void {
     if (tool === 'pan' || e.button !== 0) return;
     e.stopPropagation();
     e.preventDefault();
     const p = toNorm(e);
+
     if (tool === 'pin') {
+      // Start dragging an existing own pin if the pointer lands on one.
+      const hit = hitMarking(p);
+      if (hit?.kind === 'pin' && canErase(hit)) {
+        draggingPin = hit;
+        dragOrigin = p;
+        dragCurrent = p;
+        canvas.setPointerCapture(e.pointerId);
+        canvas.style.cursor = 'grabbing';
+        return;
+      }
+      // Otherwise drop a new pin.
       const vrect = viewport.getBoundingClientRect();
-      void placeOrEditPin(p, e.clientX - vrect.left, e.clientY - vrect.top);
+      void placePinAndEdit(p, e.clientX - vrect.left, e.clientY - vrect.top);
       return;
     }
+
     if (tool === 'erase') { void eraseAt(p); return; }
+
     // draw
     drawing = true;
     current = [p];
     canvas.setPointerCapture(e.pointerId);
     draw();
   }
+
   function onPointerMove(e: PointerEvent): void {
+    // Pin drag.
+    if (draggingPin) {
+      e.stopPropagation();
+      dragCurrent = toNorm(e);
+      draw();
+      return;
+    }
+    // Hover cursor feedback: show grab when over a movable pin in pin mode.
+    if (tool === 'pin' && !drawing) {
+      const hit = hitMarking(toNorm(e));
+      canvas.style.cursor = (hit?.kind === 'pin' && canErase(hit)) ? 'grab' : 'crosshair';
+    }
     if (!drawing) return;
     e.stopPropagation();
     current.push(toNorm(e));
     draw();
   }
+
   function onPointerUp(e: PointerEvent): void {
+    // Finish pin drag.
+    if (draggingPin) {
+      e.stopPropagation();
+      const pin = draggingPin;
+      const dest = dragCurrent ?? pin.points[0] ?? { x: 0.5, y: 0.5 };
+      const moved = dragOrigin ? Math.hypot(dest.x - dragOrigin.x, dest.y - dragOrigin.y) > DRAG_MIN : false;
+      draggingPin = null;
+      dragCurrent = null;
+      dragOrigin = null;
+      canvas.style.cursor = 'crosshair';
+      if (moved) {
+        void movePin(pin, dest);
+      } else {
+        // Short tap on own pin → edit its label.
+        const vrect = viewport.getBoundingClientRect();
+        showLabelEditor(e.clientX - vrect.left, e.clientY - vrect.top, pin.id, pin.label ?? '');
+      }
+      return;
+    }
     if (!drawing) return;
     e.stopPropagation();
     drawing = false;
@@ -314,10 +376,20 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     if (pts.length >= 2) void addMarking('stroke', pts);
     else draw();
   }
+  function onPointerCancel(): void {
+    if (draggingPin) {
+      // Revert the drag ghost and cancel.
+      draggingPin = null; dragCurrent = null; dragOrigin = null;
+      canvas.style.cursor = 'crosshair';
+      draw();
+      return;
+    }
+    if (drawing) { drawing = false; current = []; draw(); }
+  }
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
-  canvas.addEventListener('pointercancel', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerCancel);
 
   // ── Tool selection ──
   function setTool(next: Tool): void {
@@ -368,7 +440,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
-      canvas.removeEventListener('pointercancel', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerCancel);
       clear(element);
     },
   };
