@@ -38,7 +38,15 @@ function mount(node: HTMLElement, destroy?: () => void): void {
 // changed again before the chunk finished loading.
 async function mountAsync(load: () => Promise<{ element: HTMLElement; destroy?: () => void }>): Promise<void> {
   const token = ++mountToken;
-  const screen = await load();
+  let screen: { element: HTMLElement; destroy?: () => void };
+  try {
+    screen = await load();
+  } catch (err) {
+    console.error('[router] screen load failed:', err);
+    // Reset the key so the next state change attempts a remount.
+    lastKey = '';
+    return;
+  }
   if (token !== mountToken) { screen.destroy?.(); return; }
   mount(screen.element, screen.destroy);
 }
