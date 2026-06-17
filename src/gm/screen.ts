@@ -463,9 +463,8 @@ export function createGMScreen(): GMScreenHandle {
         map_strokes: () => void loadGMMapStrokes(caseId),
       }),
     );
-    presenceChannel = watchPresence(caseId, (online) => {
-      onlineSet = online;
-      // Force a players re-render.
+    presenceChannel = watchPresence(caseId, (list) => {
+      onlineSet = new Set(list.map((p) => `${p.player_name}|${p.player_color}`));
       renderPlayers(store.getState());
     });
   }

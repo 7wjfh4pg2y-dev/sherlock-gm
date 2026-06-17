@@ -454,17 +454,17 @@ export function trackPresence(caseId: string, meta: PresenceMeta): RealtimeChann
 
 export function watchPresence(
   caseId: string,
-  onSync: (online: Set<string>) => void,
+  onSync: (online: PresenceMeta[]) => void,
 ): RealtimeChannel {
   const channel = sb.channel(`presence-${caseId}`);
   channel
     .on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<PresenceMeta>();
-      const online = new Set<string>();
+      const seen = new Map<string, PresenceMeta>();
       for (const entries of Object.values(state)) {
-        for (const e of entries) online.add(`${e.player_name}|${e.player_color}`);
+        for (const e of entries) seen.set(`${e.player_name}|${e.player_color}`, e);
       }
-      onSync(online);
+      onSync([...seen.values()]);
     })
     .subscribe();
   return channel;

@@ -6,7 +6,9 @@
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo, watchPresence, removeChannel } from '../data/supabase';
+import type { PresenceMeta } from '../data/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { PLAYER_COLORS } from '../data/colors';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
@@ -27,6 +29,9 @@ type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'di
 export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
   let selectedClueId: string | null = null;
+  let presenceChannel: RealtimeChannel | null = null;
+  let onlinePlayers: PresenceMeta[] = [];
+  let presencePopupOpen = false;
   let editingAnswerId: string | null = null;
   let answerDraft = '';
   let activeTab: TabId = 'clues';
@@ -105,8 +110,48 @@ export function createPlayerScreen(): ScreenHandle {
   });
   const colorBtnWrap = h('div', { class: 'color-btn-wrap' }, colorDot, colorPopup);
 
+  // ── Presence indicator ──
+  const presenceCount = h('span', { class: 'presence-count-label', text: '0 online' });
+  const presenceList = h('div', { class: 'presence-popup hidden' });
+  const presenceBtn = h('button', {
+    class: 'btn btn-secondary btn-sm presence-btn',
+    attrs: { type: 'button', title: 'Who\'s online' },
+    on: { click: () => (presencePopupOpen ? closePresencePopup() : openPresencePopup()) },
+  }, presenceCount);
+  const presenceWrap = h('div', { class: 'presence-wrap' }, presenceBtn, presenceList);
+
+  function renderPresencePopup(): void {
+    const items = onlinePlayers.map((p) => {
+      const dot = h('span', { class: 'presence-player-dot' });
+      dot.style.background = p.player_color;
+      return h('div', { class: 'presence-player-row' }, dot, h('span', { class: 'presence-player-name', text: p.player_name }));
+    });
+    replaceChildren(presenceList, ...(items.length ? items : [h('div', { class: 'presence-empty', text: 'No one else online' })]));
+  }
+
+  function openPresencePopup(): void {
+    presencePopupOpen = true;
+    renderPresencePopup();
+    presenceList.classList.remove('hidden');
+  }
+  function closePresencePopup(): void {
+    presencePopupOpen = false;
+    presenceList.classList.add('hidden');
+  }
+
+  function updatePresence(list: PresenceMeta[]): void {
+    onlinePlayers = list;
+    presenceCount.textContent = `${list.length} online`;
+    if (presencePopupOpen) renderPresencePopup();
+  }
+
+  function startPresenceWatch(caseId: string): void {
+    if (presenceChannel) { removeChannel(presenceChannel); presenceChannel = null; }
+    presenceChannel = watchPresence(caseId, updatePresence);
+  }
+
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const header = h('header', { class: 'player-header' }, caseTitle, colorBtnWrap, leaveBtn);
+  const header = h('header', { class: 'player-header' }, caseTitle, colorBtnWrap, presenceWrap, leaveBtn);
 
   // ── Tab bar ──
   const TAB_DEFS: { id: TabId; label: string }[] = [
@@ -539,8 +584,9 @@ export function createPlayerScreen(): ScreenHandle {
   function renderChrome(s: AppState): void {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
-    // Sync color dot to identity color.
     if (s.identity) colorDot.style.background = s.identity.color;
+    // Start presence watching once we have a case id (idempotent via channel check).
+    if (s.currentCaseId && !presenceChannel) startPresenceWatch(s.currentCaseId);
     // Show/hide tab buttons based on available content
     const hasMap = !!current?.map_id;
     const hasNews = s.newspapers.length > 0;
@@ -572,6 +618,7 @@ export function createPlayerScreen(): ScreenHandle {
       unsubscribe();
       mapInlay?.detach();
       newspaperPdfHandle?.destroy();
+      if (presenceChannel) { removeChannel(presenceChannel); presenceChannel = null; }
     },
   };
 }

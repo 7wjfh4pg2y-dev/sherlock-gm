@@ -415,6 +415,20 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     erase: toolBtn('erase', '🧽', 'Erase your markings'),
   };
 
+  async function clearAllMarkings(): Promise<void> {
+    const caseId = store.getState().currentCaseId;
+    if (!caseId) return;
+    if (!confirm('Clear all markings from the map? This cannot be undone.')) return;
+    const prev = store.getState().mapStrokes;
+    store.set({ mapStrokes: [] });
+    try { await strokeRepo.clearForCase(caseId); }
+    catch { store.set({ mapStrokes: prev }); toast('Could not clear markings.'); }
+  }
+
+  const clearBtn = isGM
+    ? h('button', { class: 'map-ctrl-btn map-ctrl-danger', text: '🗑', attrs: { title: 'Clear all markings' }, on: { click: () => void clearAllMarkings() } })
+    : null;
+
   const ctrls = h('div', { class: 'map-ctrl-bar' },
     toolButtons.pan, toolButtons.draw, toolButtons.pin, toolButtons.erase,
     h('span', { class: 'map-ctrl-sep' }),
@@ -422,6 +436,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' }, on: { click: () => pz.zoomOut() } }),
     h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' }, on: { click: () => pz.zoomIn() } }),
     h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(map.url, map.name) } }),
+    ...(clearBtn ? [h('span', { class: 'map-ctrl-sep' }), clearBtn] : []),
   );
 
   setTool('pan');
