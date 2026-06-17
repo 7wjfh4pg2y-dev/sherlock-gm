@@ -35,6 +35,7 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
   if (presetCaseCode) {
     codeInput.value = presetCaseCode;
     codeInput.setAttribute('readonly', '');
+    codeInput.style.display = 'none';
   }
   const nameInput = h('input', {
     class: 'gm-input',
