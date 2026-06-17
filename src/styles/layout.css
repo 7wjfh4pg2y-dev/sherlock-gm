@@ -890,19 +890,30 @@ body::before {
 /* Inline pin label editor — floats on the map at the dropped pin */
 .map-label-box {
   position: absolute;
-  /* left/top set inline at drop time; nudge right of the pin tip */
-  transform: translate(14px, -10px);
+  transform: translate(14px, -14px);
   z-index: 150;
+  display: flex; align-items: center; gap: 3px;
+  background: rgba(20,14,6,0.88);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
+  padding: 4px 5px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
 }
 .map-label-box.hidden { display: none; }
 .map-label-input {
-  background: rgba(20,14,6,0.88);
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 5px; color: #fff; font-size: 0.82rem;
+  background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.4);
+  border-radius: 0; color: #fff; font-size: 0.82rem;
   font-family: Georgia, serif;
-  padding: 5px 9px; outline: none;
-  width: 150px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+  padding: 2px 4px; outline: none; width: 140px;
 }
-.map-label-input::placeholder { color: rgba(255,255,255,0.45); }
-.map-label-input:focus { border-color: rgba(255,255,255,0.7); }
+.map-label-input::placeholder { color: rgba(255,255,255,0.4); }
+.map-label-input:focus { border-bottom-color: rgba(255,255,255,0.8); }
+.map-label-ok, .map-label-dismiss {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.78rem; padding: 2px 4px; border-radius: 3px;
+  line-height: 1; flex-shrink: 0;
+}
+.map-label-ok { color: #6ddc8b; }
+.map-label-ok:hover { background: rgba(109,220,139,0.2); }
+.map-label-dismiss { color: rgba(255,255,255,0.55); }
+.map-label-dismiss:hover { color: #fff; background: rgba(255,255,255,0.1); }

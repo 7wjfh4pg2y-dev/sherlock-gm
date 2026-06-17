@@ -51,28 +51,38 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   // ── Inline label editor ──
-  // After a pin is dropped, a small text box appears on the map at the pin so
-  // the player can optionally name it. Positioned in viewport pixels at drop time.
+  // Appears at the pin after it is dropped. Canvas pointer-events are suspended
+  // while the editor is open so the canvas can't steal focus back.
   let labelTargetId: string | null = null;
   const labelInput = h('input', {
     class: 'map-label-input',
-    attrs: { type: 'text', placeholder: 'Label this pin…', maxlength: '40' },
+    attrs: { type: 'text', placeholder: 'Label (optional)', maxlength: '40' },
   }) as HTMLInputElement;
-  const labelBox = h('div', { class: 'map-label-box hidden' }, labelInput);
+  const labelOk = h('button', {
+    class: 'map-label-ok', attrs: { type: 'button', title: 'Save label' }, text: '✓',
+  }) as HTMLButtonElement;
+  const labelDismiss = h('button', {
+    class: 'map-label-dismiss', attrs: { type: 'button', title: 'No label' }, text: '✕',
+  }) as HTMLButtonElement;
+  const labelBox = h('div', { class: 'map-label-box hidden' }, labelInput, labelOk, labelDismiss);
   viewport.append(labelBox);
 
-  function showLabelEditor(vx: number, vy: number, strokeId: string): void {
+  function showLabelEditor(vx: number, vy: number, strokeId: string, existingLabel = ''): void {
     labelTargetId = strokeId;
-    labelInput.value = '';
+    labelInput.value = existingLabel;
     labelBox.style.left = `${vx}px`;
     labelBox.style.top = `${vy}px`;
     labelBox.classList.remove('hidden');
-    setTimeout(() => labelInput.focus(), 0);
+    // Suspend canvas interaction so it can't steal focus.
+    canvas.style.pointerEvents = 'none';
+    setTimeout(() => { labelInput.focus(); labelInput.select(); }, 0);
   }
 
   function hideLabelEditor(): void {
     labelTargetId = null;
     labelBox.classList.add('hidden');
+    // Restore canvas pointer-events if a drawing tool is still active.
+    if (tool !== 'pan') canvas.style.pointerEvents = 'auto';
   }
 
   async function commitLabel(): Promise<void> {
@@ -80,19 +90,19 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     if (!id) return;
     const label = labelInput.value.trim();
     hideLabelEditor();
-    if (!label) return;
-    // Optimistic store update so the label renders immediately.
+    // Optimistic update (empty label just clears it).
     store.set({ mapStrokes: store.getState().mapStrokes.map((m) => (m.id === id ? { ...m, label } : m)) });
-    if (id.startsWith('tmp-')) return; // not yet persisted; skip
+    if (id.startsWith('tmp-')) return;
     try { await strokeRepo.setLabel(id, label); }
     catch { toast('Could not save label.'); }
   }
 
+  labelOk.addEventListener('click', () => void commitLabel());
+  labelDismiss.addEventListener('click', hideLabelEditor);
   labelInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') void commitLabel();
     if (e.key === 'Escape') hideLabelEditor();
   });
-  labelInput.addEventListener('blur', () => void commitLabel());
 
   // ── Canvas sizing: backing store matches the image's natural pixels. ──
   function sizeCanvas(): void {
@@ -124,53 +134,49 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     ctx.stroke();
   }
 
-  // Google Maps-style teardrop pin: filled balloon with a downward point.
+  // Compact map pin: circle head above, straight sides tapering to a sharp tip.
+  // `p` is the anchor point (tip of the pin). Head radius kept small so it
+  // doesn't obscure the map for neighbouring players.
   function drawPin(p: MapStrokePoint, color: string, label: string): void {
     const cx = p.x * canvas.width;
-    const cy = p.y * canvas.height;
-    const r = Math.max(8, canvas.width * 0.011);
-    const tipY = cy + r * 2.2; // tip of the teardrop below the centre
+    const cy = p.y * canvas.height; // tip
+    const r = Math.max(5, canvas.width * 0.007); // smaller than before
+    const headCy = cy - r * 2.1; // centre of the circle head
 
     ctx.save();
     ctx.beginPath();
-    // Circle top
-    ctx.arc(cx, cy - r * 0.4, r, Math.PI * 0.18, Math.PI * 0.82, false);
-    // Bezier to tip
-    ctx.bezierCurveTo(cx + r * 1.1, cy + r * 1.2, cx + r * 0.35, tipY - r * 0.4, cx, tipY);
-    ctx.bezierCurveTo(cx - r * 0.35, tipY - r * 0.4, cx - r * 1.1, cy + r * 1.2, cx, cy - r * 0.4 - r * Math.sin(Math.PI * 0.18));
-    ctx.closePath();
+    // Arc from bottom-right (~150° CCW = 30°) clockwise around the top to bottom-left (~210°).
+    // Leaves a gap at the bottom of the circle that the two straight sides fill.
+    ctx.arc(cx, headCy, r, Math.PI / 6, Math.PI * (5 / 6), false);
+    ctx.lineTo(cx, cy); // right side → tip
+    ctx.closePath();    // tip → left arc start
 
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.lineWidth = Math.max(1.5, r * 0.2);
-    ctx.strokeStyle = 'rgba(20,14,6,0.75)';
+    ctx.lineWidth = Math.max(1, r * 0.22);
+    ctx.strokeStyle = 'rgba(20,14,6,0.8)';
     ctx.stroke();
 
     // White centre dot
     ctx.beginPath();
-    ctx.arc(cx, cy - r * 0.4, r * 0.38, 0, Math.PI * 2);
+    ctx.arc(cx, headCy, r * 0.36, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
     ctx.fill();
     ctx.restore();
 
-    // Label to the right
+    // Label to the right of the head
     if (label) {
-      const fontSize = Math.max(11, canvas.width * 0.013);
+      const fontSize = Math.max(10, canvas.width * 0.011);
       ctx.save();
       ctx.font = `bold ${fontSize}px Georgia, serif`;
       ctx.textBaseline = 'middle';
-      const textX = cx + r * 1.5;
-      const textY = cy - r * 0.4;
-      // Background pill
+      const textX = cx + r * 1.4;
+      const textY = headCy;
       const metrics = ctx.measureText(label);
-      const pad = fontSize * 0.35;
+      const pad = fontSize * 0.3;
       ctx.fillStyle = 'rgba(20,14,6,0.72)';
       ctx.beginPath();
-      const bx = textX - pad;
-      const by = textY - fontSize * 0.6 - pad;
-      const bw = metrics.width + pad * 2;
-      const bh = fontSize * 1.2 + pad * 2;
-      ctx.roundRect(bx, by, bw, bh, [4]);
+      ctx.roundRect(textX - pad, textY - fontSize * 0.6 - pad, metrics.width + pad * 2, fontSize * 1.2 + pad * 2, [4]);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.fillText(label, textX, textY);
@@ -221,7 +227,13 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   }
 
   // Drop a pin immediately, then open the inline label editor over it.
-  async function placePin(p: MapStrokePoint, vx: number, vy: number): Promise<void> {
+  // If the click lands on an existing own pin, edit its label instead.
+  async function placeOrEditPin(p: MapStrokePoint, vx: number, vy: number): Promise<void> {
+    const existing = hitMarking(p);
+    if (existing?.kind === 'pin' && canErase(existing)) {
+      showLabelEditor(vx, vy, existing.id, existing.label ?? '');
+      return;
+    }
     const id = await addMarking('pin', [p]);
     if (id) showLabelEditor(vx, vy, id);
   }
@@ -277,7 +289,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     const p = toNorm(e);
     if (tool === 'pin') {
       const vrect = viewport.getBoundingClientRect();
-      void placePin(p, e.clientX - vrect.left, e.clientY - vrect.top);
+      void placeOrEditPin(p, e.clientX - vrect.left, e.clientY - vrect.top);
       return;
     }
     if (tool === 'erase') { void eraseAt(p); return; }
