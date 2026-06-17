@@ -34,7 +34,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   let drawing = false;
   let current: MapStrokePoint[] = [];
 
-  const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name } });
+  const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name, decoding: 'async' } });
   const canvas = h('canvas', { class: 'map-draw-canvas' }) as HTMLCanvasElement;
   const layers = h('div', { class: 'map-layers' }, img, canvas);
   const viewport = h('div', { class: 'player-map-viewport' }, layers);
@@ -441,8 +441,17 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
 
   setTool('pan');
 
-  // Redraw whenever markings change (realtime → store → here).
-  const unsub = store.subscribe(() => draw());
+  // Redraw only when the markings actually change. The store fires on every
+  // update (presence, clues, notes…); strokes get a fresh array reference only
+  // when they change, so a reference check avoids needless full-canvas repaints.
+  // Pointer-driven redraws (drawing/dragging) call draw() directly, not via here.
+  let lastStrokes = store.getState().mapStrokes;
+  const unsub = store.subscribe(() => {
+    const next = store.getState().mapStrokes;
+    if (next === lastStrokes) return;
+    lastStrokes = next;
+    draw();
+  });
   draw();
 
   const element = h('div', { class: 'player-map-inlay' }, viewport, ctrls);

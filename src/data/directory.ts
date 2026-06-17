@@ -11,6 +11,8 @@ let builtIn: DirectoryEntry[] | null = null;
 let custom: DirectoryEntry[] = [];
 let hidden = new Set<string>();
 let activeCaseId: string | null = null;
+// Tracks the in-flight (or settled) load so UI can re-render once data arrives.
+let loadPromise: Promise<void> | null = null;
 
 const SEARCH_LIMIT = 200;
 
@@ -21,13 +23,25 @@ async function ensureBuiltIn(): Promise<void> {
   builtIn = (await res.json()) as DirectoryEntry[];
 }
 
-/** Load built-in data and this case's overrides. Call when a case is opened. */
-export async function loadDirectory(caseId: string): Promise<void> {
+/** Load built-in data and this case's overrides. Call when a case is opened.
+ *  Kept off the join critical path (see callers): fire without awaiting, then
+ *  use {@link whenReady} to refresh the directory UI once it resolves. */
+export function loadDirectory(caseId: string): Promise<void> {
   activeCaseId = caseId;
-  await ensureBuiltIn();
-  const overrides = await storage.loadDirectoryOverrides(caseId);
-  custom = overrides?.custom ?? [];
-  hidden = new Set(overrides?.hidden ?? []);
+  loadPromise = (async () => {
+    await ensureBuiltIn();
+    const overrides = await storage.loadDirectoryOverrides(caseId);
+    custom = overrides?.custom ?? [];
+    hidden = new Set(overrides?.hidden ?? []);
+  })();
+  return loadPromise;
+}
+
+/** Resolves when the most recent {@link loadDirectory} has finished (or
+ *  immediately if none is pending). Lets the directory panel render eagerly
+ *  and refill once the data lands. */
+export function whenReady(): Promise<void> {
+  return loadPromise ?? Promise.resolve();
 }
 
 async function persist(): Promise<void> {

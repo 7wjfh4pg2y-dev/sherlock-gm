@@ -184,6 +184,9 @@ export function buildDirectory(isGM: boolean): HTMLElement {
 
   refreshCategories();
   renderResults();
+  // The directory data is loaded off the join critical path, so it may still be
+  // in flight when this panel first renders — refill once it lands.
+  void directory.whenReady().then(() => { refreshCategories(); renderResults(); });
   setTimeout(() => searchInput.focus(), 80);
   return content;
 }

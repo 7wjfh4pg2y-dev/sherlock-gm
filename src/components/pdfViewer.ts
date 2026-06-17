@@ -25,6 +25,25 @@ export interface InlinePdfHandle {
   destroy(): void;
 }
 
+// Parsed documents are cached by URL and kept alive for the session. A newspaper
+// is opened repeatedly (tab switches, newspaper switches, fullscreen), and each
+// parse is a network fetch + worker round-trip — so we fetch+parse once and
+// reuse the PDFDocumentProxy everywhere. Viewers never destroy the shared doc;
+// they only tear down their own DOM and listeners.
+const docCache = new Map<string, Promise<pdfjsLib.PDFDocumentProxy>>();
+
+function loadDoc(url: string): Promise<pdfjsLib.PDFDocumentProxy> {
+  let p = docCache.get(url);
+  if (!p) {
+    p = pdfjsLib.getDocument({ url }).promise.catch((err) => {
+      docCache.delete(url); // don't cache a failed load — allow a retry
+      throw err;
+    });
+    docCache.set(url, p);
+  }
+  return p;
+}
+
 // Rasterize every page of a doc into `target` at the given zoom, fitting
 // BASE_WIDTH and rendering at devicePixelRatio for sharpness. Shared by the
 // inline inlay and the fullscreen overlay.
@@ -61,7 +80,6 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
   let startX = 0, startY = 0, startTx = 0, startTy = 0;
 
   let doc: pdfjsLib.PDFDocumentProxy | null = null;
-  const loadingTask = pdfjsLib.getDocument({ url });
   const pagesEl = h('div', { class: 'pdf-inlay-pages' });
   const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
   const element = h('div', { class: 'pdf-inlay-scroll' }, status, pagesEl);
@@ -79,7 +97,7 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     await rasterizePages(doc, pagesEl, zoom);
   }
 
-  loadingTask.promise
+  loadDoc(url)
     .then((d) => { doc = d; status.remove(); return renderPages(); })
     .catch(() => { status.textContent = 'Could not load this document.'; });
 
@@ -137,7 +155,7 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       window.clearTimeout(rerenderTimer);
-      void loadingTask.destroy();
+      // The parsed doc stays in docCache for reuse — only our DOM/listeners go.
     },
   };
 }
@@ -145,14 +163,13 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
 export function openPdfViewer(url: string, name = 'Document'): void {
   let zoom = 1;
   let doc: pdfjsLib.PDFDocumentProxy | null = null;
-  const loadingTask = pdfjsLib.getDocument({ url });
 
   const pagesEl = h('div', { class: 'pdf-viewer-pages' });
   const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
 
   const close = (): void => {
     document.removeEventListener('keydown', onKey);
-    void loadingTask.destroy();
+    // The parsed doc stays in docCache for reuse — only the overlay goes.
     overlay.remove();
   };
   function onKey(e: KeyboardEvent): void {
@@ -201,8 +218,8 @@ export function openPdfViewer(url: string, name = 'Document'): void {
   document.addEventListener('keydown', onKey);
   document.body.appendChild(overlay);
 
-  loadingTask
-    .promise.then((d) => {
+  loadDoc(url)
+    .then((d) => {
       doc = d;
       status.remove();
       return renderPages();

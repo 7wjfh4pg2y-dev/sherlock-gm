@@ -50,7 +50,9 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
     if (m) mapList.push(m);
   }
 
-  await loadDirectory(caseId);
+  // Directory data isn't needed until the Directory tab opens — load it in the
+  // background so it doesn't block the case room from appearing.
+  void loadDirectory(caseId);
   const [revealed, allNotes, allNewspapers, allQuestions, allAnswers, solution, strokes] = await Promise.all([
     clues.listRevealed(caseId),
     notes.listForCase(caseId),

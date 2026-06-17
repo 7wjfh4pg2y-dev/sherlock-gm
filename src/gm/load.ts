@@ -24,7 +24,9 @@ export async function loadGMCase(caseId: string): Promise<void> {
     ]);
 
   const mapList: MapRow[] = allMaps;
-  await loadDirectory(caseId);
+  // Directory data isn't needed until the Directory tab opens — load it in the
+  // background so it doesn't block the case from appearing.
+  void loadDirectory(caseId);
 
   store.set({
     currentCaseId: caseId,
