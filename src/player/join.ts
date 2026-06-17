@@ -15,10 +15,15 @@ import { store } from '../state/store';
 import { nameToColor } from '../data/colors';
 
 let channels: RealtimeChannel[] = [];
+let presenceChannel: RealtimeChannel | null = null;
 // Mutable sync callback — updated by the player screen once mounted.
 let presenceSyncCb: (list: PresenceMeta[]) => void = () => {};
 export function setPresenceSync(cb: (list: PresenceMeta[]) => void): void {
   presenceSyncCb = cb;
+}
+/** Re-broadcast presence meta (e.g. after a colour change). */
+export function updatePresenceMeta(meta: PresenceMeta): void {
+  void presenceChannel?.track(meta);
 }
 
 export interface JoinResult {
@@ -94,6 +99,7 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
     { player_name: name, player_color: color },
     (list) => presenceSyncCb(list),
   );
+  presenceChannel = presenceCh;
   channels.push(presenceCh);
 
   return { ok: true };
@@ -101,6 +107,7 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
 
 export function leaveCase(): void {
   presenceSyncCb = () => {};
+  presenceChannel = null;
   channels.forEach(removeChannel);
   channels = [];
   store.reset();

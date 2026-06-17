@@ -8,7 +8,7 @@ import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
 import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
 import type { PresenceMeta } from '../data/supabase';
-import { setPresenceSync } from './join';
+import { setPresenceSync, updatePresenceMeta } from './join';
 import { PLAYER_COLORS } from '../data/colors';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
@@ -70,6 +70,8 @@ export function createPlayerScreen(): ScreenHandle {
       ),
     });
     closeColorPopup();
+    // Re-broadcast presence so other players see the new colour immediately.
+    updatePresenceMeta({ player_name: me.name, player_color: newColor });
     try {
       await Promise.all([
         strokeRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
