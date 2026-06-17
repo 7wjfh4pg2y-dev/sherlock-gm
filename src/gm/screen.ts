@@ -51,27 +51,16 @@ export function createGMScreen(): GMScreenHandle {
     text: '+ New Case',
     on: { click: showNewCaseModal },
   });
+  const editCaseBtn = h('button', {
+    class: 'btn btn-edit btn-sm',
+    text: '✎ Edit Case',
+    on: { click: showEditCaseModal },
+  });
   const deleteCaseBtn = h('button', {
     class: 'btn btn-danger btn-sm',
     text: 'Delete Case',
     on: { click: handleDeleteCase },
   });
-  // Chronological position in the campaign (orders cases in the dropdown).
-  const caseOrderInput = h('input', {
-    class: 'gm-order-input',
-    attrs: { type: 'number', min: '0', title: 'Chronological order in the campaign' },
-  }) as HTMLInputElement;
-  caseOrderInput.addEventListener('change', async () => {
-    const cur = selectors.currentCase(store.getState());
-    if (!cur) return;
-    const ordinal = parseInt(caseOrderInput.value, 10) || 0;
-    try {
-      await caseRepo.setOrdinal(cur.id, ordinal);
-      store.set({ cases: store.getState().cases.map((c) => c.id === cur.id ? { ...c, ordinal } : c) });
-      toast('Case order updated.');
-    } catch { toast('Could not update order.'); }
-  });
-  const caseOrderWrap = h('label', { class: 'gm-order-wrap' }, h('span', { text: 'Case #' }), caseOrderInput);
   const mapsBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: '🗺 Cartographer',
@@ -89,13 +78,20 @@ export function createGMScreen(): GMScreenHandle {
   });
   const shareBlock = h('div', { class: 'gm-share-block' });
 
-  // ── Header: case title (select) + ordinal + global actions ──
+  // GM leads counter (revealed clues badge next to dropdown)
+  const gmLeadsNum = h('span', { class: 'gm-leads-num', text: '0' });
+  const gmLeadsWrap = h('div', { class: 'gm-leads-wrap' },
+    h('span', { class: 'gm-leads-icon', text: '🔍' }),
+    gmLeadsNum,
+  );
+
+  // ── Header: case title (select) + global actions ──
   const header = h('header', { class: 'gm-header' },
     h('div', { class: 'gm-title-group' },
       h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
-      caseOrderWrap,
+      gmLeadsWrap,
     ),
-    h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, deleteCaseBtn, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, editCaseBtn, deleteCaseBtn, logoutBtn),
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
@@ -211,6 +207,47 @@ export function createGMScreen(): GMScreenHandle {
         handle.close();
       } catch {
         errEl.textContent = 'Could not create case.';
+      }
+    });
+  }
+
+  function showEditCaseModal(): void {
+    const s = store.getState();
+    const current = selectors.currentCase(s);
+    if (!current) return;
+
+    const nameInput = h('input', {
+      class: 'gm-input',
+      attrs: { type: 'text', placeholder: 'Case name', value: current.name },
+    }) as HTMLInputElement;
+    const orderInput = h('input', {
+      class: 'gm-input',
+      attrs: { type: 'number', min: '1', placeholder: 'Chronological order (e.g. 1)', value: String(current.ordinal ?? '') },
+    }) as HTMLInputElement;
+    const descInput = h('textarea', {
+      class: 'gm-input',
+      attrs: { placeholder: 'Case briefing (optional)…', rows: '5' },
+    }) as HTMLTextAreaElement;
+    descInput.value = current.description ?? '';
+    const errEl = h('div', { class: 'form-error' });
+    const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save Changes' });
+    const { handle, body } = openTitledModal('Edit Case', {});
+    body.append(nameInput, orderInput, descInput, errEl, saveBtn);
+    saveBtn.addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      if (!name) { errEl.textContent = 'Enter a case name.'; return; }
+      try {
+        const updated = await caseRepo.updateFields(current.id, {
+          name,
+          description: descInput.value.trim() || null,
+          ordinal: parseInt(orderInput.value, 10) || 0,
+        });
+        store.set({ cases: s.cases.map((c) => c.id === current.id ? updated : c) });
+        renderCaseSelect(store.getState());
+        handle.close();
+        toast('Case updated.');
+      } catch {
+        errEl.textContent = 'Could not update case.';
       }
     });
   }
@@ -486,11 +523,10 @@ export function createGMScreen(): GMScreenHandle {
       s.currentCaseId ?? '',
     );
     deleteCaseBtn.style.display = s.currentCaseId ? '' : 'none';
-    const current = selectors.currentCase(s);
-    caseOrderWrap.style.display = current ? '' : 'none';
-    if (current && document.activeElement !== caseOrderInput) {
-      caseOrderInput.value = String(current.ordinal ?? 0);
-    }
+    editCaseBtn.style.display = s.currentCaseId ? '' : 'none';
+    const revealedCount = selectors.revealedClues(s).length;
+    gmLeadsNum.textContent = String(revealedCount);
+    gmLeadsWrap.style.display = s.currentCaseId ? '' : 'none';
   }
 
   function renderShareBlock(s: AppState): void {

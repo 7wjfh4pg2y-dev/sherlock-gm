@@ -226,6 +226,16 @@ body::before {
 
 .gm-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
+/* GM leads counter (next to case dropdown) */
+.gm-leads-wrap {
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.8rem; letter-spacing: 0.04em;
+  color: var(--fog);
+}
+.gm-leads-icon { font-size: 0.9rem; }
+.gm-leads-num { color: var(--sepia-light); font-weight: 600; }
+
 /* Tab row: inline content tabs (left) + resource launchers (right) */
 .gm-tabrow {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -872,6 +882,8 @@ body::before {
 }
 .color-dot-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.9); }
 .player-header-right { display: flex; align-items: center; gap: 8px; }
+.player-title-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.player-title-group .screen-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .color-btn-wrap { position: relative; display: flex; align-items: center; }
 
 /* ── Presence indicator (player header) ── */

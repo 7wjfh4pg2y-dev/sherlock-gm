@@ -60,6 +60,9 @@ export const cases = {
   async setOrdinal(id: string, ordinal: number): Promise<void> {
     unwrap(await sb.from('cases').update({ ordinal }).eq('id', id).select());
   },
+  async updateFields(id: string, patch: { name: string; description: string | null; ordinal: number }): Promise<CaseRow> {
+    return unwrap(await sb.from('cases').update(patch).eq('id', id).select().single());
+  },
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('cases').delete().eq('id', id).select());
   },

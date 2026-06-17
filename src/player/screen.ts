@@ -159,8 +159,9 @@ export function createPlayerScreen(): ScreenHandle {
   leadsWrap.addEventListener('mouseleave', () => leadsTooltip.classList.add('hidden'));
 
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, leadsWrap, presenceWrap, leaveBtn);
-  const header = h('header', { class: 'player-header' }, caseTitle, headerRight);
+  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, leaveBtn);
+  const caseTitleGroup = h('div', { class: 'player-title-group' }, caseTitle, leadsWrap);
+  const header = h('header', { class: 'player-header' }, caseTitleGroup, headerRight);
 
   // ── Tab bar ──
   const TAB_DEFS: { id: TabId; label: string }[] = [
