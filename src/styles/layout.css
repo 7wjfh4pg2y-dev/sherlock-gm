@@ -683,6 +683,34 @@ body::before {
 .btn:disabled { opacity: 0.65; cursor: not-allowed; }
 .gm-solution-panel { display: flex; flex-direction: column; gap: 12px; }
 
+/* GM: The Final Reckoning (team score) */
+.gm-score-section {
+  margin-top: 6px; padding-top: 16px;
+  border-top: 1px solid var(--parchment-darker);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.gm-score-row { display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.gm-score-field { display: flex; flex-direction: column; gap: 4px; }
+.gm-score-label {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sepia);
+}
+.gm-score-input { width: 110px; }
+.gm-score-holmes {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 1.5rem; color: var(--fog); padding: 2px 0;
+}
+.gm-score-hint {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  color: var(--fog); margin-bottom: 2px;
+}
+.gm-score-verdict {
+  font-family: 'IM Fell English', Georgia, serif; color: var(--fog);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.gm-score-verdict-title { font-weight: 700; color: var(--sepia-light); font-size: 1.05rem; }
+.gm-score-verdict-line { font-style: italic; }
+
 /* Player question cards */
 .player-questions-panel { display: flex; flex-direction: column; }
 .player-questions-intro {
@@ -716,6 +744,48 @@ body::before {
 }
 .player-official-answer-text { font-family: 'IM Fell English', Georgia, serif; color: #3a2d1a; white-space: pre-wrap; }
 .player-solution-panel { font-family: 'IM Fell English', Georgia, serif; }
+
+/* Player: The Final Reckoning reveal card */
+.player-score-card {
+  margin-top: 20px; padding: 22px 24px;
+  background: var(--parchment);
+  border: 1px solid var(--parchment-darker);
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+  text-align: center;
+}
+.player-score-title {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: 0.78rem; color: var(--sepia); margin-bottom: 16px;
+}
+.player-score-tally {
+  display: flex; align-items: center; justify-content: center; gap: 28px; margin-bottom: 16px;
+}
+.player-score-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.player-score-num {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 2.6rem; line-height: 1; color: var(--ink);
+}
+.player-score-cap {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fog);
+}
+.player-score-vs {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  color: var(--fog); font-size: 1.1rem;
+}
+.player-score-verdict {
+  border-top: 1px dashed rgba(139,105,20,0.4); padding-top: 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.player-score-verdict-title {
+  font-family: 'IM Fell English', Georgia, serif; font-weight: 700;
+  font-size: 1.3rem; color: var(--sepia);
+}
+.player-score-verdict-line {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  color: #3a2d1a; font-size: 1.05rem;
+}
 
 .player-map-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
 .player-map-inlay {

@@ -12,6 +12,7 @@ import { loadGMQuestions, loadGMSolution } from './load';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
+import { HOLMES_SCORE, verdictFor } from '../data/scoring';
 
 // ── Questions panel ──
 
@@ -230,9 +231,87 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
 export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void } {
   const element = h('div', { class: 'gm-solution-panel' });
   let editing = false;
+  // Held so a realtime refresh (e.g. a player updating an answer) doesn't wipe
+  // the score field out from under the GM while they're tallying.
+  let scoreInputEl: HTMLInputElement | null = null;
 
   function caseId(): string | null {
     return store.getState().currentCaseId;
+  }
+
+  // ── Final Reckoning (team score) ──
+  function buildScoreSection(): HTMLElement {
+    const s = store.getState();
+    const sol = s.solution;
+    const score = sol?.score ?? null;
+    const scoreRevealed = !!sol?.score_revealed;
+    const available = selectors.totalPoints(s);
+
+    const scoreInput = h('input', {
+      class: 'gm-input gm-score-input',
+      attrs: { type: 'number', min: '0', placeholder: '—', value: score === null ? '' : String(score) },
+    }) as HTMLInputElement;
+    scoreInputEl = scoreInput;
+
+    const verdictEl = h('div', { class: 'gm-score-verdict' });
+    function renderVerdict(): void {
+      const raw = scoreInput.value.trim();
+      if (raw === '') { verdictEl.textContent = 'Enter a score to preview the verdict players will see.'; return; }
+      const v = verdictFor(parseInt(raw, 10) || 0);
+      clear(verdictEl);
+      verdictEl.append(
+        h('span', { class: 'gm-score-verdict-title', text: v.title }),
+        h('span', { class: 'gm-score-verdict-line', text: v.line }),
+      );
+    }
+    renderVerdict();
+    scoreInput.addEventListener('input', renderVerdict);
+
+    async function saveScore(): Promise<void> {
+      const id = caseId();
+      if (!id) return;
+      const raw = scoreInput.value.trim();
+      const next = raw === '' ? null : (parseInt(raw, 10) || 0);
+      if (next === score) return; // nothing changed
+      try { await solutionRepo.saveScore(id, next); await loadGMSolution(id); toast('Score saved.'); }
+      catch { toast('Could not save score.'); }
+    }
+    scoreInput.addEventListener('blur', () => void saveScore());
+    scoreInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') scoreInput.blur(); });
+
+    const revealToggle = h('button', {
+      class: scoreRevealed ? 'btn btn-secondary btn-sm map-attached' : 'btn btn-primary btn-sm',
+      text: scoreRevealed ? '✓ Score revealed' : '👁 Reveal score',
+      on: {
+        click: async () => {
+          const id = caseId();
+          if (!id) return;
+          // Persist any pending edit before flipping the reveal flag.
+          await saveScore();
+          try { await solutionRepo.setScoreRevealed(id, !scoreRevealed); await loadGMSolution(id); }
+          catch { toast('Could not update.'); }
+        },
+      },
+    });
+
+    return h('div', { class: 'gm-score-section' },
+      h('div', { class: 'gm-section-head' },
+        h('div', { class: 'clues-section-title', text: 'The Final Reckoning' }),
+        revealToggle,
+      ),
+      h('div', { class: 'gm-score-row' },
+        h('label', { class: 'gm-score-field' },
+          h('span', { class: 'gm-score-label', text: "Team's score" }),
+          scoreInput,
+        ),
+        h('div', { class: 'gm-score-field' },
+          h('span', { class: 'gm-score-label', text: "Sherlock's score" }),
+          h('div', { class: 'gm-score-holmes', text: String(HOLMES_SCORE) }),
+        ),
+        h('div', { class: 'gm-score-hint', text: `${available} pts available across the case's questions` }),
+      ),
+      verdictEl,
+    );
   }
 
   function render(): void {
@@ -277,6 +356,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
         h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: 'Sherlock’s Solution' }), revealToggle),
         textarea,
         h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn),
+        buildScoreSection(),
       );
       return;
     }
@@ -287,9 +367,18 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
         ? h('div', { class: 'briefing-display' }, h('p', { class: 'briefing-text', text: content }))
         : h('span', { class: 'briefing-empty', text: 'No solution written yet.' }),
       h('button', { class: 'btn btn-secondary btn-sm', text: content ? '✏️ Edit Solution' : '✏️ Write Solution', on: { click: () => { editing = true; render(); } } }),
+      buildScoreSection(),
     );
   }
 
   render();
-  return { element, refresh: () => { if (!editing) render(); } };
+  return {
+    element,
+    refresh: () => {
+      // Don't rebuild while the GM is mid-edit (solution textarea or score field).
+      if (editing) return;
+      if (scoreInputEl && document.activeElement === scoreInputEl) return;
+      render();
+    },
+  };
 }

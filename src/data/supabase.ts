@@ -303,11 +303,30 @@ export const solutions = {
     if (res.error) return null;
     return ((res.data as SolutionRow[]) ?? [])[0] ?? null;
   },
-  /** Player view: only returns a row once the solution is revealed. */
+  /** Player view: returns a row once the solution and/or the score is revealed.
+   *  Keeps the narrative off the wire until `revealed` (and the score until
+   *  `score_revealed`), mirroring how unrevealed clue/answer text is withheld. */
   async getForPlayer(caseId: string): Promise<SolutionRow | null> {
-    const res = await sb.from('case_solutions').select('*').eq('case_id', caseId).eq('revealed', true);
+    const res = await sb
+      .from('case_solutions')
+      .select('case_id, revealed, score, score_revealed, updated_at')
+      .eq('case_id', caseId);
     if (res.error) return null;
-    return ((res.data as SolutionRow[]) ?? [])[0] ?? null;
+    const meta = ((res.data as Omit<SolutionRow, 'content'>[]) ?? [])[0];
+    if (!meta || (!meta.revealed && !meta.score_revealed)) return null;
+    let content = '';
+    if (meta.revealed) {
+      const c = await sb.from('case_solutions').select('content').eq('case_id', caseId).eq('revealed', true);
+      content = ((c.data as { content: string }[]) ?? [])[0]?.content ?? '';
+    }
+    return {
+      case_id: meta.case_id,
+      content,
+      revealed: meta.revealed,
+      score: meta.score_revealed ? meta.score : null,
+      score_revealed: meta.score_revealed,
+      updated_at: meta.updated_at,
+    };
   },
   async save(caseId: string, content: string): Promise<void> {
     unwrap(
@@ -322,6 +341,22 @@ export const solutions = {
       await sb
         .from('case_solutions')
         .upsert({ case_id: caseId, revealed, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
+        .select(),
+    );
+  },
+  async saveScore(caseId: string, score: number | null): Promise<void> {
+    unwrap(
+      await sb
+        .from('case_solutions')
+        .upsert({ case_id: caseId, score, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
+        .select(),
+    );
+  },
+  async setScoreRevealed(caseId: string, scoreRevealed: boolean): Promise<void> {
+    unwrap(
+      await sb
+        .from('case_solutions')
+        .upsert({ case_id: caseId, score_revealed: scoreRevealed, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
         .select(),
     );
   },

@@ -18,6 +18,7 @@ import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { leaveCase } from './join';
+import { HOLMES_SCORE, verdictFor } from '../data/scoring';
 
 export interface ScreenHandle {
   element: HTMLElement;
@@ -424,13 +425,39 @@ export function createPlayerScreen(): ScreenHandle {
     replaceChildren(questionsPanel, ...children);
   }
 
+  function scoreCard(score: number): HTMLElement {
+    const v = verdictFor(score);
+    return h('div', { class: 'player-score-card' },
+      h('div', { class: 'player-score-title', text: 'The Final Reckoning' }),
+      h('div', { class: 'player-score-tally' },
+        h('div', { class: 'player-score-cell' },
+          h('span', { class: 'player-score-num', text: String(score) }),
+          h('span', { class: 'player-score-cap', text: 'Your Score' }),
+        ),
+        h('div', { class: 'player-score-vs', text: 'vs' }),
+        h('div', { class: 'player-score-cell' },
+          h('span', { class: 'player-score-num', text: String(HOLMES_SCORE) }),
+          h('span', { class: 'player-score-cap', text: 'Sherlock' }),
+        ),
+      ),
+      h('div', { class: 'player-score-verdict' },
+        h('span', { class: 'player-score-verdict-title', text: v.title }),
+        h('span', { class: 'player-score-verdict-line', text: v.line }),
+      ),
+    );
+  }
+
   function renderSolution(s: AppState): void {
     const sol = s.solution;
-    if (sol?.revealed && sol.content) {
-      replaceChildren(solutionPanel, h('p', { class: 'briefing-text', text: sol.content }));
-    } else {
+    const hasContent = !!sol?.revealed && !!sol.content;
+    const hasScore = !!sol?.score_revealed && sol.score !== null;
+    if (!hasContent && !hasScore) {
       replaceChildren(solutionPanel, h('div', { class: 'empty-state', text: 'Sherlock has not revealed his solution yet.' }));
+      return;
     }
+    clear(solutionPanel);
+    if (hasContent) solutionPanel.append(h('p', { class: 'briefing-text', text: sol!.content }));
+    if (hasScore) solutionPanel.append(scoreCard(sol!.score!));
   }
 
   function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
@@ -604,7 +631,8 @@ export function createPlayerScreen(): ScreenHandle {
     const hasMap = !!current?.map_id;
     const hasNews = s.newspapers.length > 0;
     const hasQuestions = s.questions.length > 0;
-    const hasSolution = !!s.solution?.revealed && !!s.solution.content;
+    const hasSolution = (!!s.solution?.revealed && !!s.solution.content)
+      || (!!s.solution?.score_revealed && s.solution.score !== null);
     if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
     if (tabButtons.newspaper) tabButtons.newspaper.style.display = hasNews ? '' : 'none';
     if (tabButtons.questions) tabButtons.questions.style.display = hasQuestions ? '' : 'none';

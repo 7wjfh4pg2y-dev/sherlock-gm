@@ -118,6 +118,10 @@ export interface SolutionRow {
   case_id: string;
   content: string;
   revealed: boolean;
+  /** The team's final score (out of Holmes' benchmark). null = not tallied. */
+  score: number | null;
+  /** Whether the score is shown to players (gated independently of `revealed`). */
+  score_revealed: boolean;
   updated_at: string;
 }
 
