@@ -592,12 +592,17 @@ body::before {
   display: flex; flex-direction: column;
 }
 .newspaper-selector {
-  display: flex; flex-wrap: wrap; gap: 4px;
+  display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px;
   padding: 6px 8px;
   background: rgba(10,7,3,0.55);
   border-bottom: 1px solid rgba(201,169,110,0.25);
   flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,169,110,0.3) transparent;
 }
+.newspaper-selector::-webkit-scrollbar { height: 4px; }
+.newspaper-selector::-webkit-scrollbar-thumb { background: rgba(201,169,110,0.3); border-radius: 2px; }
+.newspaper-selector::-webkit-scrollbar-track { background: transparent; }
 .newspaper-selector-btn {
   font-family: 'Courier Prime', 'Courier New', monospace;
   font-size: 0.72rem; letter-spacing: 0.04em;
