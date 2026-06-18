@@ -6,7 +6,7 @@
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo, clues as clueRepo } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
 import type { PresenceMeta } from '../data/supabase';
 import { setPresenceSync, updatePresenceMeta } from './join';
 import { PLAYER_COLORS } from '../data/colors';
@@ -284,17 +284,10 @@ export function createPlayerScreen(): ScreenHandle {
     const body = c.clue_text
       ? h('div', { class: 'revealed-card-text', text: c.clue_text })
       : h('img', { attrs: { src: c.image_url, alt: c.location_name } });
-    const card = h('div', {
+    return h('div', {
       class: 'revealed-card' + (c.id === selectedClueId ? ' selected' : ''),
       on: { click: () => openClue(c) },
-    },
-      h('div', { class: 'clue-drag-handle', text: '⠿' }),
-      body,
-      h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`),
-    );
-    card.draggable = true;
-    card.dataset['clueId'] = c.id;
-    return card;
+    }, body, h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`));
   }
 
   function openClue(c: ClueRow): void {
@@ -323,94 +316,13 @@ export function createPlayerScreen(): ScreenHandle {
     replaceChildren(clueDetail, head, bodyContent);
   }
 
-  let clueDragActive = false;
-
-  function makeDraggableClueGrid(grid: HTMLElement): void {
-    let dragSrcId: string | null = null;
-
-    const slot = document.createElement('div');
-    slot.className = 'clue-drop-slot';
-
-    function removeSlot(): void { slot.parentElement?.removeChild(slot); }
-
-    function placeSlot(e: DragEvent, card: HTMLElement): void {
-      if (card.dataset['clueId'] === dragSrcId) { removeSlot(); return; }
-      const rect = card.getBoundingClientRect();
-      const after = e.clientY > rect.top + rect.height / 2;
-      if (after) { card.after(slot); } else { card.before(slot); }
-    }
-
-    grid.addEventListener('dragstart', (e: DragEvent) => {
-      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
-      if (!card) return;
-      dragSrcId = card.dataset['clueId'] ?? null;
-      clueDragActive = true;
-      requestAnimationFrame(() => card.classList.add('dragging'));
-      e.dataTransfer?.setData('text/plain', dragSrcId ?? '');
-      e.dataTransfer!.effectAllowed = 'move';
-    });
-
-    grid.addEventListener('dragend', () => {
-      clueDragActive = false;
-      grid.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging'));
-      removeSlot();
-      dragSrcId = null;
-    });
-
-    grid.addEventListener('dragover', (e: DragEvent) => {
-      e.preventDefault();
-      e.dataTransfer!.dropEffect = 'move';
-      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
-      if (card) placeSlot(e, card);
-    });
-
-    grid.addEventListener('dragleave', (e: DragEvent) => {
-      if (!grid.contains(e.relatedTarget as Node)) removeSlot();
-    });
-
-    grid.addEventListener('drop', (e: DragEvent) => {
-      e.preventDefault();
-      if (!dragSrcId || !slot.parentElement) { removeSlot(); return; }
-
-      const s = store.getState();
-      const revealed = selectors.revealedClues(s);
-
-      let insertBefore = 0;
-      for (const child of [...grid.children]) {
-        if (child === slot) break;
-        if ((child as HTMLElement).dataset?.['clueId']) insertBefore++;
-      }
-
-      removeSlot();
-
-      const srcIdx = revealed.findIndex((c) => c.id === dragSrcId);
-      if (srcIdx === -1) return;
-
-      const reordered = [...revealed];
-      const [moved] = reordered.splice(srcIdx, 1);
-      const adjustedInsert = srcIdx < insertBefore ? insertBefore - 1 : insertBefore;
-      reordered.splice(adjustedInsert, 0, moved);
-
-      if (reordered.every((c, i) => c.id === revealed[i].id)) return;
-
-      const updates = reordered.map((c, i) => ({ id: c.id, position: i + 1 }));
-      const posMap = new Map(updates.map(({ id, position }) => [id, position]));
-      const updatedClues = [...s.clues].map((c) => posMap.has(c.id) ? { ...c, position: posMap.get(c.id)! } : c);
-
-      store.set({ clues: updatedClues });
-      void clueRepo.reorder(updates).catch(() => toast('Could not save clue order.'));
-    });
-  }
-
   function renderClues(s: AppState): void {
-    if (clueDragActive) return; // don't rebuild grid mid-drag
     const revealed = selectors.revealedClues(s);
     if (!revealed.length) {
       replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
       return;
     }
     replaceChildren(clueGrid, ...revealed.map(clueCard));
-    makeDraggableClueGrid(clueGrid);
   }
 
   function renderBriefing(s: AppState): void {
