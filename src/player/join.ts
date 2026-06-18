@@ -90,6 +90,11 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
       question_answers: () => void questionAnswers.listForCase(caseId).then((a) => store.set({ questionAnswers: a })),
       case_solutions: () => void solutions.getForPlayer(caseId).then((sol) => store.set({ solution: sol })),
       map_strokes: () => void mapStrokes.listForCase(caseId).then((m) => store.set({ mapStrokes: m })),
+      cases: () => void cases.get(caseId).then(async (c) => {
+        if (!c) return;
+        const mapList = c.map_id ? [await maps.get(c.map_id)].filter(Boolean) as import('../data/types').MapRow[] : [];
+        store.set({ cases: [c], maps: mapList });
+      }),
       players: () =>
         void players.kickedState(caseId, name).then((kicked) => {
           if (kicked) leaveCase();

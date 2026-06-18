@@ -476,11 +476,13 @@ export const storage = {
 // named table. This is the ONLY thing that should drive store updates.
 type TableName =
   | 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers'
-  | 'case_questions' | 'question_answers' | 'case_solutions' | 'map_strokes';
+  | 'case_questions' | 'question_answers' | 'case_solutions' | 'map_strokes'
+  | 'cases';
 
-// `newspapers` is now a global library (no case_id), so it can't be filtered per
-// case — we listen to all of its changes. Everything else is per-case.
+// Tables with no case_id at all — subscribe to all rows.
 const GLOBAL_TABLES = new Set<TableName>(['newspapers']);
+// Tables filtered by id=eq.{caseId} rather than case_id.
+const ID_FILTERED_TABLES = new Set<TableName>(['cases']);
 
 export function subscribeToCase(
   caseId: string,
@@ -490,7 +492,9 @@ export function subscribeToCase(
   (Object.keys(handlers) as TableName[]).forEach((table) => {
     const opts = GLOBAL_TABLES.has(table)
       ? { event: '*' as const, schema: 'public', table }
-      : { event: '*' as const, schema: 'public', table, filter: `case_id=eq.${caseId}` };
+      : ID_FILTERED_TABLES.has(table)
+        ? { event: '*' as const, schema: 'public', table, filter: `id=eq.${caseId}` }
+        : { event: '*' as const, schema: 'public', table, filter: `case_id=eq.${caseId}` };
     channel = channel.on('postgres_changes', opts, () => handlers[table]?.());
   });
   channel.subscribe();
