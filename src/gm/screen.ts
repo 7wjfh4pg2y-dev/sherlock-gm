@@ -423,10 +423,15 @@ export function createGMScreen(): GMScreenHandle {
 
   // ── Rendering ──
   function renderCaseSelect(s: AppState): void {
+    const sortedCases = [...s.cases].sort((a, b) => {
+      const ao = a.ordinal ?? 0, bo = b.ordinal ?? 0;
+      if (ao !== bo) return ao - bo;
+      return a.name.localeCompare(b.name);
+    });
     caseDropdown.setOptions(
       [
         { value: '', label: '— Select a Case —' },
-        ...s.cases.map((c: CaseRow) => ({ value: c.id, label: c.name })),
+        ...sortedCases.map((c: CaseRow) => ({ value: c.id, label: c.name })),
       ],
       s.currentCaseId ?? '',
     );

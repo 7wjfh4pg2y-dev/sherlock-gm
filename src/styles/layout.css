@@ -272,7 +272,7 @@ body::before {
   font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.82rem;
   color: var(--fog);
 }
-.sy-case-row.active { color: var(--parchment); background: rgba(201,169,110,0.07); }
+.sy-case-row.active { color: var(--ink); background: rgba(139,105,20,0.12); font-weight: 600; }
 .sy-case-ordinal { color: var(--sepia); font-size: 0.7rem; flex-shrink: 0; }
 .sy-case-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

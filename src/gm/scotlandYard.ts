@@ -116,11 +116,16 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
       body.append(editSection);
     }
 
-    // ── Case list ──
+    // ── Case list (ascending by ordinal, unordered cases at the end) ──
     if (cases.length) {
+      const sorted = [...cases].sort((a, b) => {
+        const ao = a.ordinal ?? 0, bo = b.ordinal ?? 0;
+        if (ao !== bo) return ao - bo;
+        return a.name.localeCompare(b.name);
+      });
       const listSection = h('div', { class: 'sy-section sy-section--bordered' },
         h('div', { class: 'sy-section-label', text: 'All cases' }),
-        ...cases.map((c) => h('div', {
+        ...sorted.map((c) => h('div', {
           class: 'sy-case-row' + (c.id === current?.id ? ' active' : ''),
         },
           c.ordinal ? h('span', { class: 'sy-case-ordinal', text: `#${c.ordinal}` }) : null,
