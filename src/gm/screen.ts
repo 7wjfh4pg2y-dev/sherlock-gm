@@ -47,27 +47,27 @@ export function createGMScreen(): GMScreenHandle {
   // ── Top bar ──
   const caseDropdown = createDropdown({ className: 'gm-case-select', onChange: handleCaseChange });
   const newCaseBtn = h('button', {
-    class: 'btn btn-primary btn-sm',
+    class: 'btn btn-primary btn-sm btn-full',
     text: '+ New Case',
     on: { click: showNewCaseModal },
   });
   const editCaseBtn = h('button', {
-    class: 'btn btn-edit btn-sm',
+    class: 'btn btn-edit btn-sm btn-full',
     text: '✎ Edit Case',
     on: { click: showEditCaseModal },
   });
   const deleteCaseBtn = h('button', {
-    class: 'btn btn-danger btn-sm',
+    class: 'btn btn-danger btn-sm btn-full',
     text: 'Delete Case',
     on: { click: handleDeleteCase },
   });
   const mapsBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
+    class: 'btn btn-secondary btn-sm btn-full',
     text: '🗺 Cartographer',
     on: { click: openMapsLibrary },
   });
   const newspaperBtn = h('button', {
-    class: 'btn btn-secondary btn-sm',
+    class: 'btn btn-secondary btn-sm btn-full',
     text: '📰 Printing Press',
     on: { click: openNewspaperModal },
   });
@@ -85,13 +85,13 @@ export function createGMScreen(): GMScreenHandle {
     gmLeadsNum,
   );
 
-  // ── Header: case title (select) + global actions ──
+  // ── Header: case dropdown + Logout only ──
   const header = h('header', { class: 'gm-header' },
     h('div', { class: 'gm-title-group' },
       h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
       gmLeadsWrap,
     ),
-    h('div', { class: 'gm-header-actions' }, mapsBtn, newspaperBtn, newCaseBtn, editCaseBtn, deleteCaseBtn, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, logoutBtn),
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
@@ -142,9 +142,17 @@ export function createGMScreen(): GMScreenHandle {
   let currentNewspaperUrl: string | null = null;
   let newspaperPdfHandle: InlinePdfHandle | null = null;
 
-  // ── Right panel: invite code + players ──
+  // ── Scotland Yard: case management + tools ──
+  const scotlandYard = h('div', { class: 'gm-scotland-yard' },
+    h('div', { class: 'gm-panel-title', text: 'Scotland Yard' }),
+    h('div', { class: 'gm-yard-case-btns' }, newCaseBtn, editCaseBtn, deleteCaseBtn),
+    h('div', { class: 'gm-yard-divider' }),
+    h('div', { class: 'gm-yard-tool-btns' }, mapsBtn, newspaperBtn),
+  );
+
+  // ── Right panel: Scotland Yard + invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
-  const rightPanel = h('div', { class: 'gm-right-panel' }, shareBlock, playersPanel);
+  const rightPanel = h('div', { class: 'gm-right-panel' }, scotlandYard, shareBlock, playersPanel);
 
   const empty = h('div', { class: 'empty-state', text: 'Select or create a case to begin.' });
 

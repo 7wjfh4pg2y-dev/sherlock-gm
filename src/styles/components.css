@@ -11,6 +11,7 @@
   background: transparent;
 }
 .btn-sm { padding: 7px 13px; font-size: 0.68rem; }
+.btn-full { width: 100%; display: flex; align-items: center; }
 .btn-primary { border-color: var(--ink); color: var(--parchment); background: var(--ink); }
 .btn-primary:hover { background: var(--sepia); border-color: var(--sepia); }
 .btn-secondary { border-color: var(--sepia); color: var(--sepia); }
