@@ -1,9 +1,11 @@
 // ── GM login screen ──
-// Presented at the landing when the user clicks "Game Master". Simple password
-// gate — session-only, not a security boundary.
+// Presented at the landing when the user clicks "Game Master". The password is
+// verified server-side (Supabase RPC) — see auth.ts. There is no in-app reset:
+// the password is set/changed only from the Supabase dashboard, so a player
+// can't reset it to let themselves in.
 
 import { h } from '../util/dom';
-import { attemptLogin, isGMSessionActive, resetGMPassword } from './auth';
+import { attemptLogin, isGMSessionActive } from './auth';
 import { store } from '../state/store';
 
 export interface LoginHandle {
@@ -18,31 +20,28 @@ export function createGMLoginScreen(): LoginHandle {
   }) as HTMLInputElement;
   const errEl = h('div', { class: 'form-error' });
   const loginBtn = h('button', { class: 'btn btn-primary', text: 'Enter' });
-  const resetBtn = h('button', {
-    class: 'btn btn-secondary btn-sm gm-reset-pw',
-    text: 'Reset password',
-    on: {
-      click: () => {
-        if (!confirm('Reset GM password? You will need to set a new one on next login.')) return;
-        resetGMPassword();
-        errEl.textContent = 'Password reset. Enter a new password to set it.';
-        pwInput.value = '';
-      },
-    },
-  });
 
-  function tryLogin(): void {
-    const err = attemptLogin(pwInput.value.trim());
+  let busy = false;
+  async function tryLogin(): Promise<void> {
+    if (busy) return;
+    busy = true;
+    errEl.textContent = '';
+    loginBtn.textContent = 'Checking…';
+    loginBtn.setAttribute('disabled', '');
+    const err = await attemptLogin(pwInput.value.trim());
+    busy = false;
+    loginBtn.textContent = 'Enter';
+    loginBtn.removeAttribute('disabled');
     if (err) { errEl.textContent = err; return; }
     store.set({ role: 'gm', gmAuthed: true });
   }
 
-  loginBtn.addEventListener('click', tryLogin);
-  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+  loginBtn.addEventListener('click', () => void tryLogin());
+  pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void tryLogin(); });
 
   const hint = isGMSessionActive()
-    ? h('p', { class: 'gm-login-hint', text: 'Re-enter your password to continue.' })
-    : h('p', { class: 'gm-login-hint', text: 'First login? Enter a password to set it.' });
+    ? h('p', { class: 'gm-login-hint', text: 'Enter the Game Master password to continue.' })
+    : h('p', { class: 'gm-login-hint', text: 'Enter the Game Master password.' });
 
   const element = h(
     'div',
@@ -52,7 +51,6 @@ export function createGMLoginScreen(): LoginHandle {
     pwInput,
     errEl,
     loginBtn,
-    resetBtn,
   );
 
   return { element };

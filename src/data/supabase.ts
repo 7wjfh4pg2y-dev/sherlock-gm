@@ -32,6 +32,18 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
   return res.data as T;
 }
 
+// ── GM auth ──
+// Verifies a candidate password against the server-side bcrypt hash via a
+// SECURITY DEFINER RPC (db/013). The hash never reaches the client, and the
+// anon key can neither read nor change it.
+export const gmAuth = {
+  async verify(candidate: string): Promise<boolean> {
+    const { data, error } = await sb.rpc('verify_gm_password', { candidate });
+    if (error) throw new DbError(error.message);
+    return data === true;
+  },
+};
+
 // ── Cases ──
 export const cases = {
   async list(): Promise<CaseRow[]> {

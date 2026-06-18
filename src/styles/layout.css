@@ -109,7 +109,6 @@ body::before {
   font-family: 'Courier Prime', 'Courier New', monospace;
   font-size: 0.72rem; color: var(--fog); text-align: center; letter-spacing: 0.04em;
 }
-.gm-reset-pw { opacity: 0.7; }
 
 /* ── Form inputs (shared by GM modals) ── */
 .gm-input {

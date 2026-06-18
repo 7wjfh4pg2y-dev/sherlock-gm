@@ -18,7 +18,6 @@ import {
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution, loadGMMapStrokes } from './load';
-import { gmLogout } from './auth';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
 import { openScotlandYard } from './scotlandYard';
@@ -379,7 +378,6 @@ export function createGMScreen(): GMScreenHandle {
   // ── Logout ──
   function handleLogout(): void {
     teardownCase();
-    gmLogout();
     store.reset();
   }
 
