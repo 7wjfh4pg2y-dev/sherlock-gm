@@ -143,8 +143,8 @@ export type ClueInsert = {
   case_id: string;
   location_name: string;
   clue_text: string;
-  image_url?: string | null;
-  position?: number;
+  image_url: string;
+  position: number;
 };
 export type PlayerInsert = {
   case_id: string;

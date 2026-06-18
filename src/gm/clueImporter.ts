@@ -153,11 +153,14 @@ export function openClueImporter(): void {
       saveBtn.setAttribute('disabled', '');
       saveBtn.textContent = 'Saving…';
       try {
+        let nextPosition = store.getState().clues.length + 1;
         for (const c of toSave) {
           await clueRepo.create({
             case_id: caseId,
             location_name: c.location_name.trim(),
             clue_text: c.clue_text.trim(),
+            image_url: '',
+            position: nextPosition++,
           });
         }
         toast(`${toSave.length} clue${toSave.length !== 1 ? 's' : ''} imported.`);
