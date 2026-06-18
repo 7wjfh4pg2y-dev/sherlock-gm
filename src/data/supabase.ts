@@ -94,6 +94,11 @@ export const clues = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('clues').delete().eq('id', id).select());
   },
+  async reorder(items: { id: string; position: number }[]): Promise<void> {
+    for (const item of items) {
+      unwrap(await sb.from('clues').update({ position: item.position }).eq('id', item.id).select());
+    }
+  },
 };
 
 // ── Players ──

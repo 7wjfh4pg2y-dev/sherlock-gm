@@ -6,7 +6,7 @@
 import { h, replaceChildren, clear } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo, clues as clueRepo } from '../data/supabase';
 import type { PresenceMeta } from '../data/supabase';
 import { setPresenceSync, updatePresenceMeta } from './join';
 import { PLAYER_COLORS } from '../data/colors';
@@ -284,10 +284,17 @@ export function createPlayerScreen(): ScreenHandle {
     const body = c.clue_text
       ? h('div', { class: 'revealed-card-text', text: c.clue_text })
       : h('img', { attrs: { src: c.image_url, alt: c.location_name } });
-    return h('div', {
+    const card = h('div', {
       class: 'revealed-card' + (c.id === selectedClueId ? ' selected' : ''),
       on: { click: () => openClue(c) },
-    }, body, h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`));
+    },
+      h('div', { class: 'clue-drag-handle', text: '⠿' }),
+      body,
+      h('div', { class: 'revealed-card-label' }, `${c.location_name} ⤢`),
+    );
+    card.draggable = true;
+    card.dataset['clueId'] = c.id;
+    return card;
   }
 
   function openClue(c: ClueRow): void {
@@ -316,6 +323,65 @@ export function createPlayerScreen(): ScreenHandle {
     replaceChildren(clueDetail, head, bodyContent);
   }
 
+  function makeDraggableClueGrid(grid: HTMLElement): void {
+    let dragSrcId: string | null = null;
+
+    grid.addEventListener('dragstart', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (!card) return;
+      dragSrcId = card.dataset['clueId'] ?? null;
+      card.classList.add('dragging');
+      e.dataTransfer?.setData('text/plain', dragSrcId ?? '');
+    });
+
+    grid.addEventListener('dragend', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      card?.classList.remove('dragging');
+      dragSrcId = null;
+      grid.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    });
+
+    grid.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault();
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      grid.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+      if (card && card.dataset['clueId'] !== dragSrcId) card.classList.add('drag-over');
+    });
+
+    grid.addEventListener('dragleave', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (card) card.classList.remove('drag-over');
+    });
+
+    grid.addEventListener('drop', (e: DragEvent) => {
+      e.preventDefault();
+      const target = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (!target || !dragSrcId || target.dataset['clueId'] === dragSrcId) return;
+      const targetId = target.dataset['clueId']!;
+      target.classList.remove('drag-over');
+
+      const s = store.getState();
+      const revealed = selectors.revealedClues(s);
+      const srcIdx = revealed.findIndex((c) => c.id === dragSrcId);
+      const tgtIdx = revealed.findIndex((c) => c.id === targetId);
+      if (srcIdx === -1 || tgtIdx === -1) return;
+
+      const reordered = [...revealed];
+      const [moved] = reordered.splice(srcIdx, 1);
+      reordered.splice(tgtIdx, 0, moved);
+
+      const updates = reordered.map((c, i) => ({ id: c.id, position: i + 1 }));
+      const posMap = new Map(updates.map(({ id, position }) => [id, position]));
+      const updatedClues = [...s.clues].map((c) => posMap.has(c.id) ? { ...c, position: posMap.get(c.id)! } : c);
+
+      // Optimistic update
+      store.set({ clues: updatedClues });
+
+      // Persist so the team shares the same order
+      void clueRepo.reorder(updates).catch(() => toast('Could not save clue order.'));
+    });
+  }
+
   function renderClues(s: AppState): void {
     const revealed = selectors.revealedClues(s);
     if (!revealed.length) {
@@ -323,6 +389,7 @@ export function createPlayerScreen(): ScreenHandle {
       return;
     }
     replaceChildren(clueGrid, ...revealed.map(clueCard));
+    makeDraggableClueGrid(clueGrid);
   }
 
   function renderBriefing(s: AppState): void {

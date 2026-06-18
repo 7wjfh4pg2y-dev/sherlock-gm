@@ -1139,3 +1139,28 @@ body::before {
 .map-label-ok:hover { background: rgba(109,220,139,0.2); }
 .map-label-dismiss { color: rgba(255,255,255,0.55); }
 .map-label-dismiss:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+/* ── Drag-and-drop clue reordering ── */
+.clue-card[draggable="true"],
+.revealed-card[draggable="true"] { cursor: grab; }
+
+.clue-drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.85rem;
+  color: var(--fog);
+  opacity: 0;
+  pointer-events: none;
+  line-height: 1;
+  transition: opacity 0.15s;
+  z-index: 5;
+}
+.clue-card:hover .clue-drag-handle,
+.revealed-card:hover .clue-drag-handle { opacity: 0.6; }
+
+.clue-card.drag-over,
+.revealed-card.drag-over { border-top: 2px solid var(--sepia); }
+
+.clue-card.dragging,
+.revealed-card.dragging { opacity: 0.4; }

@@ -519,9 +519,10 @@ export function createGMScreen(): GMScreenHandle {
       ? h('button', { class: 'clue-action-btn hide', text: '🚫 Hide', on: { click: (e: Event) => { e.stopPropagation(); void handleHide(c.id); } } })
       : h('button', { class: 'clue-action-btn reveal', text: '👁 Reveal', on: { click: (e: Event) => { e.stopPropagation(); void handleReveal(c.id); } } });
 
-    return h(
+    const card = h(
       'div',
       { class: revealed ? 'clue-card revealed' : 'clue-card', on: { click: () => openGMCluePreview(c) } },
+      h('div', { class: 'clue-drag-handle', text: '⠿' }),
       thumb,
       h('div', { class: 'clue-label', text: c.location_name }),
       h(
@@ -532,6 +533,9 @@ export function createGMScreen(): GMScreenHandle {
         h('button', { class: 'clue-action-btn del', text: '🗑 Delete', on: { click: (e: Event) => { e.stopPropagation(); void handleDeleteClue(c.id); } } }),
       ),
     );
+    card.draggable = true;
+    card.dataset['clueId'] = c.id;
+    return card;
   }
 
   function openGMCluePreview(c: ClueRow): void {
@@ -540,9 +544,81 @@ export function createGMScreen(): GMScreenHandle {
     body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
   }
 
+  function makeDraggableGrid(grid: HTMLElement, isRevealed: boolean): void {
+    let dragSrcId: string | null = null;
+
+    grid.addEventListener('dragstart', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (!card) return;
+      dragSrcId = card.dataset['clueId'] ?? null;
+      card.classList.add('dragging');
+      e.dataTransfer?.setData('text/plain', dragSrcId ?? '');
+    });
+
+    grid.addEventListener('dragend', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      card?.classList.remove('dragging');
+      dragSrcId = null;
+      grid.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    });
+
+    grid.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault();
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      grid.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+      if (card && card.dataset['clueId'] !== dragSrcId) card.classList.add('drag-over');
+    });
+
+    grid.addEventListener('dragleave', (e: DragEvent) => {
+      const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (card) card.classList.remove('drag-over');
+    });
+
+    grid.addEventListener('drop', (e: DragEvent) => {
+      e.preventDefault();
+      const target = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
+      if (!target || !dragSrcId || target.dataset['clueId'] === dragSrcId) return;
+      const targetId = target.dataset['clueId']!;
+      target.classList.remove('drag-over');
+
+      const s = store.getState();
+      const section = isRevealed ? selectors.revealedClues(s) : selectors.hiddenClues(s);
+      const srcIdx = section.findIndex((c) => c.id === dragSrcId);
+      const tgtIdx = section.findIndex((c) => c.id === targetId);
+      if (srcIdx === -1 || tgtIdx === -1) return;
+
+      // Build reordered section array
+      const reordered = [...section];
+      const [moved] = reordered.splice(srcIdx, 1);
+      reordered.splice(tgtIdx, 0, moved);
+
+      // Build updated clues array (replace only this section's entries in the flat clues array)
+      const allClues = [...s.clues];
+      // Assign new positions within the reordered section; preserve relative gap spacing
+      const updates = reordered.map((c, i) => ({ id: c.id, position: i + 1 }));
+      const posMap = new Map(updates.map(({ id, position }) => [id, position]));
+      const updatedClues = allClues.map((c) => posMap.has(c.id) ? { ...c, position: posMap.get(c.id)! } : c);
+
+      // Optimistic update
+      store.set({ clues: updatedClues });
+
+      // Persist
+      void clueRepo.reorder(updates).catch(() => toast('Could not save clue order.'));
+    });
+  }
+
   function renderClues(s: AppState): void {
     const unrevealed = selectors.hiddenClues(s);
     const revealed = selectors.revealedClues(s);
+
+    const unrevealedGrid = h('div', { class: 'clues-grid' },
+      ...unrevealed.map(clueCard),
+      h('div', { class: 'clue-add-card', on: { click: showAddClueModal } },
+        h('span', { class: 'clue-add-icon', text: '+' }),
+        h('span', { text: 'Add Clue' }),
+      ),
+    );
+    makeDraggableGrid(unrevealedGrid, false);
 
     clear(unrevealedSection);
     unrevealedSection.append(
@@ -550,23 +626,19 @@ export function createGMScreen(): GMScreenHandle {
         'Unrevealed ',
         h('span', { class: 'counter-badge', text: String(unrevealed.length) }),
       ),
-      h('div', { class: 'clues-grid' },
-        ...unrevealed.map(clueCard),
-        h('div', { class: 'clue-add-card', on: { click: showAddClueModal } },
-          h('span', { class: 'clue-add-icon', text: '+' }),
-          h('span', { text: 'Add Clue' }),
-        ),
-      ),
+      unrevealedGrid,
     );
 
     clear(revealedSection);
     if (revealed.length) {
+      const revealedGrid = h('div', { class: 'clues-grid' }, ...revealed.map(clueCard));
+      makeDraggableGrid(revealedGrid, true);
       revealedSection.append(
         h('div', { class: 'clues-section-title' },
           'Revealed ',
           h('span', { class: 'counter-badge', text: String(revealed.length) }),
         ),
-        h('div', { class: 'clues-grid' }, ...revealed.map(clueCard)),
+        revealedGrid,
       );
     }
   }
