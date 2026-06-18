@@ -21,6 +21,7 @@ import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQues
 import { gmLogout } from './auth';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
+import { openScotlandYard } from './scotlandYard';
 import { buildGMNotebook } from './notebookModal';
 import { buildGMQuestionsPanel, buildGMSolutionPanel } from './questionsPanel';
 import { openTitledModal } from '../components/modal';
@@ -46,28 +47,34 @@ export function createGMScreen(): GMScreenHandle {
 
   // ── Top bar ──
   const caseDropdown = createDropdown({ className: 'gm-case-select', onChange: handleCaseChange });
-  const newCaseBtn = h('button', {
-    class: 'btn btn-primary btn-sm btn-full',
-    text: '+ New Case',
-    on: { click: showNewCaseModal },
-  });
-  const editCaseBtn = h('button', {
-    class: 'btn btn-edit btn-sm btn-full',
-    text: '✎ Edit Case',
-    on: { click: showEditCaseModal },
-  });
-  const deleteCaseBtn = h('button', {
-    class: 'btn btn-danger btn-sm btn-full',
-    text: 'Delete Case',
-    on: { click: handleDeleteCase },
+  const scotlandYardBtn = h('button', {
+    class: 'btn btn-secondary btn-sm',
+    text: '🏛 Scotland Yard',
+    on: { click: () => openScotlandYard({
+      onCaseCreated: async (c) => {
+        store.set({ cases: [...store.getState().cases, c] });
+        renderCaseSelect(store.getState());
+        caseDropdown.setValue(c.id);
+        await openCase(c.id);
+      },
+      onCaseUpdated: (c) => {
+        store.set({ cases: store.getState().cases.map((x) => x.id === c.id ? c : x) });
+        renderCaseSelect(store.getState());
+      },
+      onCaseDeleted: (id) => {
+        const s = store.getState();
+        store.set({ cases: s.cases.filter((c) => c.id !== id), currentCaseId: null, clues: [], players: [], notes: [] });
+        teardownCase();
+      },
+    }) },
   });
   const mapsBtn = h('button', {
-    class: 'btn btn-secondary btn-sm btn-full',
+    class: 'btn btn-secondary btn-sm',
     text: '🗺 Cartographer',
     on: { click: openMapsLibrary },
   });
   const newspaperBtn = h('button', {
-    class: 'btn btn-secondary btn-sm btn-full',
+    class: 'btn btn-secondary btn-sm',
     text: '📰 Printing Press',
     on: { click: openNewspaperModal },
   });
@@ -85,13 +92,13 @@ export function createGMScreen(): GMScreenHandle {
     gmLeadsNum,
   );
 
-  // ── Header: case dropdown + Logout only ──
+  // ── Header: case dropdown + tool buttons + Logout ──
   const header = h('header', { class: 'gm-header' },
     h('div', { class: 'gm-title-group' },
       h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
       gmLeadsWrap,
     ),
-    h('div', { class: 'gm-header-actions' }, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, logoutBtn),
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
@@ -142,17 +149,9 @@ export function createGMScreen(): GMScreenHandle {
   let currentNewspaperUrl: string | null = null;
   let newspaperPdfHandle: InlinePdfHandle | null = null;
 
-  // ── Scotland Yard: case management + tools ──
-  const scotlandYard = h('div', { class: 'gm-scotland-yard' },
-    h('div', { class: 'gm-panel-title', text: 'Scotland Yard' }),
-    h('div', { class: 'gm-yard-case-btns' }, newCaseBtn, editCaseBtn, deleteCaseBtn),
-    h('div', { class: 'gm-yard-divider' }),
-    h('div', { class: 'gm-yard-tool-btns' }, mapsBtn, newspaperBtn),
-  );
-
-  // ── Right panel: Scotland Yard + invite code + players ──
+  // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
-  const rightPanel = h('div', { class: 'gm-right-panel' }, scotlandYard, shareBlock, playersPanel);
+  const rightPanel = h('div', { class: 'gm-right-panel' }, shareBlock, playersPanel);
 
   const empty = h('div', { class: 'empty-state', text: 'Select or create a case to begin.' });
 
@@ -179,105 +178,6 @@ export function createGMScreen(): GMScreenHandle {
       return;
     }
     void openCase(id);
-  }
-
-  // ── Mutations: cases ──
-  function showNewCaseModal(): void {
-    const nameInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'text', placeholder: 'Case name' },
-    }) as HTMLInputElement;
-    const orderInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'number', min: '1', placeholder: 'Chronological order in the campaign (e.g. 1)' },
-    }) as HTMLInputElement;
-    const descInput = h('textarea', {
-      class: 'gm-input',
-      attrs: { placeholder: 'Case briefing (optional)…', rows: '5' },
-    }) as HTMLTextAreaElement;
-    const errEl = h('div', { class: 'form-error' });
-    const saveBtn = h('button', { class: 'btn btn-primary', text: 'Create Case' });
-    const { handle, body } = openTitledModal('New Case', {});
-    body.append(nameInput, orderInput, descInput, errEl, saveBtn);
-    saveBtn.addEventListener('click', async () => {
-      const name = nameInput.value.trim();
-      if (!name) { errEl.textContent = 'Enter a case name.'; return; }
-      try {
-        const c = await caseRepo.create({
-          name,
-          description: descInput.value.trim() || null,
-          ordinal: parseInt(orderInput.value, 10) || 0,
-        });
-        store.set({ cases: [...store.getState().cases, c] });
-        renderCaseSelect(store.getState());
-        caseDropdown.setValue(c.id);
-        await openCase(c.id);
-        handle.close();
-      } catch {
-        errEl.textContent = 'Could not create case.';
-      }
-    });
-  }
-
-  function showEditCaseModal(): void {
-    const s = store.getState();
-    const current = selectors.currentCase(s);
-    if (!current) return;
-
-    const nameInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'text', placeholder: 'Case name', value: current.name },
-    }) as HTMLInputElement;
-    const orderInput = h('input', {
-      class: 'gm-input',
-      attrs: { type: 'number', min: '1', placeholder: 'Chronological order (e.g. 1)', value: String(current.ordinal ?? '') },
-    }) as HTMLInputElement;
-    const descInput = h('textarea', {
-      class: 'gm-input',
-      attrs: { placeholder: 'Case briefing (optional)…', rows: '5' },
-    }) as HTMLTextAreaElement;
-    descInput.value = current.description ?? '';
-    const errEl = h('div', { class: 'form-error' });
-    const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save Changes' });
-    const { handle, body } = openTitledModal('Edit Case', {});
-    body.append(nameInput, orderInput, descInput, errEl, saveBtn);
-    saveBtn.addEventListener('click', async () => {
-      const name = nameInput.value.trim();
-      if (!name) { errEl.textContent = 'Enter a case name.'; return; }
-      try {
-        const updated = await caseRepo.updateFields(current.id, {
-          name,
-          description: descInput.value.trim() || null,
-          ordinal: parseInt(orderInput.value, 10) || 0,
-        });
-        store.set({ cases: s.cases.map((c) => c.id === current.id ? updated : c) });
-        renderCaseSelect(store.getState());
-        handle.close();
-        toast('Case updated.');
-      } catch {
-        errEl.textContent = 'Could not update case.';
-      }
-    });
-  }
-
-  async function handleDeleteCase(): Promise<void> {
-    const s = store.getState();
-    const current = selectors.currentCase(s);
-    if (!current) return;
-    if (!(await confirmDelete(`Delete case "${current.name}"? All clues, players, and notes will be lost.`))) return;
-    try {
-      await caseRepo.remove(current.id);
-      store.set({
-        cases: s.cases.filter((c) => c.id !== current.id),
-        currentCaseId: null,
-        clues: [],
-        players: [],
-        notes: [],
-      });
-      teardownCase();
-    } catch {
-      toast('Could not delete case.');
-    }
   }
 
   // ── Mutations: clues ──
@@ -530,8 +430,6 @@ export function createGMScreen(): GMScreenHandle {
       ],
       s.currentCaseId ?? '',
     );
-    deleteCaseBtn.style.display = s.currentCaseId ? '' : 'none';
-    editCaseBtn.style.display = s.currentCaseId ? '' : 'none';
     const revealedCount = selectors.revealedClues(s).length;
     gmLeadsNum.textContent = String(revealedCount);
     gmLeadsWrap.style.display = s.currentCaseId ? '' : 'none';
