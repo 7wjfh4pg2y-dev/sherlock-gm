@@ -107,16 +107,26 @@ function createStore(initial: AppState) {
 
 export const store = createStore(initialState);
 
+// Sort clues: district alphabetically (EC < NW < SE < SW < WC), then numerically.
+function sortClues(a: ClueRow, b: ClueRow): number {
+  const parse = (loc: string) => {
+    const m = loc.trim().match(/^([A-Z]+)\s*(\d+)$/i);
+    return m ? { district: m[1].toUpperCase(), num: parseInt(m[2], 10) } : { district: loc, num: 0 };
+  };
+  const pa = parse(a.location_name), pb = parse(b.location_name);
+  return pa.district.localeCompare(pb.district) || pa.num - pb.num;
+}
+
 // ── Derived selectors (pure; computed from current state) ──
 export const selectors = {
   currentCase(s: AppState): CaseRow | null {
     return s.cases.find((c) => c.id === s.currentCaseId) ?? null;
   },
   revealedClues(s: AppState): ClueRow[] {
-    return s.clues.filter((c) => c.revealed);
+    return s.clues.filter((c) => c.revealed).sort(sortClues);
   },
   hiddenClues(s: AppState): ClueRow[] {
-    return s.clues.filter((c) => !c.revealed);
+    return s.clues.filter((c) => !c.revealed).sort(sortClues);
   },
   activePlayers(s: AppState): PlayerRow[] {
     return s.players.filter((p) => !p.is_kicked);
