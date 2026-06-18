@@ -260,8 +260,19 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   async function shareNote(note: NoteRow): Promise<void> {
-    try { await noteRepo.setPrivate(note.id, false); toast('Shared with the team.'); }
-    catch { toast('Could not share note.'); }
+    const caseId = store.getState().currentCaseId;
+    if (!caseId) return;
+    const me = store.getState().identity;
+    try {
+      await noteRepo.create({
+        case_id: caseId,
+        content: note.content,
+        is_private: false,
+        player_name: me?.name ?? note.player_name,
+        player_color: me?.color ?? note.player_color,
+      });
+      toast('Shared with the team.');
+    } catch { toast('Could not share note.'); }
   }
 
   async function deleteNote(note: NoteRow): Promise<void> {
