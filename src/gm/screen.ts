@@ -22,6 +22,7 @@ import { gmLogout } from './auth';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
 import { openScotlandYard } from './scotlandYard';
+import { openClueImporter } from './clueImporter';
 import { buildGMNotebook } from './notebookModal';
 import { buildGMQuestionsPanel, buildGMSolutionPanel } from './questionsPanel';
 import { openTitledModal } from '../components/modal';
@@ -78,6 +79,11 @@ export function createGMScreen(): GMScreenHandle {
     text: '📰 Printing Press',
     on: { click: openNewspaperModal },
   });
+  const clueImporterBtn = h('button', {
+    class: 'btn btn-secondary btn-sm',
+    text: '📖 Clue Importer',
+    on: { click: openClueImporter },
+  });
   const logoutBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: 'Logout',
@@ -98,7 +104,7 @@ export function createGMScreen(): GMScreenHandle {
       h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
       gmLeadsWrap,
     ),
-    h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, clueImporterBtn, logoutBtn),
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──

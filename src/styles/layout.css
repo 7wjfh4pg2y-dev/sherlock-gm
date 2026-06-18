@@ -276,6 +276,39 @@ body::before {
 .sy-case-ordinal { color: var(--sepia); font-size: 0.7rem; flex-shrink: 0; }
 .sy-case-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ── Clue Importer modal ── */
+.clue-importer-modal { display: flex; flex-direction: column; gap: 14px; }
+.ci-instructions {
+  padding: 12px 14px; border: 1px solid rgba(139,105,20,0.3);
+  background: rgba(201,169,110,0.06); border-radius: 3px;
+  font-size: 0.9rem;
+}
+.ci-instructions p { font-weight: 700; margin-bottom: 6px; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sepia); }
+.ci-instructions ol { padding-left: 18px; display: flex; flex-direction: column; gap: 5px; line-height: 1.4; }
+.ci-instructions li { color: var(--ink); }
+.ci-instructions em { font-style: italic; color: var(--sepia); }
+.ci-paste {
+  width: 100%; min-height: 160px; resize: vertical;
+  font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.85rem;
+}
+.ci-review { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.ci-review-header {
+  display: flex; align-items: baseline; gap: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid rgba(139,105,20,0.25);
+}
+.ci-review-count { font-weight: 700; font-size: 0.9rem; color: var(--sepia); }
+.ci-review-hint { font-size: 0.78rem; color: var(--fog); }
+.ci-clue-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; border: 1px solid rgba(139,105,20,0.25);
+  border-radius: 3px; background: rgba(201,169,110,0.04);
+}
+.ci-clue-card-header { display: flex; gap: 8px; align-items: center; }
+.ci-loc-input { width: 110px; flex-shrink: 0; font-family: 'Courier Prime', 'Courier New', monospace; }
+.ci-text-input { width: 100%; min-height: 70px; resize: vertical; font-size: 0.9rem; }
+.ci-remove-btn { margin-left: auto; flex-shrink: 0; }
+.ci-save-row { padding-top: 10px; border-top: 1px solid rgba(139,105,20,0.25); }
+
 .gm-share-block {
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 0 14px;
