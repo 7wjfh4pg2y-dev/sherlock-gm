@@ -166,8 +166,6 @@ body::before {
   transition: all 0.2s; margin-bottom: 10px;
 }
 .file-drop-label:hover { border-color: var(--sepia); color: var(--ink); }
-.clue-type-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
-.clue-type-field { margin-bottom: 4px; }
 
 /* ── GM screen ── */
 .gm-screen {
@@ -521,39 +519,11 @@ body::before {
 .map-thumb { width: 100%; height: 140px; object-fit: cover; display: block; cursor: pointer; }
 .map-thumb--pdf { display: flex; align-items: center; justify-content: center; font-size: 3rem; background: var(--parchment-dark); height: 140px; }
 .map-card-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-.newspaper-page-label {
-  font-family: 'Courier Prime', 'Courier New', monospace;
-  font-size: 0.72rem; letter-spacing: 0.04em; color: var(--parchment); text-align: center;
-}
-.newspaper-group-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 1rem; font-style: italic; color: var(--parchment);
-  margin: 18px 0 8px; padding-bottom: 4px;
-  border-bottom: 1px solid rgba(201,169,110,0.25);
-}
-.newspaper-group-title:first-child { margin-top: 0; }
-
-/* GM case chronological-order input — compact chip beside the title */
-.gm-order-wrap {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'Courier Prime', 'Courier New', monospace;
-  font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fog);
-  white-space: nowrap;
-}
-.gm-order-input {
-  width: 46px; padding: 4px 6px;
-  background: rgba(20,14,6,0.5); color: var(--parchment);
-  border: 1px solid var(--parchment-darker);
-  font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.8rem;
-}
 .map-rename-input { font-size: 0.78rem; padding: 4px 6px; margin-bottom: 0; }
 .map-card-actions { display: flex; gap: 4px; }
 .map-card-actions .btn { font-size: 0.65rem; padding: 3px 7px; }
 .map-attached { color: var(--green); border-color: var(--green); }
 .maps-upload-form { border-top: 1px solid var(--parchment-darker); padding-top: 14px; }
-
-/* ── GM notebook modal ── */
-.gm-notebook-modal { max-width: 720px; width: 100%; }
 
 /* ── Player screen ── */
 .player-screen {
@@ -569,11 +539,6 @@ body::before {
   font-family: 'Special Elite', 'Courier New', monospace;
   font-size: 1.6rem; color: var(--parchment); font-weight: 700;
 }
-.screen-meta {
-  font-family: 'Courier Prime', 'Courier New', monospace;
-  font-size: 0.72rem; letter-spacing: 0.08em; color: var(--fog); margin-top: 4px;
-}
-
 /* Two-column body: main (tabs + panel) | notebook */
 .player-body {
   display: grid;
@@ -941,9 +906,6 @@ body::before {
 }
 .player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
-
-.player-content { grid-area: content; min-width: 0; }
-
 /* Inline clue detail panel — expands above the grid so the notebook stays
    interactive while a clue is open (no blocking modal overlay). */
 .clue-detail {
@@ -1007,7 +969,6 @@ body::before {
   font-size: 0.67rem; letter-spacing: 0.05em; color: var(--ink);
   border-top: 1px solid var(--parchment-darker); background: var(--parchment);
 }
-.player-content .clues-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
 @media (max-width: 860px) {
   .player-screen {

@@ -164,11 +164,3 @@ export function openMapsLibrary(): void {
     ),
   );
 }
-
-export function openCaseMap(): void {
-  const s = store.getState();
-  const current = selectors.currentCase(s);
-  const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
-  if (!map) { toast('No map attached to this case.'); return; }
-  openMapViewer(map.url, map.name);
-}

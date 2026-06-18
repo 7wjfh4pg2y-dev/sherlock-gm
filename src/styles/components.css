@@ -230,7 +230,6 @@
 .directory-custom-badge { font-size: 0.65rem; color: var(--sepia); margin-right: 5px; flex-shrink: 0; line-height: 1; }
 @keyframes dir-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .input-shake { animation: dir-shake 0.3s ease; border-color: var(--red) !important; }
-.error-msg { font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.75rem; color: var(--red); margin-top: 8px; }
 
 /* ── Map viewer ── */
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }

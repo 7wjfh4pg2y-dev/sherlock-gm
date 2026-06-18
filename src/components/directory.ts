@@ -3,7 +3,6 @@
 // remove. Reads the directory data manager; persistence lives there.
 
 import { h, replaceChildren } from '../util/dom';
-import { openModal } from './modal';
 import { confirmDelete } from './confirmDelete';
 import { toast } from './toast';
 import * as directory from '../data/directory';
@@ -189,9 +188,4 @@ export function buildDirectory(isGM: boolean): HTMLElement {
   void directory.whenReady().then(() => { refreshCategories(); renderResults(); });
   setTimeout(() => searchInput.focus(), 80);
   return content;
-}
-
-/** Opens the directory in a modal overlay (GM still uses this path). */
-export function openDirectoryModal(isGM: boolean): void {
-  openModal(buildDirectory(isGM), { contentClass: 'directory-modal' });
 }

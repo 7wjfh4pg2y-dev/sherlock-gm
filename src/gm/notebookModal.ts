@@ -5,11 +5,9 @@
 
 import { h, clear } from '../util/dom';
 import { store, type AppState } from '../state/store';
-import type { NoteRow } from '../data/types';
 import { notes as noteRepo } from '../data/supabase';
 import { loadGMRightPanel } from './load';
 import { createNotebook, noteCard, fillFeed, type NotebookTab } from '../components/notebook';
-import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 
@@ -79,79 +77,4 @@ function renderNotebookInto(target: HTMLElement, state: AppState): void {
 
   const nb = createNotebook(tabs);
   target.append(nb.element);
-}
-
-export function openGMNotebook(): void {
-  const s = store.getState();
-  const { body } = openTitledModal('Case Notebook', { contentClass: 'gm-notebook-modal' }); // handle not needed
-
-  function buildNotebook(state: AppState): void {
-    clear(body);
-    const allNotes = state.notes;
-    const sharedNotes = allNotes.filter((n) => !n.is_private);
-    const playerNames = [...new Set(allNotes.map((n) => n.player_name))];
-
-    const sharedFeed = h('div', { class: 'nb-notes' });
-    const sharedContent = h('div', {}, sharedFeed);
-
-    function buildShared(ns: NoteRow[]): void {
-      fillFeed(sharedFeed, ns.map((n) => noteCard({
-        name: n.player_name,
-        color: n.player_color,
-        time: n.created_at,
-        text: n.content,
-        actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
-      })), 'No shared notes yet.');
-    }
-
-    const tabs: NotebookTab[] = [{ id: 'shared', label: 'Shared', content: sharedContent }];
-
-    const playerFeeds = new Map<string, HTMLElement>();
-    for (const name of playerNames) {
-      const feed = h('div', { class: 'nb-notes' });
-      playerFeeds.set(name, feed);
-      const color = allNotes.find((n) => n.player_name === name)?.player_color ?? '#888';
-      tabs.push({
-        id: `player-${name}`,
-        label: name,
-        dotColor: color,
-        content: h('div', {}, feed),
-      });
-    }
-
-    const nb = createNotebook(tabs);
-    body.append(nb.element);
-
-    buildShared(sharedNotes);
-    for (const name of playerNames) {
-      const feed = playerFeeds.get(name)!;
-      const playerNotes = allNotes.filter((n) => n.player_name === name);
-      fillFeed(feed, playerNotes.map((n) => noteCard({
-        name: n.player_name,
-        color: n.player_color,
-        time: n.created_at,
-        text: n.content,
-        badge: n.is_private ? 'Private' : undefined,
-        actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
-      })), 'No notes for this player.');
-    }
-  }
-
-  buildNotebook(s);
-
-  // Subscribe to store changes while modal is open; rebuild on notes change.
-  // (Modal will unmount on close; unsub via the returned function.)
-  let lastNoteCount = s.notes.length;
-  const unsub = store.subscribe((state) => {
-    if (state.notes.length !== lastNoteCount) {
-      lastNoteCount = state.notes.length;
-      buildNotebook(state);
-    }
-  });
-
-  // Attach cleanup to body parent (modal close removes the element).
-  const observer = new MutationObserver(() => {
-    if (!body.isConnected) { unsub(); observer.disconnect(); }
-  });
-  if (body.parentElement) observer.observe(body.parentElement, { childList: true });
 }
