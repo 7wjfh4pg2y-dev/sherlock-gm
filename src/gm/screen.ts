@@ -321,14 +321,14 @@ export function createGMScreen(): GMScreenHandle {
   function showEditClueModal(clue: ClueRow): void {
     const locationPicker = buildLocationPicker(clue.location_name);
     const textInput = h('textarea', {
-      class: 'gm-input',
-      attrs: { rows: '4' },
+      class: 'gm-input clue-edit-textarea',
+      attrs: { rows: '14' },
     }) as HTMLTextAreaElement;
     textInput.value = clue.clue_text ?? '';
     const errEl = h('div', { class: 'form-error' });
     const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save' });
 
-    const { handle: editClueHandle, body } = openTitledModal('Edit Clue', {});
+    const { handle: editClueHandle, body } = openTitledModal('Edit Clue', { contentClass: 'clue-edit-modal' });
     const fields: (HTMLElement | null)[] = [locationPicker.el];
     if (clue.clue_text) fields.push(textInput);
     if (clue.image_url) {

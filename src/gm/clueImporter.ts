@@ -25,28 +25,63 @@ interface ParsedClue {
 }
 
 // Attempt to detect the district + number header.
-// Matches: "SE 8", "NW 14", "WC 3", "EC 11", "SW 7" — with or without colon.
-const LOCATION_RE = /^((?:NW|WC|EC|SW|SE)\s*\d+)\s*:?\s*(.*)$/i;
+// Matches: "SE 8", "NW 14", "WC 3", "EC 11", "SW 7" — with or without colon,
+// and in either order ("8 SE" as the book prints them, or "SE 8").
+const LOCATION_RE = /^(?:(NW|WC|EC|SW|SE)\s*(\d+)|(\d+)\s*(NW|WC|EC|SW|SE))\s*:?\s*(.*)$/i;
+
+function normaliseLocation(m: RegExpMatchArray): string {
+  // Group 1/2 = "SE 8" order; group 3/4 = "8 SE" order.
+  const district = (m[1] ?? m[4]).toUpperCase();
+  const number = m[2] ?? m[3];
+  return `${district} ${number}`;
+}
+
+// Collapse a run of body lines into clean paragraphs: a blank line separates
+// paragraphs, while consecutive non-blank lines are de-wrapped into one (so
+// OCR column-wrapping doesn't litter the text with hard breaks). Paragraph
+// breaks are preserved as a blank line so the player view (white-space:
+// pre-wrap) renders them.
+function joinParagraphs(lines: string[]): string {
+  const paragraphs: string[] = [];
+  let current: string[] = [];
+  for (const line of lines) {
+    if (!line.trim()) {
+      if (current.length) { paragraphs.push(current.join(' ')); current = []; }
+    } else {
+      current.push(line.trim());
+    }
+  }
+  if (current.length) paragraphs.push(current.join(' '));
+  return paragraphs.join('\n\n');
+}
 
 function parseClues(raw: string): ParsedClue[] {
   const results: ParsedClue[] = [];
-  // Split on one or more blank lines to get blocks.
-  const blocks = raw.split(/\n{2,}/);
-  for (const block of blocks) {
-    const lines = block.trim().split('\n').map((l) => l.trim()).filter(Boolean);
-    if (!lines.length) continue;
-    const firstMatch = lines[0].match(LOCATION_RE);
-    if (firstMatch) {
-      // Header line matches location. Rest is clue text.
-      const location_name = firstMatch[1].replace(/\s+/, ' ').toUpperCase();
-      const tail = firstMatch[2] ? [firstMatch[2], ...lines.slice(1)] : lines.slice(1);
-      const clue_text = tail.join(' ').trim();
-      if (clue_text) results.push({ location_name, clue_text });
-    } else {
-      // Single-line: "SE 8: text" already collapsed via the RE above,
-      // but also handle lines we couldn't pattern-match — skip silently.
+  const lines = raw.split('\n');
+  let pending: { location_name: string; inlineText: string; body: string[] } | null = null;
+
+  const flush = (): void => {
+    if (!pending) return;
+    // Inline text (from a "SE 8: text…" header) joins the body as its first
+    // line so it flows into the first paragraph rather than splitting off.
+    const bodyLines = pending.inlineText ? [pending.inlineText, ...pending.body] : pending.body;
+    const clue_text = joinParagraphs(bodyLines);
+    if (clue_text) results.push({ location_name: pending.location_name, clue_text });
+    pending = null;
+  };
+
+  for (const line of lines) {
+    const m = line.match(LOCATION_RE);
+    if (m) {
+      // A header line starts a new clue.
+      flush();
+      pending = { location_name: normaliseLocation(m), inlineText: (m[5] ?? '').trim(), body: [] };
+    } else if (pending) {
+      pending.body.push(line);
     }
+    // Lines before the first header are ignored.
   }
+  flush();
   return results;
 }
 
@@ -63,7 +98,7 @@ export function openClueImporter(): void {
       h('li', { text: 'Photograph the clue page from your Consulting Detective book.' }),
       (() => {
         const li = document.createElement('li');
-        li.innerHTML = 'Upload the photo to <strong>Claude.ai</strong> (or any vision AI) and ask: <em>"Extract all clues. For each clue, output the district code and number on one line (e.g. SE 8), then the clue text on the next line, with a blank line between each clue."</em>';
+        li.innerHTML = 'Upload the photo to <strong>Claude.ai</strong> (or any vision AI) and ask: <em>"Extract all clues. For each clue, put the district code and number on its own line (e.g. SE 8), then the clue text below it. Preserve the original paragraph breaks within each clue by leaving a blank line between paragraphs. Separate one clue from the next the same way."</em>';
         return li;
       })(),
       h('li', { text: 'Copy the response and paste it below.' }),
