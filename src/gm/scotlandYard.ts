@@ -11,6 +11,7 @@ import { cases as caseRepo } from '../data/supabase';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
+import { openClueImporter } from './clueImporter';
 
 export interface ScotlandYardCallbacks {
   /** Called after a case is created so the dropdown and store can refresh. */
@@ -114,6 +115,19 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
       editSection.append(editNameInput, editOrderInput, editErrEl,
         h('div', { class: 'sy-edit-row' }, editSaveBtn, deleteBtn));
       body.append(editSection);
+
+      // ── Clue Importer (needs an active case) ──
+      const importBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '📖 Import Clues from Book' });
+      importBtn.addEventListener('click', () => {
+        handle.close();
+        openClueImporter();
+      });
+      const importSection = h('div', { class: 'sy-section sy-section--bordered' },
+        h('div', { class: 'sy-section-label', text: 'Clue Importer' }),
+        h('div', { class: 'sy-section-hint', text: 'Paste book-page text extracted by Claude.ai to bulk-add clues.' }),
+        importBtn,
+      );
+      body.append(importSection);
     }
 
     // ── Case list (ascending by ordinal, unordered cases at the end) ──

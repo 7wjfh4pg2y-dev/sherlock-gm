@@ -265,6 +265,7 @@ body::before {
   font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--sepia); margin-bottom: 2px;
 }
+.sy-section-hint { font-size: 0.82rem; color: var(--fog); margin-bottom: 8px; line-height: 1.4; }
 .sy-edit-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .sy-case-row {
   display: flex; align-items: baseline; gap: 10px;
