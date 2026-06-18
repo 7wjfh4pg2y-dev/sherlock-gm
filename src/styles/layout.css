@@ -774,7 +774,7 @@ body::before {
 .gm-score-verdict-line { font-style: italic; }
 
 /* Player question cards */
-.player-questions-panel { display: flex; flex-direction: column; }
+.player-questions-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .player-questions-intro {
   font-family: 'IM Fell English', Georgia, serif; font-style: italic;
   color: var(--fog); margin-bottom: 14px;
@@ -805,7 +805,7 @@ body::before {
   margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(139,105,20,0.4);
 }
 .player-official-answer-text { font-family: 'IM Fell English', Georgia, serif; color: #3a2d1a; white-space: pre-wrap; }
-.player-solution-panel { font-family: 'IM Fell English', Georgia, serif; }
+.player-solution-panel { font-family: 'IM Fell English', Georgia, serif; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 
 /* Player: The Final Reckoning reveal card */
 .player-score-card {
