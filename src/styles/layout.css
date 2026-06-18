@@ -1143,24 +1143,36 @@ body::before {
 /* ── Drag-and-drop clue reordering ── */
 .clue-card[draggable="true"],
 .revealed-card[draggable="true"] { cursor: grab; }
+.clue-card[draggable="true"]:active,
+.revealed-card[draggable="true"]:active { cursor: grabbing; }
 
 .clue-drag-handle {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  font-size: 0.85rem;
+  top: 4px; left: 4px;
+  font-size: 0.85rem; line-height: 1;
   color: var(--fog);
-  opacity: 0;
-  pointer-events: none;
-  line-height: 1;
+  opacity: 0; pointer-events: none;
   transition: opacity 0.15s;
   z-index: 5;
 }
 .clue-card:hover .clue-drag-handle,
 .revealed-card:hover .clue-drag-handle { opacity: 0.6; }
 
-.clue-card.drag-over,
-.revealed-card.drag-over { border-top: 2px solid var(--sepia); }
-
 .clue-card.dragging,
-.revealed-card.dragging { opacity: 0.4; }
+.revealed-card.dragging { opacity: 0.35; }
+
+/* Drop slot: a visible gap + accent line showing where the card will land */
+.clue-drop-slot {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sepia);
+  opacity: 0.75;
+  margin: 2px 0;
+  pointer-events: none;
+  animation: slotPulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes slotPulse {
+  from { opacity: 0.55; }
+  to   { opacity: 0.95; }
+}
