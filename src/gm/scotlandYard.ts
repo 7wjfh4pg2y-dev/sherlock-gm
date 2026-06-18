@@ -117,7 +117,7 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
       body.append(editSection);
 
       // ── Clue Importer (needs an active case) ──
-      const importBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '📖 Import Clues from Book' });
+      const importBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '📖 Import Clues' });
       importBtn.addEventListener('click', () => {
         handle.close();
         openClueImporter();
