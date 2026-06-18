@@ -29,7 +29,7 @@ create or replace function public.verify_gm_password(candidate text)
 returns boolean
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
   select exists (
     select 1 from public.gm_auth
