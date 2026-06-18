@@ -239,69 +239,39 @@ export function createGMScreen(): GMScreenHandle {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return;
 
-    let clueType: 'text' | 'image' = 'text';
-
     const locationPicker = buildLocationPicker();
     const textInput = h('textarea', {
       class: 'gm-input',
-      attrs: { placeholder: 'Clue text…', rows: '4' },
+      attrs: { placeholder: 'Clue text… (optional if adding an image)', rows: '5' },
     }) as HTMLTextAreaElement;
-    const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to select image' });
+
+    const fileLabel = h('label', { class: 'file-drop-label', text: 'Click to attach an image (optional)' });
     const fileInput = h('input', {
       attrs: { type: 'file', accept: 'image/*', style: 'display:none' },
     }) as HTMLInputElement;
     fileInput.addEventListener('change', () => {
-      if (fileInput.files?.[0]) fileLabel.textContent = '📄 ' + fileInput.files[0].name;
+      if (fileInput.files?.[0]) fileLabel.textContent = '📷 ' + fileInput.files[0].name;
     });
     fileLabel.appendChild(fileInput);
-
-    const imageField = h('div', { class: 'clue-type-field' }, fileLabel);
-    const textField = h('div', { class: 'clue-type-field' }, textInput);
-    textField.style.display = 'none';
-
-    const textBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Text' });
-    const imgBtn = h('button', { class: 'btn btn-primary btn-sm', text: 'Image' });
-
-    const switchType = (t: 'text' | 'image') => {
-      clueType = t;
-      imageField.style.display = t === 'image' ? '' : 'none';
-      textField.style.display = t === 'text' ? '' : 'none';
-      imgBtn.className = t === 'image' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-      textBtn.className = t === 'text' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-    };
-    imgBtn.addEventListener('click', () => switchType('image'));
-    textBtn.addEventListener('click', () => switchType('text'));
 
     const errEl = h('div', { class: 'form-error' });
     const addBtn = h('button', { class: 'btn btn-primary', text: 'Add to Case File' });
 
     const { handle: addClueHandle, body } = openTitledModal('Add Clue', {});
-    body.append(
-      h('div', { class: 'clue-type-toggle' }, imgBtn, textBtn),
-      locationPicker.el,
-      imageField,
-      textField,
-      errEl,
-      addBtn,
-    );
+    body.append(locationPicker.el, textInput, fileLabel, errEl, addBtn);
 
     addBtn.addEventListener('click', async () => {
       const location_name = locationPicker.getValue();
       if (!location_name.match(/\d/)) { errEl.textContent = 'Enter a clue number.'; return; }
+      const clue_text = textInput.value.trim();
+      const file = fileInput.files?.[0];
+      if (!clue_text && !file) { errEl.textContent = 'Enter clue text or attach an image.'; return; }
       const position = store.getState().clues.length + 1;
       addBtn.textContent = 'Saving…';
       addBtn.setAttribute('disabled', '');
       try {
-        if (clueType === 'text') {
-          const clue_text = textInput.value.trim();
-          if (!clue_text) { errEl.textContent = 'Enter the clue text.'; addBtn.textContent = 'Add to Case File'; addBtn.removeAttribute('disabled'); return; }
-          await clueRepo.create({ case_id: caseId, location_name, clue_text, image_url: '', position });
-        } else {
-          const file = fileInput.files?.[0];
-          if (!file) { errEl.textContent = 'Select an image.'; addBtn.textContent = 'Add to Case File'; addBtn.removeAttribute('disabled'); return; }
-          const url = await storage.uploadImage(file);
-          await clueRepo.create({ case_id: caseId, location_name, image_url: url, clue_text: '', position });
-        }
+        const image_url = file ? await storage.uploadImage(file) : '';
+        await clueRepo.create({ case_id: caseId, location_name, clue_text, image_url, position });
         toast('Clue added!');
         addClueHandle.close();
       } catch {
@@ -316,33 +286,61 @@ export function createGMScreen(): GMScreenHandle {
     const locationPicker = buildLocationPicker(clue.location_name);
     const textInput = h('textarea', {
       class: 'gm-input clue-edit-textarea',
-      attrs: { rows: '14' },
+      attrs: { rows: '10', placeholder: 'Clue text… (optional if image is present)' },
     }) as HTMLTextAreaElement;
     textInput.value = clue.clue_text ?? '';
+
+    // Current image preview + replace/remove controls
+    let pendingImageFile: File | null = null;
+    let removeImage = false;
+    const imageSection = document.createElement('div');
+    imageSection.className = 'clue-edit-image-section';
+    const renderImageSection = (): void => {
+      imageSection.innerHTML = '';
+      if (clue.image_url && !removeImage) {
+        const preview = document.createElement('img');
+        preview.src = clue.image_url; preview.className = 'clue-edit-img-preview';
+        const removeBtn = h('button', { class: 'btn btn-danger btn-sm', text: '✕ Remove image',
+          on: { click: () => { removeImage = true; pendingImageFile = null; renderImageSection(); } } });
+        imageSection.append(preview, removeBtn);
+      } else if (pendingImageFile) {
+        const name = h('p', { class: 'form-hint', text: '📷 ' + pendingImageFile.name });
+        const clearBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '✕ Clear',
+          on: { click: () => { pendingImageFile = null; removeImage = false; renderImageSection(); } } });
+        imageSection.append(name, clearBtn);
+      } else {
+        const fileLabel = h('label', { class: 'file-drop-label', text: clue.image_url ? 'Click to replace image' : 'Click to attach an image (optional)' });
+        const fileInput = h('input', { attrs: { type: 'file', accept: 'image/*', style: 'display:none' } }) as HTMLInputElement;
+        fileInput.addEventListener('change', () => {
+          if (fileInput.files?.[0]) { pendingImageFile = fileInput.files[0]; removeImage = false; renderImageSection(); }
+        });
+        fileLabel.appendChild(fileInput);
+        imageSection.append(fileLabel);
+      }
+    };
+    renderImageSection();
+
     const errEl = h('div', { class: 'form-error' });
     const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save' });
 
     const { handle: editClueHandle, body } = openTitledModal('Edit Clue', { contentClass: 'clue-edit-modal' });
-    const fields: (HTMLElement | null)[] = [locationPicker.el];
-    if (clue.clue_text) fields.push(textInput);
-    if (clue.image_url) {
-      fields.push(h('p', { class: 'form-hint', text: 'Image clue — only location name is editable.' }));
-    }
-    fields.push(errEl, saveBtn);
-    body.append(...fields.filter(Boolean) as HTMLElement[]);
+    body.append(locationPicker.el, textInput, imageSection, errEl, saveBtn);
 
     saveBtn.addEventListener('click', async () => {
       const location_name = locationPicker.getValue();
       if (!location_name.match(/\d/)) { errEl.textContent = 'Enter a clue number.'; return; }
+      const clue_text = textInput.value.trim();
+      saveBtn.setAttribute('disabled', ''); saveBtn.textContent = 'Saving…';
       try {
-        await clueRepo.update(clue.id, {
-          location_name,
-          ...(clue.clue_text ? { clue_text: textInput.value.trim() } : {}),
-        });
+        let image_url = clue.image_url;
+        if (removeImage) image_url = '';
+        if (pendingImageFile) image_url = await storage.uploadImage(pendingImageFile);
+        await clueRepo.update(clue.id, { location_name, clue_text, image_url });
         toast('Clue updated.');
         editClueHandle.close();
       } catch {
         errEl.textContent = 'Could not save clue.';
+        saveBtn.removeAttribute('disabled'); saveBtn.textContent = 'Save';
       }
     });
   }
@@ -465,19 +463,56 @@ export function createGMScreen(): GMScreenHandle {
     if (!current) { clear(briefingPanel); briefingEditing = false; return; }
 
     const desc = current.description?.trim() ?? '';
+    const briefImg = current.brief_image_url ?? null;
 
-    const displayView = h(
-      'div',
-      { class: 'briefing-display' },
-      desc
-        ? h('p', { class: 'briefing-text', text: desc })
-        : h('span', { class: 'briefing-empty', text: 'No briefing set for this case yet.' }),
+    const displayChildren: HTMLElement[] = [];
+    if (desc) displayChildren.push(h('p', { class: 'briefing-text', text: desc }));
+    if (briefImg) {
+      const img = document.createElement('img');
+      img.src = briefImg; img.className = 'briefing-img';
+      img.addEventListener('click', () => openMapViewer(briefImg, current.name + ' — Brief'));
+      displayChildren.push(img);
+    }
+    if (!desc && !briefImg) displayChildren.push(h('span', { class: 'briefing-empty', text: 'No briefing set for this case yet.' }));
+
+    const displayView = h('div', { class: 'briefing-display' },
+      ...displayChildren,
       h('button', {
         class: 'btn btn-secondary btn-sm',
         text: '✏️ Edit Briefing',
         on: { click: () => { briefingEditing = true; renderBriefing(store.getState()); } },
       }),
     );
+
+    // Edit view: text textarea + image management
+    let pendingBriefFile: File | null = null;
+    let removeBriefImage = false;
+    const briefImageSection = document.createElement('div');
+    briefImageSection.className = 'clue-edit-image-section';
+    const renderBriefImageSection = (): void => {
+      briefImageSection.innerHTML = '';
+      if (briefImg && !removeBriefImage) {
+        const preview = document.createElement('img');
+        preview.src = briefImg; preview.className = 'clue-edit-img-preview';
+        const removeBtn = h('button', { class: 'btn btn-danger btn-sm', text: '✕ Remove image',
+          on: { click: () => { removeBriefImage = true; pendingBriefFile = null; renderBriefImageSection(); } } });
+        briefImageSection.append(preview, removeBtn);
+      } else if (pendingBriefFile) {
+        const name = h('p', { class: 'form-hint', text: '📷 ' + pendingBriefFile.name });
+        const clearBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '✕ Clear',
+          on: { click: () => { pendingBriefFile = null; removeBriefImage = false; renderBriefImageSection(); } } });
+        briefImageSection.append(name, clearBtn);
+      } else {
+        const fileLabel = h('label', { class: 'file-drop-label', text: briefImg ? 'Click to replace image' : 'Click to attach an image (optional)' });
+        const fileInput = h('input', { attrs: { type: 'file', accept: 'image/*', style: 'display:none' } }) as HTMLInputElement;
+        fileInput.addEventListener('change', () => {
+          if (fileInput.files?.[0]) { pendingBriefFile = fileInput.files[0]; removeBriefImage = false; renderBriefImageSection(); }
+        });
+        fileLabel.appendChild(fileInput);
+        briefImageSection.append(fileLabel);
+      }
+    };
+    renderBriefImageSection();
 
     const textarea = h('textarea', {
       class: 'gm-input briefing-textarea',
@@ -489,12 +524,17 @@ export function createGMScreen(): GMScreenHandle {
       text: 'Save',
       on: {
         click: async () => {
+          saveBtn.setAttribute('disabled', '');
           try {
+            let newImgUrl: string | null = briefImg;
+            if (removeBriefImage) newImgUrl = null;
+            if (pendingBriefFile) newImgUrl = await storage.uploadImage(pendingBriefFile);
             await caseRepo.updateDescription(current.id, textarea.value.trim());
-            store.set({ cases: s.cases.map((c) => c.id === current.id ? { ...c, description: textarea.value.trim() } : c) });
+            await caseRepo.updateBriefImage(current.id, newImgUrl);
+            store.set({ cases: s.cases.map((c) => c.id === current.id ? { ...c, description: textarea.value.trim(), brief_image_url: newImgUrl } : c) });
             briefingEditing = false;
             toast('Briefing saved.');
-          } catch { toast('Could not save briefing.'); }
+          } catch { toast('Could not save briefing.'); saveBtn.removeAttribute('disabled'); }
         },
       },
     });
@@ -503,16 +543,23 @@ export function createGMScreen(): GMScreenHandle {
       text: 'Cancel',
       on: { click: () => { briefingEditing = false; renderBriefing(store.getState()); } },
     });
-    const editView = h('div', { class: 'briefing-edit' }, textarea, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
+    const editView = h('div', { class: 'briefing-edit' }, textarea, briefImageSection, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
 
     clear(briefingPanel);
     briefingPanel.append(briefingEditing ? editView : displayView);
   }
 
   function clueCard(c: ClueRow): HTMLElement {
-    const thumb = c.clue_text
-      ? h('div', { class: 'clue-thumb-text', text: c.clue_text })
-      : h('img', { class: 'clue-thumb', attrs: { src: c.image_url, alt: c.location_name } });
+    let thumb: HTMLElement;
+    if (c.clue_text && c.image_url) {
+      const img = document.createElement('img');
+      img.src = c.image_url; img.className = 'clue-thumb-img';
+      thumb = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'clue-thumb-text', text: c.clue_text }));
+    } else if (c.image_url) {
+      thumb = h('img', { class: 'clue-thumb', attrs: { src: c.image_url, alt: c.location_name } });
+    } else {
+      thumb = h('div', { class: 'clue-thumb-text', text: c.clue_text });
+    }
 
     const revealed = c.revealed;
     const revealOrHide = revealed
@@ -536,8 +583,14 @@ export function createGMScreen(): GMScreenHandle {
 
   function openGMCluePreview(c: ClueRow): void {
     if (!c.clue_text && c.image_url) { openMapViewer(c.image_url, c.location_name); return; }
-    const { body } = openTitledModal(c.location_name, { contentClass: 'clue-expand' }); // handle not needed
-    body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
+    const { body } = openTitledModal(c.location_name, { contentClass: 'clue-expand' });
+    if (c.clue_text) body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
+    if (c.image_url) {
+      const img = document.createElement('img');
+      img.src = c.image_url; img.className = 'clue-expand-img';
+      img.addEventListener('click', () => openMapViewer(c.image_url!, c.location_name));
+      body.append(img);
+    }
   }
 
   function renderClues(s: AppState): void {

@@ -54,6 +54,9 @@ export const cases = {
   async updateDescription(id: string, description: string): Promise<void> {
     unwrap(await sb.from('cases').update({ description }).eq('id', id).select());
   },
+  async updateBriefImage(id: string, brief_image_url: string | null): Promise<void> {
+    unwrap(await sb.from('cases').update({ brief_image_url }).eq('id', id).select());
+  },
   async setMap(id: string, mapId: string | null): Promise<void> {
     unwrap(await sb.from('cases').update({ map_id: mapId }).eq('id', id).select());
   },
@@ -315,13 +318,17 @@ export const solutions = {
     const meta = ((res.data as Omit<SolutionRow, 'content'>[]) ?? [])[0];
     if (!meta || (!meta.revealed && !meta.score_revealed)) return null;
     let content = '';
+    let image_url: string | null = null;
     if (meta.revealed) {
-      const c = await sb.from('case_solutions').select('content').eq('case_id', caseId).eq('revealed', true);
-      content = ((c.data as { content: string }[]) ?? [])[0]?.content ?? '';
+      const c = await sb.from('case_solutions').select('content, image_url').eq('case_id', caseId).eq('revealed', true);
+      const row = ((c.data as { content: string; image_url: string | null }[]) ?? [])[0];
+      content = row?.content ?? '';
+      image_url = row?.image_url ?? null;
     }
     return {
       case_id: meta.case_id,
       content,
+      image_url,
       revealed: meta.revealed,
       score: meta.score_revealed ? meta.score : null,
       score_revealed: meta.score_revealed,
@@ -357,6 +364,14 @@ export const solutions = {
       await sb
         .from('case_solutions')
         .upsert({ case_id: caseId, score_revealed: scoreRevealed, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
+        .select(),
+    );
+  },
+  async saveImage(caseId: string, image_url: string | null): Promise<void> {
+    unwrap(
+      await sb
+        .from('case_solutions')
+        .upsert({ case_id: caseId, image_url, updated_at: new Date().toISOString() }, { onConflict: 'case_id' })
         .select(),
     );
   },

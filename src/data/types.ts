@@ -6,9 +6,8 @@ export interface CaseRow {
   id: string;
   name: string;
   description: string | null;
+  brief_image_url: string | null;
   map_id: string | null;
-  /** Chronological position in the campaign (1 = first mystery). Drives
-      cumulative newspaper unlocking: case N unlocks papers from cases 1..N. */
   ordinal: number;
   created_at: string;
 }
@@ -117,10 +116,9 @@ export interface QuestionAnswerRow {
 export interface SolutionRow {
   case_id: string;
   content: string;
+  image_url: string | null;
   revealed: boolean;
-  /** The team's final score (out of Holmes' benchmark). null = not tallied. */
   score: number | null;
-  /** Whether the score is shown to players (gated independently of `revealed`). */
   score_revealed: boolean;
   updated_at: string;
 }

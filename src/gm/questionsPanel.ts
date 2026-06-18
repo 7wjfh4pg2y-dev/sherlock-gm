@@ -7,7 +7,7 @@
 import { h, clear } from '../util/dom';
 import { store, selectors } from '../state/store';
 import type { QuestionRow, QuestionCategory } from '../data/types';
-import { questions as questionRepo, solutions as solutionRepo } from '../data/supabase';
+import { questions as questionRepo, solutions as solutionRepo, storage } from '../data/supabase';
 import { loadGMQuestions, loadGMSolution } from './load';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
@@ -320,6 +320,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
     const sol = s.solution;
     const content = sol?.content ?? '';
     const revealed = !!sol?.revealed;
+    const solImg = sol?.image_url ?? null;
 
     const revealToggle = h('button', {
       class: revealed ? 'btn btn-secondary btn-sm map-attached' : 'btn btn-primary btn-sm',
@@ -340,14 +341,54 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
         attrs: { rows: '16', placeholder: 'Write Sherlock’s full solution — how he reasoned it out, who did it and why…' },
       }) as HTMLTextAreaElement;
       textarea.value = content;
+
+      // Image management for solution
+      let pendingSolFile: File | null = null;
+      let removeSolImage = false;
+      const solImageSection = document.createElement('div');
+      solImageSection.className = 'clue-edit-image-section';
+      const renderSolImageSection = (): void => {
+        solImageSection.innerHTML = '';
+        if (solImg && !removeSolImage) {
+          const preview = document.createElement('img');
+          preview.src = solImg; preview.className = 'clue-edit-img-preview';
+          const removeBtn = h('button', { class: 'btn btn-danger btn-sm', text: '✕ Remove image',
+            on: { click: () => { removeSolImage = true; pendingSolFile = null; renderSolImageSection(); } } });
+          solImageSection.append(preview, removeBtn);
+        } else if (pendingSolFile) {
+          const name = h('p', { class: 'form-hint', text: '📷 ' + pendingSolFile.name });
+          const clearBtn = h('button', { class: 'btn btn-secondary btn-sm', text: '✕ Clear',
+            on: { click: () => { pendingSolFile = null; removeSolImage = false; renderSolImageSection(); } } });
+          solImageSection.append(name, clearBtn);
+        } else {
+          const fileLabel = h('label', { class: 'file-drop-label', text: solImg ? 'Click to replace image' : 'Click to attach an image (optional)' });
+          const fileInput = h('input', { attrs: { type: 'file', accept: 'image/*', style: 'display:none' } }) as HTMLInputElement;
+          fileInput.addEventListener('change', () => {
+            if (fileInput.files?.[0]) { pendingSolFile = fileInput.files[0]; removeSolImage = false; renderSolImageSection(); }
+          });
+          fileLabel.appendChild(fileInput);
+          solImageSection.append(fileLabel);
+        }
+      };
+      renderSolImageSection();
+
       const saveBtn = h('button', {
         class: 'btn btn-primary btn-sm', text: 'Save',
         on: {
           click: async () => {
             const id = caseId();
             if (!id) return;
-            try { await solutionRepo.save(id, textarea.value.trim()); await loadGMSolution(id); editing = false; render(); toast('Solution saved.'); }
-            catch { toast('Could not save solution.'); }
+            saveBtn.setAttribute('disabled', '');
+            try {
+              let newImgUrl: string | null = solImg;
+              if (removeSolImage) newImgUrl = null;
+              if (pendingSolFile) newImgUrl = await storage.uploadImage(pendingSolFile);
+              await solutionRepo.save(id, textarea.value.trim());
+              await solutionRepo.saveImage(id, newImgUrl);
+              await loadGMSolution(id);
+              editing = false; render(); toast('Solution saved.');
+            }
+            catch { toast('Could not save solution.'); saveBtn.removeAttribute('disabled'); }
           },
         },
       });
@@ -355,18 +396,26 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
       element.append(
         h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: 'Sherlock’s Solution' }), revealToggle),
         textarea,
+        solImageSection,
         h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn),
         buildScoreSection(),
       );
       return;
     }
 
+    const displayChildren: (HTMLElement | null)[] = [];
+    if (content) displayChildren.push(h('div', { class: 'briefing-display' }, h('p', { class: 'briefing-text', text: content })));
+    if (solImg) {
+      const img = document.createElement('img');
+      img.src = solImg; img.className = 'briefing-img';
+      displayChildren.push(img);
+    }
+    if (!content && !solImg) displayChildren.push(h('span', { class: 'briefing-empty', text: 'No solution written yet.' }));
+
     element.append(
       h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: 'Sherlock’s Solution' }), revealToggle),
-      content
-        ? h('div', { class: 'briefing-display' }, h('p', { class: 'briefing-text', text: content }))
-        : h('span', { class: 'briefing-empty', text: 'No solution written yet.' }),
-      h('button', { class: 'btn btn-secondary btn-sm', text: content ? '✏️ Edit Solution' : '✏️ Write Solution', on: { click: () => { editing = true; render(); } } }),
+      ...displayChildren.filter(Boolean) as HTMLElement[],
+      h('button', { class: 'btn btn-secondary btn-sm', text: content || solImg ? '✏️ Edit Solution' : '✏️ Write Solution', on: { click: () => { editing = true; render(); } } }),
       buildScoreSection(),
     );
   }

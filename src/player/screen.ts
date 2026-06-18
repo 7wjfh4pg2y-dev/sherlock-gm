@@ -281,9 +281,16 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Rendering ──
   function clueCard(c: ClueRow): HTMLElement {
-    const body = c.clue_text
-      ? h('div', { class: 'revealed-card-text', text: c.clue_text })
-      : h('img', { attrs: { src: c.image_url, alt: c.location_name } });
+    let body: HTMLElement;
+    if (c.clue_text && c.image_url) {
+      const img = document.createElement('img');
+      img.src = c.image_url; img.className = 'clue-thumb-img';
+      body = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'revealed-card-text', text: c.clue_text }));
+    } else if (c.image_url) {
+      body = h('img', { attrs: { src: c.image_url, alt: c.location_name } });
+    } else {
+      body = h('div', { class: 'revealed-card-text', text: c.clue_text });
+    }
     return h('div', {
       class: 'revealed-card' + (c.id === selectedClueId ? ' selected' : ''),
       on: { click: () => openClue(c) },
@@ -309,11 +316,15 @@ export function createPlayerScreen(): ScreenHandle {
     const closeBtn = h('button', { class: 'clue-detail-close', text: '✕', attrs: { 'aria-label': 'Close clue' }, on: { click: closeDetail } });
     const head = h('div', { class: 'clue-detail-head' },
       h('span', { class: 'clue-detail-title', text: c.location_name }), closeBtn);
-    const bodyContent = c.clue_text
-      ? h('div', { class: 'clue-detail-text', text: c.clue_text })
-      : h('img', { class: 'clue-detail-img', attrs: { src: c.image_url, alt: c.location_name },
-          on: { click: () => openMapViewer(c.image_url!, c.location_name) } });
-    replaceChildren(clueDetail, head, bodyContent);
+    const bodyParts: HTMLElement[] = [];
+    if (c.clue_text) bodyParts.push(h('div', { class: 'clue-detail-text', text: c.clue_text }));
+    if (c.image_url) {
+      const img = document.createElement('img');
+      img.src = c.image_url; img.className = 'clue-detail-img';
+      img.addEventListener('click', () => openMapViewer(c.image_url!, c.location_name));
+      bodyParts.push(img);
+    }
+    replaceChildren(clueDetail, head, ...bodyParts);
   }
 
   function renderClues(s: AppState): void {
@@ -328,11 +339,17 @@ export function createPlayerScreen(): ScreenHandle {
   function renderBriefing(s: AppState): void {
     const current = selectors.currentCase(s);
     const desc = current?.description?.trim();
-    if (desc) {
-      replaceChildren(briefingPanel, h('p', { class: 'briefing-text', text: desc }));
-    } else {
-      replaceChildren(briefingPanel, h('p', { class: 'empty-state', text: 'No briefing for this case yet.' }));
+    const briefImg = current?.brief_image_url ?? null;
+    const children: HTMLElement[] = [];
+    if (desc) children.push(h('p', { class: 'briefing-text', text: desc }));
+    if (briefImg) {
+      const img = document.createElement('img');
+      img.src = briefImg; img.className = 'briefing-img';
+      img.addEventListener('click', () => openMapViewer(briefImg, (current?.name ?? '') + ' — Brief'));
+      children.push(img);
     }
+    if (!children.length) children.push(h('p', { class: 'empty-state', text: 'No briefing for this case yet.' }));
+    replaceChildren(briefingPanel, ...children);
   }
 
   async function saveTeamAnswer(q: QuestionRow): Promise<void> {
@@ -457,6 +474,12 @@ export function createPlayerScreen(): ScreenHandle {
     }
     clear(solutionPanel);
     if (hasContent) solutionPanel.append(h('p', { class: 'briefing-text', text: sol!.content }));
+    if (sol?.image_url) {
+      const img = document.createElement('img');
+      img.src = sol.image_url; img.className = 'briefing-img';
+      img.addEventListener('click', () => openMapViewer(sol!.image_url!, 'Solution'));
+      solutionPanel.append(img);
+    }
     if (hasScore) solutionPanel.append(scoreCard(sol!.score!));
   }
 
