@@ -544,6 +544,10 @@ export function createGMScreen(): GMScreenHandle {
     body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
   }
 
+  // Guard: skip clue grid rebuilds while a drag is in progress so the DOM
+  // isn't torn down under an active drag interaction.
+  let clueDragActive = false;
+
   function makeDraggableGrid(grid: HTMLElement, isRevealed: boolean): void {
     let dragSrcId: string | null = null;
 
@@ -573,6 +577,7 @@ export function createGMScreen(): GMScreenHandle {
       const card = getCardAt(e);
       if (!card) return;
       dragSrcId = card.dataset['clueId'] ?? null;
+      clueDragActive = true;
       // Delay opacity so the drag ghost captures the full card first.
       requestAnimationFrame(() => card.classList.add('dragging'));
       e.dataTransfer?.setData('text/plain', dragSrcId ?? '');
@@ -580,6 +585,7 @@ export function createGMScreen(): GMScreenHandle {
     });
 
     grid.addEventListener('dragend', () => {
+      clueDragActive = false;
       grid.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging'));
       removeSlot();
       dragSrcId = null;
@@ -634,6 +640,7 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   function renderClues(s: AppState): void {
+    if (clueDragActive) return; // don't tear down the grid mid-drag
     const unrevealed = selectors.hiddenClues(s);
     const revealed = selectors.revealedClues(s);
 

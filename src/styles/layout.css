@@ -1163,6 +1163,7 @@ body::before {
 
 /* Drop slot: a visible gap + accent line showing where the card will land */
 .clue-drop-slot {
+  grid-column: 1 / -1;
   width: 100%;
   height: 6px;
   border-radius: 3px;

@@ -323,6 +323,8 @@ export function createPlayerScreen(): ScreenHandle {
     replaceChildren(clueDetail, head, bodyContent);
   }
 
+  let clueDragActive = false;
+
   function makeDraggableClueGrid(grid: HTMLElement): void {
     let dragSrcId: string | null = null;
 
@@ -342,12 +344,14 @@ export function createPlayerScreen(): ScreenHandle {
       const card = (e.target as HTMLElement).closest('[data-clue-id]') as HTMLElement | null;
       if (!card) return;
       dragSrcId = card.dataset['clueId'] ?? null;
+      clueDragActive = true;
       requestAnimationFrame(() => card.classList.add('dragging'));
       e.dataTransfer?.setData('text/plain', dragSrcId ?? '');
       e.dataTransfer!.effectAllowed = 'move';
     });
 
     grid.addEventListener('dragend', () => {
+      clueDragActive = false;
       grid.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging'));
       removeSlot();
       dragSrcId = null;
@@ -399,6 +403,7 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function renderClues(s: AppState): void {
+    if (clueDragActive) return; // don't rebuild grid mid-drag
     const revealed = selectors.revealedClues(s);
     if (!revealed.length) {
       replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
