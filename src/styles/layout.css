@@ -462,7 +462,7 @@ body::before {
 .clue-add-icon { font-size: 1.8rem; line-height: 1; }
 
 /* Clue expand modal — wider lightbox, shared by GM + player */
-.clue-expand { max-width: 820px; width: 100%; }
+.clue-expand { max-width: 1100px; width: 92vw; }
 .clue-expand-text {
   font-family: 'IM Fell English', Georgia, serif;
   font-size: 1.05rem; line-height: 1.85; color: var(--ink); white-space: pre-wrap;
