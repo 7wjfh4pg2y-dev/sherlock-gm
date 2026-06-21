@@ -31,6 +31,7 @@ import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
 import type { InlinePdfHandle } from '../components/pdfViewer';
+import { createFullscreener, type Fullscreener } from '../util/fullscreen';
 import { createDropdown } from '../components/dropdown';
 
 export interface GMScreenHandle {
@@ -147,6 +148,7 @@ export function createGMScreen(): GMScreenHandle {
   let builtNewspaperUrl: string | null = null;
   let currentNewspaperUrl: string | null = null;
   let newspaperPdfHandle: InlinePdfHandle | null = null;
+  let newspaperFullscreen: Fullscreener | null = null;
 
   // ── Right panel: invite code + players ──
   const playersPanel = h('div', { class: 'gm-players-panel' });
@@ -648,6 +650,8 @@ export function createGMScreen(): GMScreenHandle {
 
   function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
     if (paper.image_url === builtNewspaperUrl && newspaperPanel.childElementCount > 0) return;
+    newspaperFullscreen?.dispose();
+    newspaperFullscreen = null;
     newspaperPdfHandle?.destroy();
     newspaperPdfHandle = null;
     builtNewspaperUrl = paper.image_url;
@@ -667,13 +671,22 @@ export function createGMScreen(): GMScreenHandle {
 
     const scrollEl = h('div', { class: 'pdf-inlay-scroll' }, h('div', { class: 'pdf-viewer-status', text: 'Loading…' }));
     let handle: InlinePdfHandle | null = null;
+    const fsBtn = h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' } });
     const ctrls = h('div', { class: 'map-ctrl-bar' },
       h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },  on: { click: () => handle?.reset() } }),
       h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },     on: { click: () => handle?.zoomOut() } }),
       h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },      on: { click: () => handle?.zoomIn() } }),
-      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' },  on: { click: () => openMapViewer(paper.image_url, paper.name) } }),
+      fsBtn,
     );
-    newspaperPanel.append(h('div', { class: 'player-newspaper-inlay' }, scrollEl, ctrls));
+    const inlay = h('div', { class: 'player-newspaper-inlay' }, scrollEl, ctrls);
+    newspaperPanel.append(inlay);
+
+    // Fullscreen by reparenting the inlay — no second render (memory-safe).
+    newspaperFullscreen = createFullscreener(inlay, (open) => {
+      fsBtn.textContent = open ? '✕' : '⤢';
+      fsBtn.title = open ? 'Exit fullscreen' : 'Fullscreen';
+    });
+    fsBtn.addEventListener('click', () => newspaperFullscreen?.toggle());
 
     void import('../components/pdfViewer').then((m) => {
       const pdfHandle = m.createInlinePdfViewer(paper.image_url);
@@ -700,7 +713,7 @@ export function createGMScreen(): GMScreenHandle {
     if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
     // Tear down the map's window listeners whenever we're not on the map tab.
     if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
-    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
+    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperFullscreen?.dispose(); newspaperFullscreen = null; newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       // While editing, skip the rebuild so a realtime store update (e.g. a player
       // note) doesn't wipe unsaved textarea text — the persistent briefingPanel
@@ -815,6 +828,7 @@ export function createGMScreen(): GMScreenHandle {
     destroy() {
       teardownCase();
       mapInlay?.detach();
+      newspaperFullscreen?.dispose();
       newspaperPdfHandle?.destroy();
       unsubscribe();
     },

@@ -17,6 +17,14 @@ const ZOOM_STEP = 0.25;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4;
 
+// Hard caps on a single page's backing canvas. Mobile Safari refuses to paint
+// canvases above ~16.7M px (and ~4096 px per side on some devices) — exceeding
+// either yields blank pages or a tab crash. We render at devicePixelRatio for
+// sharpness but never past these limits; the CSS layout size is unaffected, so
+// pages just get slightly softer at extreme zoom instead of crashing.
+const MAX_CANVAS_DIM = 4096;
+const MAX_CANVAS_AREA = 16_000_000;
+
 export interface InlinePdfHandle {
   element: HTMLElement;
   zoomIn(): void;
@@ -57,13 +65,26 @@ async function rasterizePages(
   for (let n = 1; n <= doc.numPages; n++) {
     const page = await doc.getPage(n);
     const unscaled = page.getViewport({ scale: 1 });
-    const scale = (BASE_WIDTH / unscaled.width) * zoom;
-    const viewport = page.getViewport({ scale: scale * dpr });
+    // CSS layout size the page occupies on screen.
+    const cssScale = (BASE_WIDTH / unscaled.width) * zoom;
+    const cssW = unscaled.width * cssScale;
+    const cssH = unscaled.height * cssScale;
+    // Desired backing scale (dpr-sharp), then clamp so neither side nor the
+    // total area exceeds the mobile canvas limits.
+    let renderScale = cssScale * dpr;
+    const pxW = unscaled.width * renderScale;
+    const pxH = unscaled.height * renderScale;
+    const dimCap = MAX_CANVAS_DIM / Math.max(pxW, pxH);
+    const areaCap = Math.sqrt(MAX_CANVAS_AREA / (pxW * pxH));
+    const cap = Math.min(1, dimCap, areaCap);
+    if (cap < 1) renderScale *= cap;
+    const viewport = page.getViewport({ scale: renderScale });
     const canvas = h('canvas', { class: 'pdf-viewer-page' }) as HTMLCanvasElement;
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    canvas.style.width = viewport.width / dpr + 'px';
-    canvas.style.height = viewport.height / dpr + 'px';
+    // Layout size stays put regardless of any backing-resolution clamp.
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
     const ctx = canvas.getContext('2d');
     if (ctx) {
       target.append(canvas);
