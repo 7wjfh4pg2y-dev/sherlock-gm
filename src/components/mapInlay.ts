@@ -32,14 +32,10 @@ export interface MapInlayOpts {
   map: MapRow;
   isGM: boolean;
   author: MapAuthor;
-  /** When set, this inlay is the fullscreen instance: the corner button closes
-   *  it (via onClose) instead of opening another fullscreen view. */
-  isFullscreen?: boolean;
-  onClose?: () => void;
 }
 
 export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
-  const { map, isGM, author, isFullscreen, onClose } = opts;
+  const { map, isGM, author } = opts;
   let tool: Tool = 'pan';
   let drawing = false;
   let current: MapStrokePoint[] = [];
@@ -463,15 +459,54 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     ? h('button', { class: 'map-ctrl-btn map-ctrl-danger', text: '🗑', attrs: { title: 'Clear all markings' }, on: { click: () => void clearAllMarkings() } })
     : null;
 
+  // ── Fullscreen: reparent this element into an overlay rather than building a
+  // second inlay. One image + one canvas → no double memory use on mobile.
+  let fullscreenOverlay: HTMLElement | null = null;
+  let originalParent: Element | null = null;
+  let originalNextSibling: ChildNode | null = null;
+
+  function enterFullscreen(): void {
+    if (fullscreenOverlay) return;
+    originalParent = element.parentElement;
+    originalNextSibling = element.nextSibling;
+    fullscreenOverlay = h('div', { class: 'map-fullscreen-overlay' });
+    document.body.appendChild(fullscreenOverlay);
+    fullscreenOverlay.appendChild(element);
+    element.classList.add('map-inlay--fullscreen');
+    fsBtn.textContent = '✕';
+    fsBtn.title = 'Exit fullscreen';
+    document.addEventListener('keydown', onFsKey);
+    // Re-fit to the new (larger) viewport.
+    fitToViewport();
+  }
+
+  function exitFullscreen(): void {
+    if (!fullscreenOverlay) return;
+    document.removeEventListener('keydown', onFsKey);
+    if (originalParent) {
+      originalParent.insertBefore(element, originalNextSibling ?? null);
+    }
+    fullscreenOverlay.remove();
+    fullscreenOverlay = null;
+    element.classList.remove('map-inlay--fullscreen');
+    fsBtn.textContent = '⤢';
+    fsBtn.title = 'Fullscreen';
+    fitToViewport();
+  }
+
+  function onFsKey(e: KeyboardEvent): void { if (e.key === 'Escape') exitFullscreen(); }
+
+  const fsBtn = h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' },
+    on: { click: () => { fullscreenOverlay ? exitFullscreen() : enterFullscreen(); } },
+  }) as HTMLButtonElement;
+
   const ctrls = h('div', { class: 'map-ctrl-bar' },
     toolButtons.pan, toolButtons.draw, toolButtons.pin, toolButtons.erase,
     h('span', { class: 'map-ctrl-sep' }),
     h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' }, on: { click: () => pz.reset() } }),
     h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' }, on: { click: () => pz.zoomOut() } }),
     h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' }, on: { click: () => pz.zoomIn() } }),
-    isFullscreen
-      ? h('button', { class: 'map-ctrl-btn', text: '✕', attrs: { title: 'Close' }, on: { click: () => onClose?.() } })
-      : h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openFullscreenMap({ map, isGM, author }) } }),
+    fsBtn,
     ...(clearBtn ? [h('span', { class: 'map-ctrl-sep' }), clearBtn] : []),
   );
 
@@ -495,8 +530,10 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   return {
     element,
     detach() {
+      exitFullscreen();
       unsub();
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('keydown', onFsKey);
       pz.detach();
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
@@ -505,21 +542,4 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
       clear(element);
     },
   };
-}
-
-// Open the collaborative map in a fullscreen overlay. Hosts a second inlay
-// (sharing the same map/author) with the full pin/draw/erase toolset; markings
-// sync through the store so both views stay in lockstep. Esc / ✕ closes.
-export function openFullscreenMap(opts: { map: MapRow; isGM: boolean; author: MapAuthor }): void {
-  const overlay = h('div', { class: 'map-fullscreen-overlay' });
-  function onKey(e: KeyboardEvent): void { if (e.key === 'Escape') close(); }
-  function close(): void {
-    document.removeEventListener('keydown', onKey);
-    inlay.detach();
-    overlay.remove();
-  }
-  const inlay = buildMapInlay({ ...opts, isFullscreen: true, onClose: close });
-  overlay.append(inlay.element);
-  document.addEventListener('keydown', onKey);
-  document.body.appendChild(overlay);
 }
