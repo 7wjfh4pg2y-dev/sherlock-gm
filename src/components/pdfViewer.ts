@@ -134,17 +134,64 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
   function onMouseMove(e: MouseEvent): void { moveDrag(e.clientX, e.clientY); }
   function onMouseUp(): void { endDrag(); }
 
+  // Pinch-to-zoom: change `zoom` live (CSS scale) around the finger midpoint,
+  // re-rastering once the gesture settles — the same pipeline as wheel zoom.
+  let pinching = false;
+  let pinchStartDist = 0;
+  let pinchStartZoom = 1;
+  function touchDist(t0: Touch, t1: Touch): number {
+    return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+  }
+  // Zoom toward (fx, fy) on screen. transform-origin is top-center, so that's
+  // the reference point we hold the focal offset against.
+  function zoomAround(nextZoom: number, fx: number, fy: number): void {
+    const clamped = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom));
+    const rect = pagesEl.getBoundingClientRect();
+    const ox = rect.left + rect.width / 2;
+    const oy = rect.top;
+    const k = clamped / zoom;
+    tx += (1 - k) * (fx - ox);
+    ty += (1 - k) * (fy - oy);
+    zoom = clamped;
+    applyTransform();
+    window.clearTimeout(rerenderTimer);
+    rerenderTimer = window.setTimeout(() => void renderPages(), 160);
+  }
+
   function onTouchStart(e: TouchEvent): void {
-    if (e.touches.length !== 1) return;
-    e.preventDefault();
-    startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      pinching = true;
+      dragging = false;
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartZoom = zoom;
+    } else if (e.touches.length === 1) {
+      e.preventDefault();
+      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
   }
   function onTouchMove(e: TouchEvent): void {
-    if (e.touches.length !== 1) return;
-    e.preventDefault();
-    moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+    if (pinching && e.touches.length === 2) {
+      e.preventDefault();
+      const dist = touchDist(e.touches[0], e.touches[1]);
+      if (pinchStartDist > 0) {
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        zoomAround(pinchStartZoom * (dist / pinchStartDist), midX, midY);
+      }
+    } else if (dragging && e.touches.length === 1) {
+      e.preventDefault();
+      moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
   }
-  function onTouchEnd(): void { endDrag(); }
+  function onTouchEnd(e: TouchEvent): void {
+    if (e.touches.length === 0) { endDrag(); pinching = false; }
+    else if (e.touches.length === 1 && pinching) {
+      // Lifting one finger of a pinch — continue as a one-finger drag.
+      pinching = false;
+      startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }
 
   element.style.cursor = 'grab';
   element.style.touchAction = 'none';
@@ -191,6 +238,9 @@ export function openPdfViewer(url: string, name = 'Document'): void {
 
   const close = (): void => {
     document.removeEventListener('keydown', onKey);
+    stage.removeEventListener('touchstart', onTouchStart);
+    stage.removeEventListener('touchmove', onTouchMove);
+    stage.removeEventListener('touchend', onTouchEnd);
     // The parsed doc stays in docCache for reuse — only the overlay goes.
     overlay.remove();
   };
@@ -206,6 +256,36 @@ export function openPdfViewer(url: string, name = 'Document'): void {
     zoom = next;
     zoomLabel.textContent = Math.round(zoom * 100) + '%';
     void renderPages();
+  }
+
+  // Two-finger pinch: scale the pages live for smooth feedback, then commit to
+  // the sharp re-raster (and the % label / buttons) on release. One-finger
+  // touch keeps the stage's native scroll, so panning is unchanged.
+  let pinching = false;
+  let pinchStartDist = 0;
+  let pinchLiveScale = 1;
+  function touchDist(t0: Touch, t1: Touch): number {
+    return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+  }
+  function onTouchStart(e: TouchEvent): void {
+    if (e.touches.length !== 2) return;
+    e.preventDefault();
+    pinching = true;
+    pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+    pinchLiveScale = 1;
+    pagesEl.style.transformOrigin = 'top center';
+  }
+  function onTouchMove(e: TouchEvent): void {
+    if (!pinching || e.touches.length !== 2 || pinchStartDist === 0) return;
+    e.preventDefault();
+    pinchLiveScale = touchDist(e.touches[0], e.touches[1]) / pinchStartDist;
+    pagesEl.style.transform = `scale(${pinchLiveScale})`;
+  }
+  function onTouchEnd(e: TouchEvent): void {
+    if (!pinching || e.touches.length >= 2) return;
+    pinching = false;
+    pagesEl.style.transform = '';
+    setZoom(zoom * pinchLiveScale);
   }
 
   async function renderPages(): Promise<void> {
@@ -238,6 +318,9 @@ export function openPdfViewer(url: string, name = 'Document'): void {
   );
 
   document.addEventListener('keydown', onKey);
+  stage.addEventListener('touchstart', onTouchStart, { passive: false });
+  stage.addEventListener('touchmove', onTouchMove, { passive: false });
+  stage.addEventListener('touchend', onTouchEnd);
   document.body.appendChild(overlay);
 
   loadDoc(url)
