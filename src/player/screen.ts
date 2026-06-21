@@ -43,6 +43,12 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Header (slim — title + color picker + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
+  caseTitle.style.cursor = 'pointer';
+  caseTitle.addEventListener('click', () => {
+    const expanded = caseTitle.style.whiteSpace === 'normal';
+    caseTitle.style.whiteSpace = expanded ? '' : 'normal';
+    caseTitle.style.overflow = expanded ? '' : 'visible';
+  });
 
   // Color picker popup
   let colorPopupOpen = false;
