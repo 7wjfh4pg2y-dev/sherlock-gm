@@ -278,7 +278,7 @@
 }
 .pdf-viewer-btn:hover { background: var(--sepia); color: var(--parchment); }
 .pdf-viewer-zoom { font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.8rem; min-width: 48px; text-align: center; }
-.pdf-viewer-stage { flex: 1 1 auto; width: 100%; overflow: auto; display: flex; flex-direction: column; align-items: center; padding: 24px; }
-.pdf-viewer-pages { display: flex; flex-direction: column; gap: 24px; align-items: center; }
+.pdf-viewer-stage { flex: 1 1 auto; width: 100%; overflow: auto; display: flex; flex-direction: column; align-items: flex-start; padding: 24px; }
+.pdf-viewer-pages { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; margin: 0 auto; }
 .pdf-viewer-page { display: block; box-shadow: 0 0 60px rgba(122,92,18,0.3); border: 1px solid var(--sepia); background: #fff; }
 .pdf-viewer-status { color: var(--fog); font-style: italic; padding: 80px 20px; font-size: 1.1rem; }

@@ -111,29 +111,48 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     rerenderTimer = window.setTimeout(() => void renderPages(), 160);
   }
 
-  // Drag-to-pan.
-  function onMouseDown(e: MouseEvent): void {
-    if (e.button !== 0) return;
+  // Drag-to-pan (mouse + touch).
+  function startDrag(clientX: number, clientY: number): void {
     dragging = true;
-    startX = e.clientX; startY = e.clientY;
+    startX = clientX; startY = clientY;
     startTx = tx; startTy = ty;
     element.style.cursor = 'grabbing';
   }
-  function onMouseMove(e: MouseEvent): void {
+  function moveDrag(clientX: number, clientY: number): void {
     if (!dragging) return;
-    tx = startTx + (e.clientX - startX);
-    ty = startTy + (e.clientY - startY);
+    tx = startTx + (clientX - startX);
+    ty = startTy + (clientY - startY);
     applyTransform();
   }
-  function onMouseUp(): void {
+  function endDrag(): void {
     if (!dragging) return;
     dragging = false;
     element.style.cursor = 'grab';
   }
 
+  function onMouseDown(e: MouseEvent): void { if (e.button === 0) startDrag(e.clientX, e.clientY); }
+  function onMouseMove(e: MouseEvent): void { moveDrag(e.clientX, e.clientY); }
+  function onMouseUp(): void { endDrag(); }
+
+  function onTouchStart(e: TouchEvent): void {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    startDrag(e.touches[0].clientX, e.touches[0].clientY);
+  }
+  function onTouchMove(e: TouchEvent): void {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+  }
+  function onTouchEnd(): void { endDrag(); }
+
   element.style.cursor = 'grab';
+  element.style.touchAction = 'none';
   element.addEventListener('wheel', onWheel, { passive: false });
   element.addEventListener('mousedown', onMouseDown);
+  element.addEventListener('touchstart', onTouchStart, { passive: false });
+  element.addEventListener('touchmove', onTouchMove, { passive: false });
+  element.addEventListener('touchend', onTouchEnd);
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
 
@@ -152,6 +171,9 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     destroy() {
       element.removeEventListener('wheel', onWheel);
       element.removeEventListener('mousedown', onMouseDown);
+      element.removeEventListener('touchstart', onTouchStart);
+      element.removeEventListener('touchmove', onTouchMove);
+      element.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       window.clearTimeout(rerenderTimer);
