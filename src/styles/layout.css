@@ -910,19 +910,25 @@ body::before {
 }
 .player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
-/* Notebook fullscreen toggle — only useful (and only shown) on mobile, where
-   vertical space is scarce. Floats at the parchment's bottom-right, clear of the
-   composer's Add Note button at the top. */
-.nb-fullscreen-btn {
-  display: none; position: absolute; bottom: 12px; right: 12px; z-index: 5;
-  width: 34px; height: 34px; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #efd898 0%, #d4ae58 100%);
-  border: 1px solid #7a5010; color: #3a2200;
-  font-size: 1rem; line-height: 1; cursor: pointer; border-radius: 5px;
-  box-shadow: 0 2px 6px rgba(40,24,4,0.4);
+/* Action tabs (collapse ▾ / fullscreen ⤢) — hidden on desktop, shown on mobile
+   as compact icon tabs that share the tab row with My Notes / Team Notes. */
+.nb-action-tab {
+  display: none; flex-shrink: 0;
+  padding: 6px 12px 8px; cursor: pointer;
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 0.8rem; letter-spacing: 0.05em;
+  border: 1px solid #7a5010; border-bottom: none;
+  background: linear-gradient(180deg, #c8a96a 0%, #b8944a 100%);
+  color: #5a3a10; margin-right: 3px; user-select: none;
+  position: relative; top: 1px;
+  transition: background 0.15s, color 0.15s;
+  /* Push action tabs to the right end of the tab row */
 }
-.nb-fullscreen-btn:active { background: #d4ae58; }
-/* Notebook expanded to fill the screen (toggled by the button). */
+.nb-action-tab:last-child { margin-left: auto; margin-right: 0; }
+.nb-action-tab:hover { background: linear-gradient(180deg, #efd898 0%, #d4ae58 100%); color: #2a1200; }
+/* Collapsed: hide the parchment body — tab bar stays visible. */
+.notebook.notebook--collapsed .nb-paper { display: none; }
+/* Fullscreen: cover the whole screen. */
 .notebook.notebook--fullscreen {
   position: fixed; inset: 0; z-index: 650; margin: 0;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
@@ -999,7 +1005,10 @@ body::before {
      The grid lives on .player-body, not .player-screen (which is flex). */
   .player-body { grid-template-columns: 1fr; }
   .player-notebook { position: static; }
-  .nb-fullscreen-btn { display: inline-flex; align-items: center; }
+  .nb-action-tab { display: inline-block; }
+  /* First action tab (collapse) — no extra margin; last (fullscreen) pushed right. */
+  .nb-action-tab:first-of-type { margin-left: auto; }
+  .nb-action-tab:last-child { margin-left: 0; margin-right: 0; }
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }

@@ -20,9 +20,9 @@ export interface NotebookHandle {
 }
 
 export interface NotebookOptions {
-  /** Show a fullscreen toggle (mobile only via CSS) that expands the notebook
-   *  to fill the screen — handy where vertical space is tight. */
-  fullscreenToggle?: boolean;
+  /** On mobile, add collapse + fullscreen action tabs so the notebook can be
+   *  tucked away or expanded without losing state. */
+  mobileControls?: boolean;
 }
 
 export function createNotebook(
@@ -61,16 +61,38 @@ export function createNotebook(
 
   const element = h('div', { class: 'notebook' }, tabBar, paper);
 
-  if (opts.fullscreenToggle) {
-    const btn = h('button', {
-      class: 'nb-fullscreen-btn', text: '⤢', attrs: { type: 'button', title: 'Fullscreen' },
+  if (opts.mobileControls) {
+    // ── Collapse tab ──
+    const collapseTab = h('button', {
+      class: 'nb-tab nb-action-tab', text: '▾',
+      attrs: { type: 'button', title: 'Collapse notes' },
     });
-    btn.addEventListener('click', () => {
-      const on = element.classList.toggle('notebook--fullscreen');
-      btn.textContent = on ? '✕' : '⤢';
-      btn.title = on ? 'Exit fullscreen' : 'Fullscreen';
+    collapseTab.addEventListener('click', () => {
+      const collapsed = element.classList.toggle('notebook--collapsed');
+      // Exit fullscreen if collapsing.
+      if (collapsed) element.classList.remove('notebook--fullscreen');
+      collapseTab.textContent = collapsed ? '▴' : '▾';
+      collapseTab.title = collapsed ? 'Expand notes' : 'Collapse notes';
+      fullscreenTab.textContent = '⤢';
+      fullscreenTab.title = 'Fullscreen';
     });
-    paper.append(btn);
+
+    // ── Fullscreen tab ──
+    const fullscreenTab = h('button', {
+      class: 'nb-tab nb-action-tab', text: '⤢',
+      attrs: { type: 'button', title: 'Fullscreen' },
+    });
+    fullscreenTab.addEventListener('click', () => {
+      const full = element.classList.toggle('notebook--fullscreen');
+      // Exit collapsed if going fullscreen.
+      if (full) element.classList.remove('notebook--collapsed');
+      fullscreenTab.textContent = full ? '✕' : '⤢';
+      fullscreenTab.title = full ? 'Exit fullscreen' : 'Fullscreen';
+      collapseTab.textContent = '▾';
+      collapseTab.title = 'Collapse notes';
+    });
+
+    tabBar.append(collapseTab, fullscreenTab);
   }
 
   if (activeId) setActive(activeId);
