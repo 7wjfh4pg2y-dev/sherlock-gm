@@ -70,7 +70,7 @@ export function createNotebook(
       btn.textContent = on ? '✕' : '⤢';
       btn.title = on ? 'Exit fullscreen' : 'Fullscreen';
     });
-    tabBar.append(btn);
+    paper.append(btn);
   }
 
   if (activeId) setActive(activeId);
