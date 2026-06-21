@@ -43,11 +43,11 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Header (slim — title + color picker + leave) ──
   const caseTitle = h('h1', { class: 'screen-title' });
+  // The title truncates with an ellipsis when it's too wide (notably on phones).
+  // Tapping it surfaces the full name via a toast — no header-layout disruption.
   caseTitle.style.cursor = 'pointer';
   caseTitle.addEventListener('click', () => {
-    const expanded = caseTitle.style.whiteSpace === 'normal';
-    caseTitle.style.whiteSpace = expanded ? '' : 'normal';
-    caseTitle.style.overflow = expanded ? '' : 'visible';
+    if (caseTitle.scrollWidth > caseTitle.clientWidth) toast(caseTitle.textContent ?? '');
   });
 
   // Color picker popup
