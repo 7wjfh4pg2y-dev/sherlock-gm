@@ -19,7 +19,17 @@ export interface NotebookHandle {
   setActive(id: string): void;
 }
 
-export function createNotebook(tabs: NotebookTab[], activeId = tabs[0]?.id): NotebookHandle {
+export interface NotebookOptions {
+  /** Show a fullscreen toggle (mobile only via CSS) that expands the notebook
+   *  to fill the screen — handy where vertical space is tight. */
+  fullscreenToggle?: boolean;
+}
+
+export function createNotebook(
+  tabs: NotebookTab[],
+  activeId = tabs[0]?.id,
+  opts: NotebookOptions = {},
+): NotebookHandle {
   const tabEls = new Map<string, HTMLElement>();
   const pageEls = new Map<string, HTMLElement>();
 
@@ -50,6 +60,19 @@ export function createNotebook(tabs: NotebookTab[], activeId = tabs[0]?.id): Not
   }
 
   const element = h('div', { class: 'notebook' }, tabBar, paper);
+
+  if (opts.fullscreenToggle) {
+    const btn = h('button', {
+      class: 'nb-fullscreen-btn', text: '⤢', attrs: { type: 'button', title: 'Fullscreen' },
+    });
+    btn.addEventListener('click', () => {
+      const on = element.classList.toggle('notebook--fullscreen');
+      btn.textContent = on ? '✕' : '⤢';
+      btn.title = on ? 'Exit fullscreen' : 'Fullscreen';
+    });
+    tabBar.append(btn);
+  }
+
   if (activeId) setActive(activeId);
 
   return { element, setActive };

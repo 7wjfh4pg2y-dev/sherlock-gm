@@ -244,7 +244,7 @@ export function createPlayerScreen(): ScreenHandle {
   const notebook = createNotebook([
     { id: 'private', label: 'My Notes', content: privateContent },
     { id: 'shared',  label: 'Team Notes', content: sharedContent },
-  ]);
+  ], undefined, { fullscreenToggle: true });
   const notebookWrap = h('aside', { class: 'player-notebook' }, notebook.element);
 
   const element = h('div', { class: 'player-screen' },

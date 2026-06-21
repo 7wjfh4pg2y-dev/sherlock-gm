@@ -910,6 +910,23 @@ body::before {
 }
 .player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
+/* Notebook fullscreen toggle — only useful (and only shown) on mobile, where
+   vertical space is scarce. Sits at the right end of the tab row. */
+.nb-fullscreen-btn {
+  display: none; margin-left: auto; align-self: flex-end;
+  background: linear-gradient(180deg, #c8a96a 0%, #b8944a 100%);
+  border: 1px solid #7a5010; border-bottom: none; color: #5a3a10;
+  font-size: 0.85rem; line-height: 1; padding: 5px 10px 7px; cursor: pointer;
+  position: relative; top: 1px;
+}
+/* Notebook expanded to fill the screen (toggled by the button). */
+.notebook.notebook--fullscreen {
+  position: fixed; inset: 0; z-index: 650; margin: 0;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: #1a1208;
+}
+.notebook.notebook--fullscreen .nb-paper { flex: 1; min-height: 0; }
+
 /* Inline clue detail panel — expands above the grid so the notebook stays
    interactive while a clue is open (no blocking modal overlay). */
 .clue-detail {
@@ -979,6 +996,7 @@ body::before {
      The grid lives on .player-body, not .player-screen (which is flex). */
   .player-body { grid-template-columns: 1fr; }
   .player-notebook { position: static; }
+  .nb-fullscreen-btn { display: inline-flex; align-items: center; }
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }
