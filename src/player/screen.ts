@@ -265,12 +265,16 @@ export function createPlayerScreen(): ScreenHandle {
     } catch { toast('Could not save note.'); }
   }
 
-  // Tracks notes currently being shared so a double-click (the action sits in a
-  // re-rendering feed) can't post the same note to the team feed twice.
+  // Persistent set of note IDs already shared this session. Never cleared so
+  // re-sharing the same note shows a message instead of posting a duplicate.
+  const sharedNoteIds = new Set<string>();
+  // Tracks notes currently in-flight to prevent concurrent double-submit.
   const sharingNotes = new Set<string>();
   async function shareNote(note: NoteRow): Promise<void> {
     const caseId = store.getState().currentCaseId;
-    if (!caseId || sharingNotes.has(note.id)) return;
+    if (!caseId) return;
+    if (sharedNoteIds.has(note.id)) { toast('Already shared with the team.'); return; }
+    if (sharingNotes.has(note.id)) return;
     sharingNotes.add(note.id);
     const me = store.getState().identity;
     try {
@@ -281,6 +285,7 @@ export function createPlayerScreen(): ScreenHandle {
         player_name: me?.name ?? note.player_name,
         player_color: me?.color ?? note.player_color,
       });
+      sharedNoteIds.add(note.id);
       toast('Shared with the team.');
     } catch { toast('Could not share note.'); }
     finally { sharingNotes.delete(note.id); }
