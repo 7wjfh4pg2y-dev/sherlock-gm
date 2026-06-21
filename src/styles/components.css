@@ -263,6 +263,17 @@
 /* Fullscreen: fixed top-right */
 .map-ctrl-bar--overlay { position: fixed; top: 16px; right: 16px; z-index: 801; }
 
+/* Standalone close cross (PDF viewer) — pinned to the upper-right corner */
+.map-viewer-close {
+  position: fixed; top: 16px; right: 16px; z-index: 802;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  background: rgba(10,7,3,0.5); backdrop-filter: blur(5px);
+  border: 1px solid rgba(201,169,110,0.25); border-radius: 4px;
+  color: var(--parchment); font-size: 1.1rem; line-height: 1; cursor: pointer;
+  font-family: inherit; transition: background 0.12s;
+}
+.map-viewer-close:hover { background: rgba(201,169,110,0.25); }
+
 /* ── PDF viewer (PDF.js, in-world chrome) ── */
 .pdf-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.96); z-index: 800; display: flex; flex-direction: column; align-items: center; }
 .pdf-viewer-toolbar {
