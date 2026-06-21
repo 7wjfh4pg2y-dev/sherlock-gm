@@ -890,6 +890,10 @@ body::before {
 .map-ctrl-sep { width: 1px; align-self: stretch; margin: 4px 2px; background: rgba(255,255,255,0.25); }
 .map-tool-btn.active { background: var(--sepia); color: var(--paper); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4); }
 
+/* Fullscreen collaborative map: a hosted inlay filling the screen. */
+.map-fullscreen-overlay { position: fixed; inset: 0; z-index: 800; background: rgba(8,6,3,0.96); }
+.map-fullscreen-overlay > .player-map-inlay { width: 100%; height: 100%; border: none; box-shadow: none; }
+
 /* Notebook stretches to match the left panel height (player-body uses
    align-items:stretch). The note feed scrolls internally with a hidden bar. */
 .player-notebook {

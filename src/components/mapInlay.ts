@@ -9,7 +9,6 @@ import { h, clear } from '../util/dom';
 import { attachPanZoom } from '../util/panZoom';
 import { store } from '../state/store';
 import { mapStrokes as strokeRepo } from '../data/supabase';
-import { openMapViewer } from './mapViewer';
 import { toast } from './toast';
 import { confirmDelete } from './confirmDelete';
 import type { MapRow, MapStrokeRow, MapStrokePoint } from '../data/types';
@@ -29,8 +28,18 @@ export interface MapAuthor {
 // How close (in normalised units) a click must be to erase a marking.
 const ERASE_HIT = 0.025;
 
-export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAuthor }): MapInlayHandle {
-  const { map, isGM, author } = opts;
+export interface MapInlayOpts {
+  map: MapRow;
+  isGM: boolean;
+  author: MapAuthor;
+  /** When set, this inlay is the fullscreen instance: the corner button closes
+   *  it (via onClose) instead of opening another fullscreen view. */
+  isFullscreen?: boolean;
+  onClose?: () => void;
+}
+
+export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
+  const { map, isGM, author, isFullscreen, onClose } = opts;
   let tool: Tool = 'pan';
   let drawing = false;
   let current: MapStrokePoint[] = [];
@@ -460,7 +469,9 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' }, on: { click: () => pz.reset() } }),
     h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' }, on: { click: () => pz.zoomOut() } }),
     h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' }, on: { click: () => pz.zoomIn() } }),
-    h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(map.url, map.name) } }),
+    isFullscreen
+      ? h('button', { class: 'map-ctrl-btn', text: '✕', attrs: { title: 'Close' }, on: { click: () => onClose?.() } })
+      : h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openFullscreenMap({ map, isGM, author }) } }),
     ...(clearBtn ? [h('span', { class: 'map-ctrl-sep' }), clearBtn] : []),
   );
 
@@ -494,4 +505,21 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
       clear(element);
     },
   };
+}
+
+// Open the collaborative map in a fullscreen overlay. Hosts a second inlay
+// (sharing the same map/author) with the full pin/draw/erase toolset; markings
+// sync through the store so both views stay in lockstep. Esc / ✕ closes.
+export function openFullscreenMap(opts: { map: MapRow; isGM: boolean; author: MapAuthor }): void {
+  const overlay = h('div', { class: 'map-fullscreen-overlay' });
+  function onKey(e: KeyboardEvent): void { if (e.key === 'Escape') close(); }
+  function close(): void {
+    document.removeEventListener('keydown', onKey);
+    inlay.detach();
+    overlay.remove();
+  }
+  const inlay = buildMapInlay({ ...opts, isFullscreen: true, onClose: close });
+  overlay.append(inlay.element);
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(overlay);
 }
