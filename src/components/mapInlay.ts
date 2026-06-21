@@ -106,6 +106,8 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   });
 
   // ── Canvas sizing: backing store matches the image's natural pixels. ──
+  // The layers box now renders at natural size; pan/zoom shrinks it to fit the
+  // panel, so the map stays crisp instead of being a small upscaled bitmap.
   function sizeCanvas(): void {
     const w = img.naturalWidth || img.width;
     const hgt = img.naturalHeight || img.height;
@@ -114,8 +116,20 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
       canvas.height = hgt;
     }
   }
-  if (img.complete) sizeCanvas();
-  img.addEventListener('load', () => { sizeCanvas(); draw(); });
+  // Compute the scale that fits the natural-size map inside the viewport and
+  // hand it to pan/zoom as the reset/base scale.
+  function fitToViewport(): void {
+    const w = img.naturalWidth || canvas.width;
+    const hgt = img.naturalHeight || canvas.height;
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    if (!w || !hgt || !vw || !vh) return;
+    pz.setFitScale(Math.min(vw / w, vh / hgt));
+  }
+  if (img.complete) { sizeCanvas(); fitToViewport(); }
+  img.addEventListener('load', () => { sizeCanvas(); fitToViewport(); draw(); });
+  const onResize = (): void => fitToViewport();
+  window.addEventListener('resize', onResize);
 
   // ── Pin drag state ──
   let draggingPin: MapStrokeRow | null = null;
@@ -461,6 +475,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
     element,
     detach() {
       unsub();
+      window.removeEventListener('resize', onResize);
       pz.detach();
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);

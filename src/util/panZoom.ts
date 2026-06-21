@@ -6,6 +6,9 @@
 export interface PanZoomHandle {
   zoomIn(): void;
   zoomOut(): void;
+  /** Set the base ("fit") scale used by reset() — e.g. to shrink a
+   *  natural-size layer into a smaller viewport. Applies immediately. */
+  setFitScale(scale: number): void;
   reset(): void;
   /** Suspend/resume drag-to-pan (wheel/pinch zoom stays active). Used when a
    *  drawing tool takes over the pointer so dragging draws instead of panning. */
@@ -18,10 +21,13 @@ export function attachPanZoom(
   img: HTMLElement,
   opts: { min?: number; max?: number; step?: number } = {},
 ): PanZoomHandle {
-  const min = opts.min ?? 0.5;
+  let min = opts.min ?? 0.5;
   const max = opts.max ?? 6;
   const step = opts.step ?? 0.1;
 
+  // Base scale that reset() returns to. 1 = layer rendered at display size; for
+  // a natural-size layer this is set below 1 to fit it into the viewport.
+  let fitScale = 1;
   let scale = 1;
   let tx = 0;
   let ty = 0;
@@ -150,8 +156,17 @@ export function attachPanZoom(
   return {
     zoomIn()  { bump(1); },
     zoomOut() { bump(-1); },
+    setFitScale(s: number) {
+      fitScale = s;
+      // Allow zooming/resetting below the default floor so the whole map fits.
+      min = Math.min(min, s);
+      scale = s;
+      tx = 0;
+      ty = 0;
+      apply();
+    },
     reset() {
-      scale = 1;
+      scale = fitScale;
       tx = 0;
       ty = 0;
       apply();
