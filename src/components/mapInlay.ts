@@ -71,8 +71,18 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   function showLabelEditor(vx: number, vy: number, strokeId: string, existingLabel = ''): void {
     labelTargetId = strokeId;
     labelInput.value = existingLabel;
-    labelBox.style.left = `${vx}px`;
-    labelBox.style.top = `${vy}px`;
+    // Position the box, then clamp so it never overflows the viewport.
+    // The CSS transform nudges it 14px right / 14px up, so account for that.
+    const BOX_W = 210; // approx box width (input 140 + 2 buttons + padding + gap)
+    const BOX_H = 38;  // approx box height
+    const NUDGE_X = 14;
+    const NUDGE_Y = -14;
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const clampedX = Math.min(vx, vw - BOX_W - NUDGE_X - 4);
+    const clampedY = Math.max(BOX_H - NUDGE_Y + 4, Math.min(vy, vh - BOX_H + NUDGE_Y - 4));
+    labelBox.style.left = `${clampedX}px`;
+    labelBox.style.top  = `${clampedY}px`;
     labelBox.classList.remove('hidden');
     // Suspend canvas interaction so it can't steal focus.
     canvas.style.pointerEvents = 'none';
