@@ -120,15 +120,32 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     if (e.key === 'Escape') hideLabelEditor();
   });
 
-  // ── Canvas sizing: backing store matches the image's natural pixels. ──
-  // The layers box now renders at natural size; pan/zoom shrinks it to fit the
-  // panel, so the map stays crisp instead of being a small upscaled bitmap.
+  // ── Canvas sizing ──
+  // Mobile Safari hard limits: ~4096 px per side, ~8M px total (the map is
+  // continuously composited during pan/zoom, so we use a tighter area cap than
+  // PDFs). When the image exceeds the caps we scale the backing store down and
+  // let CSS stretch it back to full display size — still far crisper than a
+  // small rendered bitmap.
+  const MAX_MAP_DIM  = 4096;
+  const MAX_MAP_AREA = 8_000_000;
+
   function sizeCanvas(): void {
-    const w = img.naturalWidth || img.width;
-    const hgt = img.naturalHeight || img.height;
-    if (w && hgt && (canvas.width !== w || canvas.height !== hgt)) {
-      canvas.width = w;
+    let w   = img.naturalWidth  || img.width;
+    let hgt = img.naturalHeight || img.height;
+    if (!w || !hgt) return;
+
+    const dimCap  = MAX_MAP_DIM  / Math.max(w, hgt);
+    const areaCap = Math.sqrt(MAX_MAP_AREA / (w * hgt));
+    const cap = Math.min(1, dimCap, areaCap);
+    if (cap < 1) { w = Math.round(w * cap); hgt = Math.round(hgt * cap); }
+
+    if (canvas.width !== w || canvas.height !== hgt) {
+      canvas.width  = w;
       canvas.height = hgt;
+      // Keep CSS display size at full natural resolution so the image stays
+      // crisp: the canvas is CSS-scaled by panZoom anyway.
+      canvas.style.width  = `${img.naturalWidth  || w}px`;
+      canvas.style.height = `${img.naturalHeight || hgt}px`;
     }
   }
   // Compute the scale that fits the natural-size map inside the viewport and
