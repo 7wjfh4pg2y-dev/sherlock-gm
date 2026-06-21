@@ -72,9 +72,6 @@ export const cases = {
   async setMap(id: string, mapId: string | null): Promise<void> {
     unwrap(await sb.from('cases').update({ map_id: mapId }).eq('id', id).select());
   },
-  async setOrdinal(id: string, ordinal: number): Promise<void> {
-    unwrap(await sb.from('cases').update({ ordinal }).eq('id', id).select());
-  },
   async updateFields(id: string, patch: { name: string; description: string | null; ordinal: number }): Promise<CaseRow> {
     return unwrap(await sb.from('cases').update(patch).eq('id', id).select().single());
   },
@@ -163,9 +160,6 @@ export const notes = {
   },
   async updateContent(id: string, content: string): Promise<void> {
     unwrap(await sb.from('notes').update({ content }).eq('id', id).select());
-  },
-  async setPrivate(id: string, isPrivate: boolean): Promise<void> {
-    unwrap(await sb.from('notes').update({ is_private: isPrivate }).eq('id', id).select());
   },
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('notes').delete().eq('id', id).select());
@@ -434,7 +428,7 @@ export const storage = {
   },
   async uploadMapImage(file: File): Promise<string> {
     const ext = file.name.split('.').pop() ?? 'png';
-    const path = `maps/${Date.now()}.${ext}`;
+    const path = `maps/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await sb.storage.from(STORAGE_BUCKET).upload(path, file);
     if (error) throw new DbError(error.message);
     return sb.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
@@ -516,13 +510,11 @@ export interface PresenceMeta {
 // Single presence channel that both tracks the local player AND notifies on
 // sync events. All listeners must be added before .subscribe() — Supabase
 // throws if you call .on() on an already-subscribed channel.
-// `onSync` can be updated later via the returned setter.
 export function joinPresence(
   caseId: string,
   meta: PresenceMeta,
   onSync: (online: PresenceMeta[]) => void,
-): { channel: RealtimeChannel; setOnSync: (cb: (online: PresenceMeta[]) => void) => void } {
-  let syncCb = onSync;
+): RealtimeChannel {
   const channel = sb.channel(`presence-${caseId}`);
   channel
     .on('presence', { event: 'sync' }, () => {
@@ -530,12 +522,12 @@ export function joinPresence(
       const seen = new Map<string, PresenceMeta>();
       for (const entries of Object.values(state))
         for (const e of entries) seen.set(`${e.player_name}|${e.player_color}`, e);
-      syncCb([...seen.values()]);
+      onSync([...seen.values()]);
     })
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') void channel.track(meta);
     });
-  return { channel, setOnSync: (cb) => { syncCb = cb; } };
+  return channel;
 }
 
 // GM-only watcher: does not track a player, just observes presence.

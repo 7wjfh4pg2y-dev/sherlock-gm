@@ -10,6 +10,7 @@ import type { QuestionRow, QuestionCategory } from '../data/types';
 import { questions as questionRepo, solutions as solutionRepo, storage } from '../data/supabase';
 import { loadGMQuestions, loadGMSolution } from './load';
 import { openTitledModal } from '../components/modal';
+import { openMapViewer } from '../components/mapViewer';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { HOLMES_SCORE, verdictFor } from '../data/scoring';
@@ -408,6 +409,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
     if (solImg) {
       const img = document.createElement('img');
       img.src = solImg; img.className = 'briefing-img';
+      img.addEventListener('click', () => openMapViewer(solImg, 'Solution'));
       displayChildren.push(img);
     }
     if (!content && !solImg) displayChildren.push(h('span', { class: 'briefing-empty', text: 'No solution written yet.' }));

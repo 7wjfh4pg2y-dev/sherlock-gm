@@ -139,10 +139,6 @@ export const selectors = {
     if (!s.identity) return [];
     return s.notes.filter((n) => n.is_private && n.player_name === s.identity!.name);
   },
-  // All notes for one player (GM per-player tab): private + shared.
-  notesForPlayer(s: AppState, playerName: string): NoteRow[] {
-    return s.notes.filter((n) => n.player_name === playerName);
-  },
   // The team's collective answer to a question, if any.
   teamAnswerFor(s: AppState, questionId: string): QuestionAnswerRow | null {
     return s.questionAnswers.find((a) => a.question_id === questionId) ?? null;

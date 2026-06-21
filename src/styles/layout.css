@@ -970,10 +970,9 @@ body::before {
 }
 
 @media (max-width: 860px) {
-  .player-screen {
-    grid-template-columns: 1fr;
-    grid-template-areas: "header" "briefing" "content" "notebook";
-  }
+  /* Collapse the player's two-column body (main | notebook) to a single column.
+     The grid lives on .player-body, not .player-screen (which is flex). */
+  .player-body { grid-template-columns: 1fr; }
   .player-notebook { position: static; }
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }

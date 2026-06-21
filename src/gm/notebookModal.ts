@@ -1,7 +1,7 @@
-// ── GM Notebook modal ──
+// ── GM Notebook panel ──
 // Read-only view (plus delete) of every player's notes, grouped into a Shared
-// tab + one tab per player. Self-contained: opens its own modal, subscribes to
-// the store while open, and tears the subscription down when the modal closes.
+// tab + one tab per player. Renders inline in the GM screen and exposes a
+// refresh() the screen calls on store updates — it does not subscribe itself.
 
 import { h, clear } from '../util/dom';
 import { store, type AppState } from '../state/store';

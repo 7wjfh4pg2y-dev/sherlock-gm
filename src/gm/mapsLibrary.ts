@@ -49,12 +49,12 @@ export function openMapsLibrary(): void {
         ? h('button', {
             class: 'btn btn-secondary btn-sm map-attached',
             text: '✓ In this case',
-            on: { click: () => void attachMap(null, mapRows, m.id) },
+            on: { click: () => void attachMap(null, mapRows) },
           })
         : h('button', {
             class: 'btn btn-primary btn-sm',
             text: 'Use in this case',
-            on: { click: () => void attachMap(m.id, mapRows, m.id) },
+            on: { click: () => void attachMap(m.id, mapRows) },
           });
 
       const renameInput = h('input', {
@@ -113,7 +113,7 @@ export function openMapsLibrary(): void {
     }
   }
 
-  async function attachMap(mapId: string | null, mapRows: MapRow[], _clickedId: string): Promise<void> {
+  async function attachMap(mapId: string | null, mapRows: MapRow[]): Promise<void> {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return;
     try {

@@ -101,7 +101,7 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
         }),
     }),
   );
-  const { channel: presenceCh } = joinPresence(
+  const presenceCh = joinPresence(
     caseId,
     { player_name: name, player_color: color },
     (list) => presenceSyncCb(list),

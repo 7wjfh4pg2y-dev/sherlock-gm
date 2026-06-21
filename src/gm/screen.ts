@@ -702,7 +702,10 @@ export function createGMScreen(): GMScreenHandle {
     if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
     if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
-      renderBriefing(s);
+      // While editing, skip the rebuild so a realtime store update (e.g. a player
+      // note) doesn't wipe unsaved textarea text — the persistent briefingPanel
+      // keeps the edit DOM. Mirrors buildGMSolutionPanel's `if (editing) return`.
+      if (!briefingEditing) renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
     } else if (activeTab === 'questions') {
       gmQuestions.refresh();

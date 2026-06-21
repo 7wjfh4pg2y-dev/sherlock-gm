@@ -259,9 +259,13 @@ export function createPlayerScreen(): ScreenHandle {
     } catch { toast('Could not save note.'); }
   }
 
+  // Tracks notes currently being shared so a double-click (the action sits in a
+  // re-rendering feed) can't post the same note to the team feed twice.
+  const sharingNotes = new Set<string>();
   async function shareNote(note: NoteRow): Promise<void> {
     const caseId = store.getState().currentCaseId;
-    if (!caseId) return;
+    if (!caseId || sharingNotes.has(note.id)) return;
+    sharingNotes.add(note.id);
     const me = store.getState().identity;
     try {
       await noteRepo.create({
@@ -273,6 +277,7 @@ export function createPlayerScreen(): ScreenHandle {
       });
       toast('Shared with the team.');
     } catch { toast('Could not share note.'); }
+    finally { sharingNotes.delete(note.id); }
   }
 
   async function deleteNote(note: NoteRow): Promise<void> {

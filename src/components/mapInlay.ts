@@ -11,6 +11,7 @@ import { store } from '../state/store';
 import { mapStrokes as strokeRepo } from '../data/supabase';
 import { openMapViewer } from './mapViewer';
 import { toast } from './toast';
+import { confirmDelete } from './confirmDelete';
 import type { MapRow, MapStrokeRow, MapStrokePoint } from '../data/types';
 
 type Tool = 'pan' | 'draw' | 'pin' | 'erase';
@@ -418,7 +419,7 @@ export function buildMapInlay(opts: { map: MapRow; isGM: boolean; author: MapAut
   async function clearAllMarkings(): Promise<void> {
     const caseId = store.getState().currentCaseId;
     if (!caseId) return;
-    if (!confirm('Clear all markings from the map? This cannot be undone.')) return;
+    if (!(await confirmDelete('Clear all markings from the map? This cannot be undone.', 'Clear'))) return;
     const prev = store.getState().mapStrokes;
     store.set({ mapStrokes: [] });
     try { await strokeRepo.clearForCase(caseId); }
