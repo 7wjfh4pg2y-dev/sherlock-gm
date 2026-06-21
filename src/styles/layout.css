@@ -911,14 +911,17 @@ body::before {
 .player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
 /* Notebook fullscreen toggle — only useful (and only shown) on mobile, where
-   vertical space is scarce. Pinned flush to the notebook's top-right corner. */
+   vertical space is scarce. Floats at the parchment's bottom-right, clear of the
+   composer's Add Note button at the top. */
 .nb-fullscreen-btn {
-  display: none; position: absolute; top: 4px; right: 4px; z-index: 4;
-  background: none; border: none; color: #5a3a10;
-  font-size: 0.95rem; line-height: 1; padding: 4px 6px; cursor: pointer;
-  border-radius: 3px; opacity: 0.75;
+  display: none; position: absolute; bottom: 12px; right: 12px; z-index: 5;
+  width: 34px; height: 34px; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #efd898 0%, #d4ae58 100%);
+  border: 1px solid #7a5010; color: #3a2200;
+  font-size: 1rem; line-height: 1; cursor: pointer; border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(40,24,4,0.4);
 }
-.nb-fullscreen-btn:hover { opacity: 1; background: rgba(122,80,16,0.14); }
+.nb-fullscreen-btn:active { background: #d4ae58; }
 /* Notebook expanded to fill the screen (toggled by the button). */
 .notebook.notebook--fullscreen {
   position: fixed; inset: 0; z-index: 650; margin: 0;
