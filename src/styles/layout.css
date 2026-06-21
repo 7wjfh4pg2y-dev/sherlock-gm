@@ -911,10 +911,10 @@ body::before {
 .player-notebook .nb-notes::-webkit-scrollbar { width: 0; height: 0; }
 
 /* Action tabs (collapse ▾ / fullscreen ⤢) — hidden on desktop, shown on mobile
-   as compact icon tabs that share the tab row with My Notes / Team Notes. */
+   as compact icon tabs grouped at the right end of the tab row. */
 .nb-action-tab {
   display: none; flex-shrink: 0;
-  padding: 6px 12px 8px; cursor: pointer;
+  padding: 6px 14px 8px; cursor: pointer;
   font-family: 'Special Elite', 'Courier New', monospace;
   font-size: 0.8rem; letter-spacing: 0.05em;
   border: 1px solid #7a5010; border-bottom: none;
@@ -922,9 +922,8 @@ body::before {
   color: #5a3a10; margin-right: 3px; user-select: none;
   position: relative; top: 1px;
   transition: background 0.15s, color 0.15s;
-  /* Push action tabs to the right end of the tab row */
 }
-.nb-action-tab:last-child { margin-left: auto; margin-right: 0; }
+.nb-action-tab:last-child { margin-right: 0; }
 .nb-action-tab:hover { background: linear-gradient(180deg, #efd898 0%, #d4ae58 100%); color: #2a1200; }
 /* Collapsed: hide the parchment body — tab bar stays visible. */
 .notebook.notebook--collapsed .nb-paper { display: none; }
@@ -1006,9 +1005,17 @@ body::before {
   .player-body { grid-template-columns: 1fr; }
   .player-notebook { position: static; }
   .nb-action-tab { display: inline-block; }
-  /* First action tab (collapse) — no extra margin; last (fullscreen) pushed right. */
+  /* Group the two icon tabs at the right edge of the tab row. */
   .nb-action-tab:first-of-type { margin-left: auto; }
-  .nb-action-tab:last-child { margin-left: 0; margin-right: 0; }
+  /* Wrap the tab row so the action tabs stay on the right without a big void. */
+  .player-notebook .nb-tabs { flex-wrap: nowrap; }
+  /* Collapsed: dock the tab bar to the bottom of the screen, freeing the space
+     above for the case content. */
+  .notebook.notebook--collapsed {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 600;
+    margin: 0; padding: 6px 14px env(safe-area-inset-bottom, 6px);
+    background: linear-gradient(180deg, rgba(20,14,6,0) 0%, rgba(20,14,6,0.92) 38%);
+  }
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }
