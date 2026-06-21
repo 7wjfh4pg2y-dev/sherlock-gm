@@ -12,6 +12,7 @@ import { setPresenceSync, updatePresenceMeta } from './join';
 import { PLAYER_COLORS } from '../data/colors';
 import { createNotebook, noteCard, noteEditor, noteComposer, fillFeed } from '../components/notebook';
 import { openMapViewer } from '../components/mapViewer';
+import { createFullscreener, type Fullscreener } from '../util/fullscreen';
 import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
@@ -38,6 +39,7 @@ export function createPlayerScreen(): ScreenHandle {
   let mapInlay: MapInlayHandle | null = null;
   let builtMapId: string | null = null;
   let newspaperPdfHandle: { destroy(): void; zoomIn(): void; zoomOut(): void; reset(): void } | null = null;
+  let newspaperFullscreen: Fullscreener | null = null;
   let builtNewspaperUrl: string | null = null;
   let currentNewspaperUrl: string | null = null;
 
@@ -513,6 +515,8 @@ export function createPlayerScreen(): ScreenHandle {
   function buildNewspaperInlay(paper: NewspaperRow, allPapers: NewspaperRow[]): void {
     // Don't rebuild if the same paper is already displayed.
     if (paper.image_url === builtNewspaperUrl && newspaperPanel.childElementCount > 0) return;
+    newspaperFullscreen?.dispose();
+    newspaperFullscreen = null;
     newspaperPdfHandle?.destroy();
     newspaperPdfHandle = null;
     builtNewspaperUrl = paper.image_url;
@@ -543,15 +547,24 @@ export function createPlayerScreen(): ScreenHandle {
 
     let handle: { destroy(): void; zoomIn(): void; zoomOut(): void; reset(): void } | null = null;
 
+    const fsBtn = h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' } });
     const ctrls = h('div', { class: 'map-ctrl-bar' },
       h('button', { class: 'map-ctrl-btn', text: '⟲', attrs: { title: 'Reset view' },  on: { click: () => handle?.reset() } }),
       h('button', { class: 'map-ctrl-btn', text: '−', attrs: { title: 'Zoom out' },     on: { click: () => handle?.zoomOut() } }),
       h('button', { class: 'map-ctrl-btn', text: '+', attrs: { title: 'Zoom in' },      on: { click: () => handle?.zoomIn() } }),
-      h('button', { class: 'map-ctrl-btn', text: '⤢', attrs: { title: 'Fullscreen' }, on: { click: () => openMapViewer(paper.image_url, paper.name) } }),
+      fsBtn,
     );
 
     const inlay = h('div', { class: 'player-newspaper-inlay' }, scrollEl, ctrls);
     newspaperPanel.append(inlay);
+
+    // Fullscreen by reparenting the existing inlay (canvases preserved) — no
+    // second render, so it can't crash low-memory mobile browsers.
+    newspaperFullscreen = createFullscreener(inlay, (open) => {
+      fsBtn.textContent = open ? '✕' : '⤢';
+      fsBtn.title = open ? 'Exit fullscreen' : 'Fullscreen';
+    });
+    fsBtn.addEventListener('click', () => newspaperFullscreen?.toggle());
 
     void import('../components/pdfViewer').then((m) => {
       const pdfHandle = m.createInlinePdfViewer(paper.image_url);
@@ -609,7 +622,7 @@ export function createPlayerScreen(): ScreenHandle {
     // Tear down the map's window listeners whenever we're not showing the map.
     if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
     // Tear down newspaper PDF when leaving; builtNewspaperUrl resets so it rebuilds on re-enter.
-    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
+    if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperFullscreen?.dispose(); newspaperFullscreen = null; newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       renderBriefing(s);
       replaceChildren(panelEl, briefingPanel);
@@ -709,6 +722,7 @@ export function createPlayerScreen(): ScreenHandle {
       unsubscribe();
       setPresenceSync(() => {});
       mapInlay?.detach();
+      newspaperFullscreen?.dispose();
       newspaperPdfHandle?.destroy();
     },
   };
