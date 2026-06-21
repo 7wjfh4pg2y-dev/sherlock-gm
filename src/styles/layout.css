@@ -168,7 +168,7 @@ body::before {
 
 /* ── GM screen ── */
 .gm-screen {
-  height: 100vh; overflow: hidden;
+  height: 100vh; height: 100dvh; overflow: hidden;
   display: flex; flex-direction: column;
   padding: 22px 32px 0;
 }
@@ -526,7 +526,7 @@ body::before {
 
 /* ── Player screen ── */
 .player-screen {
-  height: 100vh; overflow: hidden;
+  height: 100vh; height: 100dvh; overflow: hidden;
   display: flex; flex-direction: column;
   padding: 20px 28px; gap: 0;
 }
@@ -977,6 +977,23 @@ body::before {
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }
+}
+
+/* ── Phone tuning (≤480px) ──
+   Scoped entirely to small screens, so it has no effect on desktop/tablet.
+   Trims chrome and, most importantly, keeps the 8-tab bars usable by letting
+   them scroll sideways instead of overflowing a narrow viewport. */
+@media (max-width: 480px) {
+  .player-screen { padding: 12px 14px; }
+  .gm-screen { padding: 14px 14px 0; }
+  .screen-title { font-size: 1.2rem; }
+
+  .player-tab-bar, .gm-tab-bar {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .player-tab-bar::-webkit-scrollbar, .gm-tab-bar::-webkit-scrollbar { display: none; }
+  .player-tab-btn, .gm-tab-btn { flex: 0 0 auto; padding: 9px 13px; }
 }
 
 /* ── Color picker (join screen + mid-session) ── */

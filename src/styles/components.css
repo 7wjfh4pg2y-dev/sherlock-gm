@@ -233,7 +233,7 @@
 
 /* ── Map viewer ── */
 .map-viewer-overlay { position: fixed; inset: 0; background: rgba(8,6,3,0.94); z-index: 800; display: flex; align-items: center; justify-content: center; }
-.map-viewer-stage { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+.map-viewer-stage { width: 100vw; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; }
 /* Fixed, clipped window — the map pans/zooms inside; the frame stays put. */
 .map-viewer-frame {
   width: 92vw; height: 90vh; overflow: hidden;
