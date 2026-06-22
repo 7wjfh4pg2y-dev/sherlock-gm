@@ -450,6 +450,9 @@ body::before {
 .clue-action-btn.del:hover { background: #f5e8e8; }
 .clue-action-btn.erase { color: var(--red); border-right: 1px solid var(--parchment-darker); }
 .clue-action-btn.erase:hover { background: #f5e8e8; }
+/* Keep all three action hovers warm/consistent in the questions panel. */
+.gm-question-actions .clue-action-btn.erase:hover,
+.gm-question-actions .clue-action-btn.del:hover { background: var(--parchment-dark); }
 .clue-add-card {
   border: 1px dashed rgba(184,160,120,0.45);
   background: rgba(244,232,206,0.04);
