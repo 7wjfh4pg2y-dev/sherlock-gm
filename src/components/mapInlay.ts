@@ -41,11 +41,14 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   let current: MapStrokePoint[] = [];
 
   const img = h('img', { class: 'player-map-img', attrs: { src: map.url, alt: map.name, decoding: 'async' } });
+  // canvas lives OUTSIDE layers so it is never CSS-transformed with the map.
+  // It stays viewport-sized and redraws in viewport-space coords on every
+  // pan/zoom update — this prevents the GPU from compositing a huge texture.
   const canvas = h('canvas', { class: 'map-draw-canvas' }) as HTMLCanvasElement;
-  const layers = h('div', { class: 'map-layers' }, img, canvas);
-  const viewport = h('div', { class: 'player-map-viewport' }, layers);
+  const layers = h('div', { class: 'map-layers' }, img);
+  const viewport = h('div', { class: 'player-map-viewport' }, layers, canvas);
   // labelBox is appended to the viewport after it's declared below.
-  const pz = attachPanZoom(viewport, layers);
+  const pz = attachPanZoom(viewport, layers, { onTransform: () => draw() });
   const ctx = canvas.getContext('2d')!;
 
   // The acting author, read live so a mid-session colour/name change is honoured
@@ -121,50 +124,56 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   });
 
   // ── Canvas sizing ──
-  // Mobile Safari hard limits: ~4096 px per side, ~8M px total (the map is
-  // continuously composited during pan/zoom, so we use a tighter area cap than
-  // PDFs). When the image exceeds the caps we scale the backing store down and
-  // let CSS stretch it back to full display size — still far crisper than a
-  // small rendered bitmap.
-  const MAX_MAP_DIM  = 4096;
-  const MAX_MAP_AREA = 8_000_000;
-
+  // The canvas is a viewport-sized overlay (NOT inside .map-layers), so the
+  // GPU never composites a massive texture during pan/zoom. It redraws in
+  // viewport-space coordinates on every transform update via onTransform.
   function sizeCanvas(): void {
-    let w   = img.naturalWidth  || img.width;
-    let hgt = img.naturalHeight || img.height;
-    if (!w || !hgt) return;
-
-    const dimCap  = MAX_MAP_DIM  / Math.max(w, hgt);
-    const areaCap = Math.sqrt(MAX_MAP_AREA / (w * hgt));
-    const cap = Math.min(1, dimCap, areaCap);
-    if (cap < 1) { w = Math.round(w * cap); hgt = Math.round(hgt * cap); }
-
-    if (canvas.width !== w || canvas.height !== hgt) {
-      canvas.width  = w;
-      canvas.height = hgt;
-      // Keep CSS display size at full natural resolution so the image stays
-      // crisp: the canvas is CSS-scaled by panZoom anyway.
-      canvas.style.width  = `${img.naturalWidth  || w}px`;
-      canvas.style.height = `${img.naturalHeight || hgt}px`;
-    }
-  }
-  // Compute the scale that fits the natural-size map inside the viewport and
-  // hand it to pan/zoom as the reset/base scale.
-  function fitToViewport(): void {
-    const w = img.naturalWidth || canvas.width;
-    const hgt = img.naturalHeight || canvas.height;
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    if (!w || !hgt || !vw || !vh) return;
-    pz.setFitScale(Math.min(vw / w, vh / hgt));
+    if (!vw || !vh) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const bw = Math.round(vw * dpr);
+    const bh = Math.round(vh * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width  = bw;
+      canvas.height = bh;
+    }
   }
+
+  // Give .map-layers its explicit CSS size (natural image dims) so the CSS
+  // transform math is correct, then compute the fit scale.
+  function fitToViewport(): void {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    if (!w || !h || !vw || !vh) return;
+    layers.style.width  = `${w}px`;
+    layers.style.height = `${h}px`;
+    pz.setFitScale(Math.min(vw / w, vh / h));
+  }
+
+  // Convert normalised map coords → canvas backing-store pixels.
+  // The panZoom transform is translate(tx,ty) scale(scale) with origin at the
+  // centre of .map-layers (which flex-centres inside the viewport).
+  function normToCanvas(p: MapStrokePoint): [number, number] {
+    const { scale, tx, ty } = pz.getTransform();
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) return [0, 0];
+    const dpr = canvas.width / (viewport.clientWidth || 1);
+    const vpW = viewport.clientWidth;
+    const vpH = viewport.clientHeight;
+    const vx = vpW / 2 + tx + (p.x - 0.5) * w * scale;
+    const vy = vpH / 2 + ty + (p.y - 0.5) * h * scale;
+    return [vx * dpr, vy * dpr];
+  }
+
   if (img.complete) { sizeCanvas(); fitToViewport(); }
   img.addEventListener('load', () => { sizeCanvas(); fitToViewport(); draw(); });
-  // If the image was already cached, fitToViewport() above ran before the
-  // element was inserted into the DOM (viewport.clientWidth === 0), so the
-  // fit-scale was never applied. Re-run once the browser has laid it out.
-  requestAnimationFrame(() => { if (img.complete) { fitToViewport(); draw(); } });
-  const onResize = (): void => fitToViewport();
+  // Cached image: fitToViewport ran before DOM insertion (clientWidth === 0).
+  requestAnimationFrame(() => { if (img.complete) { sizeCanvas(); fitToViewport(); draw(); } });
+  const onResize = (): void => { fitToViewport(); sizeCanvas(); draw(); };
   window.addEventListener('resize', onResize);
 
   // ── Pin drag state ──
@@ -180,13 +189,18 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
 
   function drawStroke(points: MapStrokePoint[], color: string): void {
     if (points.length < 1) return;
+    const dpr = canvas.width / (viewport.clientWidth || 1);
     ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(2.5, canvas.width * 0.003);
+    ctx.lineWidth = 2.5 * dpr;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(points[0].x * canvas.width, points[0].y * canvas.height);
-    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x * canvas.width, points[i].y * canvas.height);
+    const [x0, y0] = normToCanvas(points[0]);
+    ctx.moveTo(x0, y0);
+    for (let i = 1; i < points.length; i++) {
+      const [xi, yi] = normToCanvas(points[i]);
+      ctx.lineTo(xi, yi);
+    }
     ctx.stroke();
   }
 
@@ -194,18 +208,16 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   // `p` is the anchor point (tip of the pin). Head radius kept small so it
   // doesn't obscure the map for neighbouring players.
   function drawPin(p: MapStrokePoint, color: string, label: string): void {
-    const cx = p.x * canvas.width;
-    const cy = p.y * canvas.height; // tip
-    const r = Math.max(5, canvas.width * 0.007); // smaller than before
-    const headCy = cy - r * 2.1; // centre of the circle head
+    const dpr = canvas.width / (viewport.clientWidth || 1);
+    const [cx, cy] = normToCanvas(p); // tip in backing-store pixels
+    const r = 10 * dpr; // fixed visual size regardless of zoom
+    const headCy = cy - r * 2.1;
 
     ctx.save();
     ctx.beginPath();
-    // Arc from bottom-right (~150° CCW = 30°) clockwise around the top to bottom-left (~210°).
-    // Leaves a gap at the bottom of the circle that the two straight sides fill.
     ctx.arc(cx, headCy, r, Math.PI / 6, Math.PI * (5 / 6), false);
-    ctx.lineTo(cx, cy); // right side → tip
-    ctx.closePath();    // tip → left arc start
+    ctx.lineTo(cx, cy);
+    ctx.closePath();
 
     ctx.fillStyle = color;
     ctx.fill();
@@ -213,16 +225,14 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     ctx.strokeStyle = 'rgba(20,14,6,0.8)';
     ctx.stroke();
 
-    // White centre dot
     ctx.beginPath();
     ctx.arc(cx, headCy, r * 0.36, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
     ctx.fill();
     ctx.restore();
 
-    // Label to the right of the head
     if (label) {
-      const fontSize = Math.max(10, canvas.width * 0.011);
+      const fontSize = 12 * dpr;
       ctx.save();
       ctx.font = `bold ${fontSize}px Georgia, serif`;
       ctx.textBaseline = 'middle';
@@ -256,10 +266,24 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   }
 
   // ── Pointer → normalised coordinates ──
+  // Inverts the panZoom CSS transform to map viewport pointer coords back to
+  // normalised image coords (0–1). The canvas is no longer CSS-transformed so
+  // we can't use getBoundingClientRect on it; use the pz transform directly.
   function toNorm(e: PointerEvent): MapStrokePoint {
-    const rect = canvas.getBoundingClientRect();
+    const { scale, tx, ty } = pz.getTransform();
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h || !scale) return { x: 0.5, y: 0.5 };
+    const rect = viewport.getBoundingClientRect();
+    const viewX = e.clientX - rect.left;
+    const viewY = e.clientY - rect.top;
+    const vpW = viewport.clientWidth;
+    const vpH = viewport.clientHeight;
     const clamp = (v: number): number => Math.min(1, Math.max(0, v));
-    return { x: clamp((e.clientX - rect.left) / rect.width), y: clamp((e.clientY - rect.top) / rect.height) };
+    return {
+      x: clamp((viewX - vpW / 2 - tx) / (w * scale) + 0.5),
+      y: clamp((viewY - vpH / 2 - ty) / (h * scale) + 0.5),
+    };
   }
 
   // ── Persistence (optimistic, reconciled by id; realtime keeps others fresh) ──
@@ -497,8 +521,7 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     fsBtn.textContent = '✕';
     fsBtn.title = 'Exit fullscreen';
     document.addEventListener('keydown', onFsKey);
-    // Re-fit to the new (larger) viewport.
-    fitToViewport();
+    fitToViewport(); sizeCanvas(); draw();
   }
 
   function exitFullscreen(): void {
@@ -512,7 +535,7 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     element.classList.remove('map-inlay--fullscreen');
     fsBtn.textContent = '⤢';
     fsBtn.title = 'Fullscreen';
-    fitToViewport();
+    fitToViewport(); sizeCanvas(); draw();
   }
 
   function onFsKey(e: KeyboardEvent): void { if (e.key === 'Escape') exitFullscreen(); }

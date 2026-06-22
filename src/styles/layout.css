@@ -886,7 +886,10 @@ body::before {
   user-select: none; pointer-events: none;
 }
 .map-draw-canvas {
-  display: block; position: relative; z-index: 1;
+  /* Viewport-sized overlay — NOT inside .map-layers so it is never
+     CSS-transformed with the map. Redraws in viewport-space coords. */
+  display: block; position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 1;
   pointer-events: none; /* toggled to 'auto' while a drawing tool is active */
   touch-action: none;
 }
