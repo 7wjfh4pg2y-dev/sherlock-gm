@@ -604,7 +604,10 @@ export function createPlayerScreen(): ScreenHandle {
     const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
     // Don't rebuild (and lose zoom/pan) if the same map is already mounted — a
     // store update from notes/clues shouldn't reset what the player is examining.
-    if ((map?.id ?? null) === builtMapId && mapPanel.childElementCount > 0) return;
+    // Guard on mapInlay !== null rather than mapPanel.childElementCount: when the
+    // map enters fullscreen its element is reparented out of mapPanel, so
+    // childElementCount becomes 0 and a bare count check would tear down the inlay.
+    if ((map?.id ?? null) === builtMapId && mapInlay !== null) return;
     builtMapId = map?.id ?? null;
     mapInlay?.detach();
     mapInlay = null;

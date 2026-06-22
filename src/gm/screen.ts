@@ -635,7 +635,7 @@ export function createGMScreen(): GMScreenHandle {
     const current = selectors.currentCase(s);
     const map = current?.map_id ? s.maps.find((m) => m.id === current.map_id) : null;
     // Don't rebuild (and lose zoom/pan) if the same map is already mounted.
-    if ((map?.id ?? null) === builtMapId && mapPanel.childElementCount > 0) return;
+    if ((map?.id ?? null) === builtMapId && mapInlay !== null) return;
     builtMapId = map?.id ?? null;
     mapInlay?.detach();
     mapInlay = null;
