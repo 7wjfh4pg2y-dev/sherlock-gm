@@ -121,7 +121,7 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
     const editBtn = h('button', { class: 'clue-action-btn edit', text: '✏️ Edit', on: { click: () => showQuestionModal(q) } });
     const eraseBtn = team?.content
       ? h('button', {
-          class: 'clue-action-btn erase', text: '🧽 Erase answer',
+          class: 'clue-action-btn erase', text: '🧽 Erase',
           on: {
             click: async () => {
               if (!(await confirmDelete("Erase the team's answer for this question?", 'Erase'))) return;
