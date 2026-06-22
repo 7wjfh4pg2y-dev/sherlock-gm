@@ -1018,7 +1018,10 @@ body::before {
 @media (max-width: 860px) {
   /* Collapse the player's two-column body (main | notebook) to a single column.
      The grid lives on .player-body, not .player-screen (which is flex). */
-  .player-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  /* Single column. Reserve a tall floor for the notebook so the notes use the
+     bottom space, and let the main panel scroll within its share. */
+  .player-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, auto) minmax(45vh, 1fr); }
+  .player-main { min-height: 0; overflow-y: auto; }
   .player-notebook { position: static; min-height: 0; }
   .nb-action-tab { display: inline-block; }
   /* Group the two icon tabs at the right edge of the tab row. */
