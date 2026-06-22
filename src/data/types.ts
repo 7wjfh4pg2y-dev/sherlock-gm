@@ -8,6 +8,7 @@ export interface CaseRow {
   description: string | null;
   brief_image_url: string | null;
   map_id: string | null;
+  investigation_date: string | null;
   ordinal: number;
   created_at: string;
 }
@@ -136,7 +137,7 @@ export interface NewspaperRow {
 }
 
 // ── Insert payloads (server fills id/created_at/defaults) ──
-export type CaseInsert = { name: string; description?: string | null; ordinal?: number };
+export type CaseInsert = { name: string; description?: string | null; ordinal?: number; investigation_date?: string | null };
 export type ClueInsert = {
   case_id: string;
   location_name: string;

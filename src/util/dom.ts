@@ -57,3 +57,13 @@ export function replaceChildren(node: Element, ...children: Child[]): void {
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+/** "15 March 1895" from a YYYY-MM-DD date string. Parsed as a plain calendar
+ *  date (no timezone shift) so the day never drifts across midnight. */
+export function formatCaseDate(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+}

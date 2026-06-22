@@ -42,6 +42,10 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
       class: 'gm-input',
       attrs: { type: 'number', min: '1', placeholder: 'Order in campaign (e.g. 1)' },
     }) as HTMLInputElement;
+    const newDateInput = h('input', {
+      class: 'gm-input',
+      attrs: { type: 'date', title: 'Date the investigation takes place (in-world)' },
+    }) as HTMLInputElement;
     const newErrEl = h('div', { class: 'form-error' });
     const newSaveBtn = h('button', { class: 'btn btn-primary btn-sm', text: '+ Open Case' });
     newSaveBtn.addEventListener('click', async () => {
@@ -53,6 +57,7 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
           name,
           description: null,
           ordinal: parseInt(newOrderInput.value, 10) || 0,
+          investigation_date: newDateInput.value || null,
         });
         toast(`Case "${c.name}" opened.`);
         await callbacks.onCaseCreated(c);
@@ -62,7 +67,11 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
         newSaveBtn.removeAttribute('disabled');
       }
     });
-    newSection.append(newNameInput, newOrderInput, newErrEl, newSaveBtn);
+    newSection.append(
+      newNameInput, newOrderInput,
+      h('label', { class: 'sy-field-label', text: 'Investigation date (optional)' }), newDateInput,
+      newErrEl, newSaveBtn,
+    );
 
     // ── Edit / Delete (only when a case is active) ──
     if (current) {
@@ -78,6 +87,10 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
         class: 'gm-input',
         attrs: { type: 'number', min: '1', placeholder: 'Order in campaign', value: String(current.ordinal ?? '') },
       }) as HTMLInputElement;
+      const editDateInput = h('input', {
+        class: 'gm-input',
+        attrs: { type: 'date', title: 'Date the investigation takes place (in-world)', value: current.investigation_date ?? '' },
+      }) as HTMLInputElement;
       const editErrEl = h('div', { class: 'form-error' });
       const editSaveBtn = h('button', { class: 'btn btn-edit btn-sm', text: '✎ Save Changes' });
       editSaveBtn.addEventListener('click', async () => {
@@ -89,6 +102,7 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
             name,
             description: current.description ?? null,
             ordinal: parseInt(editOrderInput.value, 10) || 0,
+            investigation_date: editDateInput.value || null,
           });
           callbacks.onCaseUpdated(updated);
           toast('Case updated.');
@@ -112,7 +126,9 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
         }
       });
 
-      editSection.append(editNameInput, editOrderInput, editErrEl,
+      editSection.append(editNameInput, editOrderInput,
+        h('label', { class: 'sy-field-label', text: 'Investigation date (optional)' }), editDateInput,
+        editErrEl,
         h('div', { class: 'sy-edit-row' }, editSaveBtn, deleteBtn));
       body.append(editSection);
 

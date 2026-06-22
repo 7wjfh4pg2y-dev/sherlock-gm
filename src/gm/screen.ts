@@ -2,7 +2,7 @@
 // Reactive: subscribes to store; realtime (wired in enterGM) drives store.set().
 // All child panels are updated via replaceChildren / fillFeed — no full re-render.
 
-import { h, replaceChildren, clear } from '../util/dom';
+import { h, replaceChildren, clear, formatCaseDate } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, PlayerRow, CaseRow, NewspaperRow } from '../data/types';
 import {
@@ -92,11 +92,28 @@ export function createGMScreen(): GMScreenHandle {
     gmLeadsNum,
   );
 
+  // ── Investigation date (small read-only line under the case name) ──
+  // The in-world date is set in the Scotland Yard create/edit form; this just
+  // displays it (hidden when unset). Players see the same line.
+  const caseDate = h('div', { class: 'case-date case-date-readonly' });
+
+  function renderCaseDate(s: AppState): void {
+    const current = selectors.currentCase(s);
+    const text = current?.investigation_date ? formatCaseDate(current.investigation_date) : '';
+    caseDate.textContent = text;
+    caseDate.style.display = text ? '' : 'none';
+  }
+
   // ── Header: case dropdown + tool buttons + Logout ──
   const header = h('header', { class: 'gm-header' },
     h('div', { class: 'gm-title-group' },
-      h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
-      gmLeadsWrap,
+      h('div', { class: 'gm-title-stack' },
+        h('div', { class: 'gm-title-row' },
+          h('div', { class: 'gm-select-wrap' }, caseDropdown.element),
+          gmLeadsWrap,
+        ),
+        caseDate,
+      ),
     ),
     h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, logoutBtn),
   );
@@ -793,6 +810,7 @@ export function createGMScreen(): GMScreenHandle {
 
   function render(s: AppState): void {
     renderCaseSelect(s);
+    renderCaseDate(s);
     renderShareBlock(s);
     const hasCase = !!s.currentCaseId;
     element.classList.toggle('no-case', !hasCase);

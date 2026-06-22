@@ -3,7 +3,7 @@
 // right panel is always the notebook. Notes stay interactive regardless of which tab
 // is open. Newspaper renders inline as PDF.js canvases — no overlay.
 
-import { h, replaceChildren, clear } from '../util/dom';
+import { h, replaceChildren, clear, formatCaseDate } from '../util/dom';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
 import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
@@ -169,7 +169,14 @@ export function createPlayerScreen(): ScreenHandle {
 
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
   const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, leaveBtn);
-  const caseTitleGroup = h('div', { class: 'player-title-group' }, caseTitle, leadsWrap);
+  // Read-only investigation date line under the case name (hidden when unset).
+  const caseDate = h('div', { class: 'case-date case-date-readonly' });
+  const caseTitleGroup = h('div', { class: 'player-title-group' },
+    h('div', { class: 'player-title-stack' },
+      h('div', { class: 'player-title-row' }, caseTitle, leadsWrap),
+      caseDate,
+    ),
+  );
   const header = h('header', { class: 'player-header' }, caseTitleGroup, headerRight);
 
   // ── Tab bar ──
@@ -687,6 +694,9 @@ export function createPlayerScreen(): ScreenHandle {
   function renderChrome(s: AppState): void {
     const current = selectors.currentCase(s);
     caseTitle.textContent = current?.name ?? '';
+    const dateText = current?.investigation_date ? formatCaseDate(current.investigation_date) : '';
+    caseDate.textContent = dateText;
+    caseDate.style.display = dateText ? '' : 'none';
     if (s.identity) colorDot.style.background = s.identity.color;
     const leadCount = selectors.revealedClues(s).length;
     leadsNum.textContent = String(leadCount);
