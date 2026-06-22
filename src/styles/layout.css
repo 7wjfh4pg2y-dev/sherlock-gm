@@ -868,16 +868,13 @@ body::before {
   cursor: grab; overflow: hidden; position: relative; isolation: isolate;
   display: flex; align-items: center; justify-content: center;
 }
-/* Map layers: the canvas is the in-flow, intrinsically-sized element (its width/
-   height attributes carry the map's natural pixels), so it letterboxes exactly
-   like a plain <img> would; the image is overlaid behind it. Both sit under one
-   pan/zoom transform applied to .map-layers. */
-/* The layers box renders at the map's *natural* pixel size; attachPanZoom
-   applies an initial fit-scale (<1) to shrink it into the panel. Rasterizing at
-   full resolution and scaling down keeps the inline map crisp, and zooming in
-   toward 1x stays sharp instead of magnifying a tiny cached bitmap. */
+/* Map layers: a box sized (in JS) to the map's natural pixel dimensions, holding
+   the <img>. attachPanZoom applies a fit-scale (<1) to shrink it into the panel
+   and transforms it on pan/zoom. It is flex-centred in the viewport, so
+   flex-shrink must be 0 — otherwise the flex container squashes its explicit
+   width and the map collapses to a thin strip. */
 .map-layers {
-  position: relative; display: block;
+  position: relative; display: block; flex-shrink: 0;
   transform-origin: center center;
 }
 .player-map-img {
