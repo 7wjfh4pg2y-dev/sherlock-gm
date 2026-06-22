@@ -360,8 +360,14 @@ input[type="date"].gm-input { color-scheme: dark; }
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
 
-/* GM briefing — lives in its own tab */
-.gm-briefing { max-width: 760px; }
+/* GM briefing — lives in its own tab. Constrain its width to match the player's
+   brief column exactly so the GM previews the real player line-wrapping (in both
+   display and edit modes). The player's text column is `viewport − 496px`
+   (28px page padding ×2 + 420px notebook + 20px gap); the GM brief's containing
+   box is `viewport − 396px` (32px padding ×2 + 300px right panel + 24px gap +
+   8px panel padding), so a 100px inset lines them up. Reset on mobile, where
+   both layouts collapse to a single full-width column. */
+.gm-briefing { max-width: calc(100% - 100px); }
 .briefing-display, .briefing-edit { padding: 4px 0; }
 .briefing-text {
   font-family: 'IM Fell English', Georgia, serif;
@@ -1066,6 +1072,7 @@ input[type="date"].gm-input { color-scheme: dark; }
   .gm-screen { height: auto; overflow: visible; }
   .gm-body { grid-template-columns: 1fr; }
   .gm-right-panel { width: 100%; }
+  .gm-briefing { max-width: none; }
 }
 
 /* ── Phone tuning (≤480px) ──
