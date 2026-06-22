@@ -160,6 +160,10 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
   }
   if (img.complete) { sizeCanvas(); fitToViewport(); }
   img.addEventListener('load', () => { sizeCanvas(); fitToViewport(); draw(); });
+  // If the image was already cached, fitToViewport() above ran before the
+  // element was inserted into the DOM (viewport.clientWidth === 0), so the
+  // fit-scale was never applied. Re-run once the browser has laid it out.
+  requestAnimationFrame(() => { if (img.complete) { fitToViewport(); draw(); } });
   const onResize = (): void => fitToViewport();
   window.addEventListener('resize', onResize);
 
