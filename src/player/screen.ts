@@ -666,7 +666,7 @@ export function createPlayerScreen(): ScreenHandle {
     const isPrivate = note.is_private;
     return noteCard({
       name: note.player_name, color: note.player_color, time: note.created_at, text: note.content,
-      badge: isPrivate ? 'Private' : undefined,
+      badge: isPrivate ? 'Private' : 'Shared',
       actions: [
         { label: '✎ Edit', onClick: () => { editingId = note.id; renderNotes(store.getState()); } },
         ...(isPrivate ? [{ label: '↗ Share', onClick: () => void shareNote(note) }] : []),

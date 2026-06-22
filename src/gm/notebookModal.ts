@@ -55,6 +55,7 @@ function renderNotebookInto(target: HTMLElement, state: AppState): void {
     color: n.player_color,
     time: n.created_at,
     text: n.content,
+    badge: 'Shared',
     actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
   })), 'No shared notes yet.');
 
@@ -70,7 +71,7 @@ function renderNotebookInto(target: HTMLElement, state: AppState): void {
       color: n.player_color,
       time: n.created_at,
       text: n.content,
-      badge: n.is_private ? 'Private' : undefined,
+      badge: n.is_private ? 'Private' : 'Shared',
       actions: [{ label: '✕', danger: true, onClick: () => void handleDeleteNote(n.id) }],
     })), 'No notes for this player.');
   }
