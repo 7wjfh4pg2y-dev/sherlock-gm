@@ -302,6 +302,9 @@ export const questionAnswers = {
         .select(),
     );
   },
+  async clear(questionId: string): Promise<void> {
+    unwrap(await sb.from('question_answers').delete().eq('question_id', questionId));
+  },
 };
 
 // ── Solution (one per case) ──

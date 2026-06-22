@@ -733,6 +733,9 @@ body::before {
 }
 .gm-question-answer, .gm-question-team { margin-bottom: 10px; }
 .gm-question-answer-text { font-family: 'IM Fell English', Georgia, serif; color: var(--ink); white-space: pre-wrap; }
+.gm-question-team-row { display: flex; align-items: flex-start; gap: 6px; }
+.gm-question-team-row .gm-question-team-text { flex: 1; margin: 0; }
+.gm-question-clear-btn { flex-shrink: 0; align-self: center; }
 .gm-question-team-text { font-family: 'Caveat', cursive; font-size: 1.15rem; color: #2a2118; white-space: pre-wrap; }
 .gm-question-team-by { font-family: 'Courier Prime', monospace; font-size: 0.62rem; color: var(--fog); }
 .gm-question-team-empty, .gm-question-answer-text:empty { font-style: italic; color: var(--fog); }
