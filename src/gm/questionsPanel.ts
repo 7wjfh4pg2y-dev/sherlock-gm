@@ -119,6 +119,18 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
       },
     });
     const editBtn = h('button', { class: 'clue-action-btn edit', text: '✏️ Edit', on: { click: () => showQuestionModal(q) } });
+    const eraseBtn = team?.content
+      ? h('button', {
+          class: 'clue-action-btn del', text: '🧽 Erase answer',
+          on: {
+            click: async () => {
+              if (!(await confirmDelete("Erase the team's answer for this question?", 'Erase'))) return;
+              try { await answerRepo.clear(q.id); await reload(); toast('Team answer erased.'); }
+              catch { toast('Could not erase answer.'); }
+            },
+          },
+        })
+      : null;
     const delBtn = h('button', {
       class: 'clue-action-btn del', text: '🗑 Delete',
       on: {
@@ -143,28 +155,11 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
       h('div', { class: 'gm-question-team' },
         h('span', { class: 'gm-question-label', text: 'Team answer' }),
         team?.content
-          ? h('div', { class: 'gm-question-team-row' },
-              h('p', { class: 'gm-question-team-text', text: team.content },
-                h('span', { class: 'gm-question-team-by', text: team.updated_by ? ` — ${team.updated_by}` : '' })),
-              h('button', {
-                class: 'clue-action-btn del gm-question-clear-btn',
-                attrs: { title: 'Clear team answer' },
-                text: '🗑',
-                on: {
-                  click: async () => {
-                    if (!(await confirmDelete("Clear the team's answer for this question?", 'Clear'))) return;
-                    try {
-                      await answerRepo.clear(q.id);
-                      await reload();
-                      toast('Team answer cleared.');
-                    } catch { toast('Could not clear answer.'); }
-                  },
-                },
-              }),
-            )
+          ? h('p', { class: 'gm-question-team-text', text: team.content },
+              h('span', { class: 'gm-question-team-by', text: team.updated_by ? ` — ${team.updated_by}` : '' }))
           : h('p', { class: 'gm-question-team-empty', text: 'No answer submitted yet.' }),
       ),
-      h('div', { class: 'gm-question-actions' }, visibleBtn, revealBtn, editBtn, delBtn),
+      h('div', { class: 'gm-question-actions' }, visibleBtn, revealBtn, editBtn, eraseBtn, delBtn),
     );
   }
 
