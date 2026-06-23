@@ -4,6 +4,7 @@
 // is open. Newspaper renders inline as PDF.js canvases — no overlay.
 
 import { h, replaceChildren, clear, formatCaseDate } from '../util/dom';
+import { renderRichText, hasImagePlaceholder, stripMarkup } from '../util/richText';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
 import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
@@ -328,14 +329,15 @@ export function createPlayerScreen(): ScreenHandle {
   // ── Rendering ──
   function clueCard(c: ClueRow): HTMLElement {
     let body: HTMLElement;
-    if (c.clue_text && c.image_url) {
+    const thumbText = stripMarkup(c.clue_text);
+    if (thumbText && c.image_url) {
       const img = document.createElement('img');
       img.src = c.image_url; img.className = 'clue-thumb-img';
-      body = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'revealed-card-text', text: c.clue_text }));
+      body = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'revealed-card-text', text: thumbText }));
     } else if (c.image_url) {
       body = h('img', { attrs: { src: c.image_url, alt: c.location_name } });
     } else {
-      body = h('div', { class: 'revealed-card-text', text: c.clue_text });
+      body = h('div', { class: 'revealed-card-text', text: thumbText });
     }
     return h('div', {
       class: 'revealed-card' + (c.id === selectedClueId ? ' selected' : ''),
@@ -362,9 +364,14 @@ export function createPlayerScreen(): ScreenHandle {
     const closeBtn = h('button', { class: 'clue-detail-close', text: '✕', attrs: { 'aria-label': 'Close clue' }, on: { click: closeDetail } });
     const head = h('div', { class: 'clue-detail-head' },
       h('span', { class: 'clue-detail-title', text: c.location_name }), closeBtn);
-    const bodyParts: HTMLElement[] = [];
-    if (c.clue_text) bodyParts.push(h('div', { class: 'clue-detail-text', text: c.clue_text }));
-    if (c.image_url) {
+    const bodyParts: (HTMLElement | Node)[] = [];
+    if (c.clue_text) {
+      const textEl = h('div', { class: 'clue-detail-text' });
+      const imgClick = c.image_url ? () => openMapViewer(c.image_url!, c.location_name) : undefined;
+      textEl.append(...renderRichText(c.clue_text, c.image_url || undefined, imgClick));
+      bodyParts.push(textEl);
+    }
+    if (c.image_url && !(c.clue_text && hasImagePlaceholder(c.clue_text))) {
       const img = document.createElement('img');
       img.src = c.image_url; img.className = 'clue-detail-img';
       img.addEventListener('click', () => openMapViewer(c.image_url!, c.location_name));
@@ -396,9 +403,14 @@ export function createPlayerScreen(): ScreenHandle {
     const current = selectors.currentCase(s);
     const desc = current?.description?.trim();
     const briefImg = current?.brief_image_url ?? null;
-    const children: HTMLElement[] = [];
-    if (desc) children.push(h('p', { class: 'briefing-text', text: desc }));
-    if (briefImg) {
+    const children: Node[] = [];
+    if (desc) {
+      const p = h('div', { class: 'briefing-text' });
+      const imgClick = briefImg ? () => openMapViewer(briefImg, (current?.name ?? '') + ' — Brief') : undefined;
+      p.append(...renderRichText(desc, briefImg || undefined, imgClick));
+      children.push(p);
+    }
+    if (briefImg && !(desc && hasImagePlaceholder(desc))) {
       const img = document.createElement('img');
       img.src = briefImg; img.className = 'briefing-img';
       img.addEventListener('click', () => openMapViewer(briefImg, (current?.name ?? '') + ' — Brief'));
@@ -442,7 +454,7 @@ export function createPlayerScreen(): ScreenHandle {
     if (editingAnswerId === q.id) {
       const textarea = h('textarea', {
         class: 'gm-input player-answer-textarea',
-        attrs: { rows: '3', placeholder: 'Type the team’s answer…' },
+        attrs: { rows: '3', placeholder: "Type the team's answer…" },
         on: { input: (e: Event) => { answerDraft = (e.target as HTMLTextAreaElement).value; } },
       }) as HTMLTextAreaElement;
       textarea.value = answerDraft;
@@ -529,8 +541,13 @@ export function createPlayerScreen(): ScreenHandle {
       return;
     }
     clear(solutionPanel);
-    if (hasContent) solutionPanel.append(h('p', { class: 'briefing-text', text: sol!.content }));
-    if (sol?.image_url) {
+    if (hasContent) {
+      const p = h('div', { class: 'briefing-text' });
+      const imgClick = sol?.image_url ? () => openMapViewer(sol!.image_url!, 'Solution') : undefined;
+      p.append(...renderRichText(sol!.content, sol?.image_url || undefined, imgClick));
+      solutionPanel.append(p);
+    }
+    if (sol?.image_url && !(hasContent && hasImagePlaceholder(sol!.content))) {
       const img = document.createElement('img');
       img.src = sol.image_url; img.className = 'briefing-img';
       img.addEventListener('click', () => openMapViewer(sol!.image_url!, 'Solution'));

@@ -3,6 +3,7 @@
 // All child panels are updated via replaceChildren / fillFeed — no full re-render.
 
 import { h, replaceChildren, clear, formatCaseDate } from '../util/dom';
+import { renderRichText, hasImagePlaceholder, stripMarkup, createFormatBar } from '../util/richText';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, PlayerRow, CaseRow, NewspaperRow } from '../data/types';
 import {
@@ -289,7 +290,7 @@ export function createGMScreen(): GMScreenHandle {
     const addBtn = h('button', { class: 'btn btn-primary', text: 'Add to Case File' });
 
     const { handle: addClueHandle, body } = openTitledModal('Add Clue', {});
-    body.append(locationPicker.el, textInput, fileLabel, errEl, addBtn);
+    body.append(locationPicker.el, createFormatBar(textInput, { imageHint: true }), textInput, fileLabel, errEl, addBtn);
 
     addBtn.addEventListener('click', async () => {
       const location_name = locationPicker.getValue();
@@ -355,7 +356,7 @@ export function createGMScreen(): GMScreenHandle {
     const saveBtn = h('button', { class: 'btn btn-primary', text: 'Save' });
 
     const { handle: editClueHandle, body } = openTitledModal('Edit Clue', { contentClass: 'clue-edit-modal' });
-    body.append(locationPicker.el, textInput, imageSection, errEl, saveBtn);
+    body.append(locationPicker.el, createFormatBar(textInput, { imageHint: true }), textInput, imageSection, errEl, saveBtn);
 
     saveBtn.addEventListener('click', async () => {
       const location_name = locationPicker.getValue();
@@ -495,9 +496,15 @@ export function createGMScreen(): GMScreenHandle {
     const desc = current.description?.trim() ?? '';
     const briefImg = current.brief_image_url ?? null;
 
-    const displayChildren: HTMLElement[] = [];
-    if (desc) displayChildren.push(h('p', { class: 'briefing-text', text: desc }));
-    if (briefImg) {
+    const displayChildren: (HTMLElement | Node)[] = [];
+    if (desc) {
+      const p = h('div', { class: 'briefing-text' });
+      p.append(...renderRichText(desc, briefImg || undefined, briefImg ? () => openMapViewer(briefImg!, (current.name ?? '') + ' — Brief') : undefined));
+      // If [image] not used in text, the image block below handles it.
+      displayChildren.push(p);
+    }
+    // Only append image block separately when the text didn't already place it via [image].
+    if (briefImg && !(desc && hasImagePlaceholder(desc))) {
       const img = document.createElement('img');
       img.src = briefImg; img.className = 'briefing-img';
       img.addEventListener('click', () => openMapViewer(briefImg, current.name + ' — Brief'));
@@ -573,7 +580,7 @@ export function createGMScreen(): GMScreenHandle {
       text: 'Cancel',
       on: { click: () => { briefingEditing = false; renderBriefing(store.getState()); } },
     });
-    const editView = h('div', { class: 'briefing-edit' }, textarea, briefImageSection, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
+    const editView = h('div', { class: 'briefing-edit' }, createFormatBar(textarea, { imageHint: true }), textarea, briefImageSection, h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn));
 
     clear(briefingPanel);
     briefingPanel.append(briefingEditing ? editView : displayView);
@@ -581,14 +588,15 @@ export function createGMScreen(): GMScreenHandle {
 
   function clueCard(c: ClueRow): HTMLElement {
     let thumb: HTMLElement;
-    if (c.clue_text && c.image_url) {
+    const thumbText = stripMarkup(c.clue_text);
+    if (thumbText && c.image_url) {
       const img = document.createElement('img');
       img.src = c.image_url; img.className = 'clue-thumb-img';
-      thumb = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'clue-thumb-text', text: c.clue_text }));
+      thumb = h('div', { class: 'clue-thumb-both' }, img, h('div', { class: 'clue-thumb-text', text: thumbText }));
     } else if (c.image_url) {
       thumb = h('img', { class: 'clue-thumb', attrs: { src: c.image_url, alt: c.location_name } });
     } else {
-      thumb = h('div', { class: 'clue-thumb-text', text: c.clue_text });
+      thumb = h('div', { class: 'clue-thumb-text', text: thumbText });
     }
 
     const revealed = c.revealed;
@@ -614,8 +622,19 @@ export function createGMScreen(): GMScreenHandle {
   function openGMCluePreview(c: ClueRow): void {
     if (!c.clue_text && c.image_url) { openMapViewer(c.image_url, c.location_name); return; }
     const { body } = openTitledModal(c.location_name, { contentClass: 'clue-expand' });
-    if (c.clue_text) body.append(h('div', { class: 'clue-expand-text', text: c.clue_text }));
-    if (c.image_url) {
+    if (c.clue_text) {
+      const textEl = h('div', { class: 'clue-expand-text' });
+      const imgClick = c.image_url ? () => openMapViewer(c.image_url!, c.location_name) : undefined;
+      textEl.append(...renderRichText(c.clue_text, c.image_url || undefined, imgClick));
+      body.append(textEl);
+      // If [image] was not used in the text, append the image separately at the end.
+      if (c.image_url && !hasImagePlaceholder(c.clue_text)) {
+        const img = document.createElement('img');
+        img.src = c.image_url; img.className = 'clue-expand-img';
+        img.addEventListener('click', () => openMapViewer(c.image_url!, c.location_name));
+        body.append(img);
+      }
+    } else if (c.image_url) {
       const img = document.createElement('img');
       img.src = c.image_url; img.className = 'clue-expand-img';
       img.addEventListener('click', () => openMapViewer(c.image_url!, c.location_name));

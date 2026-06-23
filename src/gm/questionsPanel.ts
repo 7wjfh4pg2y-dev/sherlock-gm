@@ -5,6 +5,7 @@
 // reloads via the GM loaders. Returns { element, refresh } like buildGMNotebook.
 
 import { h, clear } from '../util/dom';
+import { renderRichText, hasImagePlaceholder, createFormatBar } from '../util/richText';
 import { store, selectors } from '../state/store';
 import type { QuestionRow, QuestionCategory } from '../data/types';
 import { questions as questionRepo, questionAnswers as answerRepo, solutions as solutionRepo, storage } from '../data/supabase';
@@ -208,7 +209,7 @@ export function buildGMQuestionsPanel(): { element: HTMLElement; refresh(): void
     );
 
     if (!qs.length) {
-      element.append(h('p', { class: 'empty-state', text: 'No questions yet. Add the case’s end questions for players to answer.' }));
+      element.append(h('p', { class: 'empty-state', text: "No questions yet. Add the case's end questions for players to answer." }));
     } else {
       // Group by category, preserving overall numbering within each group.
       const groups: { key: QuestionCategory; label: string }[] = [
@@ -351,7 +352,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
     if (editing) {
       const textarea = h('textarea', {
         class: 'gm-input briefing-textarea',
-        attrs: { rows: '16', placeholder: 'Write Sherlock’s full solution — how he reasoned it out, who did it and why…' },
+        attrs: { rows: '16', placeholder: "Write Sherlock's full solution — how he reasoned it out, who did it and why…" },
       }) as HTMLTextAreaElement;
       textarea.value = content;
 
@@ -407,7 +408,8 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
       });
       const cancelBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel', on: { click: () => { editing = false; render(); } } });
       element.append(
-        h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: 'Sherlock’s Solution' }), revealToggle),
+        h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: "Sherlock's Solution" }), revealToggle),
+        createFormatBar(textarea, { imageHint: true }),
         textarea,
         solImageSection,
         h('div', { class: 'briefing-edit-row' }, saveBtn, cancelBtn),
@@ -416,9 +418,14 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
       return;
     }
 
-    const displayChildren: (HTMLElement | null)[] = [];
-    if (content) displayChildren.push(h('div', { class: 'briefing-display' }, h('p', { class: 'briefing-text', text: content })));
-    if (solImg) {
+    const displayChildren: (HTMLElement | Node | null)[] = [];
+    if (content) {
+      const p = h('div', { class: 'briefing-display briefing-text' });
+      const imgClick = solImg ? () => openMapViewer(solImg, 'Solution') : undefined;
+      p.append(...renderRichText(content, solImg || undefined, imgClick));
+      displayChildren.push(p);
+    }
+    if (solImg && !(content && hasImagePlaceholder(content))) {
       const img = document.createElement('img');
       img.src = solImg; img.className = 'briefing-img';
       img.addEventListener('click', () => openMapViewer(solImg, 'Solution'));
@@ -427,7 +434,7 @@ export function buildGMSolutionPanel(): { element: HTMLElement; refresh(): void 
     if (!content && !solImg) displayChildren.push(h('span', { class: 'briefing-empty', text: 'No solution written yet.' }));
 
     element.append(
-      h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: 'Sherlock’s Solution' }), revealToggle),
+      h('div', { class: 'gm-section-head' }, h('div', { class: 'clues-section-title', text: "Sherlock's Solution" }), revealToggle),
       ...displayChildren.filter(Boolean) as HTMLElement[],
       h('button', { class: 'btn btn-secondary btn-sm', text: content || solImg ? '✏️ Edit Solution' : '✏️ Write Solution', on: { click: () => { editing = true; render(); } } }),
       buildScoreSection(),
