@@ -148,7 +148,20 @@ export function createGMScreen(): GMScreenHandle {
   const briefingPanel = h('div', { class: 'gm-briefing' });
   const unrevealedSection = h('div', { class: 'gm-section' });
   const revealedSection = h('div', { class: 'gm-section' });
-  const cluesPanel = h('div', { class: 'gm-clues-panel' }, unrevealedSection, revealedSection);
+  const searchSection = h('div', { class: 'gm-section' });
+  // Stable search input — NOT rebuilt on store updates so the GM never loses
+  // focus/cursor position while typing mid-search.
+  let clueQuery = '';
+  const clueSearchInput = h('input', {
+    class: 'clue-search-input',
+    attrs: { type: 'search', placeholder: '🔍  Search clues by title or content…' },
+  }) as HTMLInputElement;
+  clueSearchInput.addEventListener('input', () => {
+    clueQuery = clueSearchInput.value;
+    renderClues(store.getState());
+  });
+  searchSection.append(clueSearchInput);
+  const cluesPanel = h('div', { class: 'gm-clues-panel' }, searchSection, unrevealedSection, revealedSection);
   const directoryPanel = h('div', { class: 'gm-directory-panel' });
   const informantsPanel = h('div', { class: 'gm-informants-panel' }, buildInformants());
   const mapPanel = h('div', { class: 'gm-map-panel' });
@@ -610,9 +623,32 @@ export function createGMScreen(): GMScreenHandle {
     }
   }
 
+  function clueMatchesQuery(c: ClueRow, q: string): boolean {
+    const norm = q.toLowerCase();
+    return c.location_name.toLowerCase().includes(norm) || c.clue_text.toLowerCase().includes(norm);
+  }
+
   function renderClues(s: AppState): void {
     const unrevealed = selectors.hiddenClues(s);
     const revealed = selectors.revealedClues(s);
+    const q = clueQuery.trim();
+
+    if (q) {
+      // Search mode: flatten into a single section, no Add Clue card.
+      const matches = [...unrevealed, ...revealed].filter((c) => clueMatchesQuery(c, q));
+      clear(unrevealedSection);
+      clear(revealedSection);
+      unrevealedSection.append(
+        h('div', { class: 'clues-section-title' },
+          `Matching clues `,
+          h('span', { class: 'counter-badge', text: String(matches.length) }),
+        ),
+        matches.length
+          ? h('div', { class: 'clues-grid' }, ...matches.map(clueCard))
+          : h('div', { class: 'empty-state', text: 'No clues match that search.' }),
+      );
+      return;
+    }
 
     clear(unrevealedSection);
     unrevealedSection.append(

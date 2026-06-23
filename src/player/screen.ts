@@ -218,7 +218,17 @@ export function createPlayerScreen(): ScreenHandle {
   // ── Clue detail (inline, inside panel) ──
   const clueDetail = h('div', { class: 'clue-detail' });
   const clueGrid = h('div', { class: 'clues-grid' });
-  const cluesPanel = h('div', {}, clueDetail, clueGrid);
+  let clueQuery = '';
+  const clueSearchInput = h('input', {
+    class: 'clue-search-input',
+    attrs: { type: 'search', placeholder: '🔍  Search clues by title or content…' },
+    style: { display: 'none' },
+  }) as HTMLInputElement;
+  clueSearchInput.addEventListener('input', () => {
+    clueQuery = clueSearchInput.value;
+    renderClues(store.getState());
+  });
+  const cluesPanel = h('div', {}, clueDetail, clueSearchInput, clueGrid);
 
   // ── Briefing panel ──
   const briefingPanel = h('div', { class: 'player-briefing-panel' });
@@ -366,10 +376,20 @@ export function createPlayerScreen(): ScreenHandle {
   function renderClues(s: AppState): void {
     const revealed = selectors.revealedClues(s);
     if (!revealed.length) {
+      clueSearchInput.style.display = 'none';
       replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'Awaiting the Game Master to reveal clues…' }));
       return;
     }
-    replaceChildren(clueGrid, ...revealed.map(clueCard));
+    clueSearchInput.style.display = '';
+    const q = clueQuery.trim();
+    const list = q
+      ? revealed.filter((c) => c.location_name.toLowerCase().includes(q.toLowerCase()) || c.clue_text.toLowerCase().includes(q.toLowerCase()))
+      : revealed;
+    if (q && !list.length) {
+      replaceChildren(clueGrid, h('div', { class: 'empty-state', text: 'No clues match that search.' }));
+    } else {
+      replaceChildren(clueGrid, ...list.map(clueCard));
+    }
   }
 
   function renderBriefing(s: AppState): void {
