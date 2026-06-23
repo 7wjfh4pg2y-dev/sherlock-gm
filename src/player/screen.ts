@@ -16,6 +16,7 @@ import { openMapViewer } from '../components/mapViewer';
 import { createFullscreener, type Fullscreener } from '../util/fullscreen';
 import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
+import { openRulesModal } from '../components/rules';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
@@ -168,8 +169,14 @@ export function createPlayerScreen(): ScreenHandle {
   leadsWrap.addEventListener('mouseenter', () => leadsTooltip.classList.remove('hidden'));
   leadsWrap.addEventListener('mouseleave', () => leadsTooltip.classList.add('hidden'));
 
+  const rulesBtn = h('button', {
+    class: 'btn btn-secondary btn-sm rules-btn',
+    text: '?',
+    attrs: { title: 'How to play', 'aria-label': 'How to play' },
+    on: { click: () => openRulesModal() },
+  });
   const leaveBtn = h('button', { class: 'btn btn-secondary btn-sm', text: 'Leave', on: { click: leaveCase } });
-  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, leaveBtn);
+  const headerRight = h('div', { class: 'player-header-right' }, colorBtnWrap, presenceWrap, rulesBtn, leaveBtn);
   // Read-only investigation date line under the case name (hidden when unset).
   const caseDate = h('div', { class: 'case-date case-date-readonly' });
   const caseTitleGroup = h('div', { class: 'player-title-group' },

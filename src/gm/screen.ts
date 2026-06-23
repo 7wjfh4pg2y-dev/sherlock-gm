@@ -30,6 +30,7 @@ import { toast } from '../components/toast';
 import { openMapViewer } from '../components/mapViewer';
 import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
+import { openRulesModal } from '../components/rules';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
 import type { InlinePdfHandle } from '../components/pdfViewer';
 import { createFullscreener, type Fullscreener } from '../util/fullscreen';
@@ -79,6 +80,12 @@ export function createGMScreen(): GMScreenHandle {
     text: '📰 Printing Press',
     on: { click: openNewspaperModal },
   });
+  const rulesBtn = h('button', {
+    class: 'btn btn-secondary btn-sm rules-btn',
+    text: '?',
+    attrs: { title: 'How to play', 'aria-label': 'How to play' },
+    on: { click: () => openRulesModal() },
+  });
   const logoutBtn = h('button', {
     class: 'btn btn-secondary btn-sm',
     text: 'Logout',
@@ -116,7 +123,7 @@ export function createGMScreen(): GMScreenHandle {
         caseDate,
       ),
     ),
-    h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, logoutBtn),
+    h('div', { class: 'gm-header-actions' }, scotlandYardBtn, mapsBtn, newspaperBtn, rulesBtn, logoutBtn),
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──

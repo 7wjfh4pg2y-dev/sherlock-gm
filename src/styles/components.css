@@ -183,6 +183,25 @@
   line-height: 1.6; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
 }
 
+/* ── Rules modal ── */
+.rules-modal { max-width: 600px; width: 100%; max-height: 84vh; display: flex; flex-direction: column; }
+.rules-modal .modal-body { overflow-y: auto; }
+.rules-intro {
+  font-family: 'IM Fell English', Georgia, serif; font-size: 1rem; font-style: italic;
+  line-height: 1.6; color: var(--sepia); margin: 0 0 18px;
+}
+.rules-section { margin-bottom: 18px; }
+.rules-section:last-child { margin-bottom: 0; }
+.rules-heading {
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: 1rem; letter-spacing: 0.04em;
+  color: var(--ink); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid rgba(180,140,60,0.4);
+}
+.rules-para {
+  font-family: 'IM Fell English', Georgia, serif; font-size: 0.98rem; line-height: 1.62;
+  color: var(--ink); margin: 0 0 10px;
+}
+.rules-para:last-child { margin-bottom: 0; }
+
 /* ── Directory modal ── */
 .directory-modal { max-width: 660px; width: 100%; max-height: 82vh; display: flex; flex-direction: column; }
 .directory-modal > div { padding: 24px 28px 20px; display: flex; flex-direction: column; min-height: 0; flex: 1; }

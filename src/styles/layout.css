@@ -757,6 +757,26 @@ input[type="date"].gm-input { color-scheme: dark; }
 .gm-informants-panel { background: var(--parchment-dark); padding: 16px 20px; border: 1px solid var(--parchment-darker); }
 .gm-informants-panel .informants-intro p { color: var(--ink); }
 
+/* ── Holmes's lecture (collapsible, inside informants intro) ── */
+.lecture-toggle {
+  margin-top: 8px; background: none; border: none; cursor: pointer; padding: 2px 0;
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.86rem;
+  letter-spacing: 0.03em; color: var(--sepia); text-align: left;
+}
+.lecture-toggle:hover { color: var(--ink); text-decoration: underline; }
+.gm-informants-panel .lecture-toggle { color: var(--ink); }
+.lecture-body { display: none; margin-top: 10px; max-height: 42vh; overflow-y: auto; padding-right: 6px; }
+.lecture-body.open { display: block; }
+.lecture-para {
+  font-family: 'IM Fell English', Georgia, serif; font-size: 0.96rem; line-height: 1.6;
+  color: var(--parchment-dark); margin: 0 0 12px;
+}
+.gm-informants-panel .lecture-para { color: var(--ink); }
+.lecture-para:last-child { margin-bottom: 0; }
+
+/* ── "How to play" header button (small, circular ?) ── */
+.rules-btn { font-weight: 700; min-width: 32px; padding-left: 0; padding-right: 0; text-align: center; }
+
 .gm-map-panel { padding: 0; height: 100%; min-height: 0; display: flex; }
 .gm-newspaper-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .gm-notebook-inline { flex: 1; min-height: 0; overflow-y: auto; }
