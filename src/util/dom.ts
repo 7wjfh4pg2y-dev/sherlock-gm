@@ -12,8 +12,8 @@ type Child = Node | string | number | null | undefined | false;
 // from its surrounding context and emits the correct curly glyph. It runs at
 // display time only (on textContent), so the stored data stays untouched and
 // editing always sees the raw text.
-const L_DQUOTE = '“', R_DQUOTE = '”'; // “ “
-const L_SQUOTE = '‘', R_SQUOTE = '’'; // ' '
+const L_DQUOTE = '“', R_DQUOTE = '”'; // opening / closing double
+const L_SQUOTE = '‘', R_SQUOTE = '’'; // opening / closing single
 
 function opensQuote(prev: string): boolean {
   // A quote opens at the start of the text, or after whitespace / an opening
@@ -22,7 +22,7 @@ function opensQuote(prev: string): boolean {
 }
 
 export function educateQuotes(input: string): string {
-  if (!input || !/['”'‘’“”]/.test(input)) return input;
+  if (!input || !/["'‘’“”]/.test(input)) return input;
   let out = '';
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
