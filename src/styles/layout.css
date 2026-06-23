@@ -757,22 +757,15 @@ input[type="date"].gm-input { color-scheme: dark; }
 .gm-informants-panel { background: var(--parchment-dark); padding: 16px 20px; border: 1px solid var(--parchment-darker); }
 .gm-informants-panel .informants-intro p { color: var(--ink); }
 
-/* ── Holmes's lecture (collapsible, inside informants intro) ── */
+/* ── Holmes's lecture (opens in a modal, inside informants intro) ── */
 .lecture-toggle {
-  margin-top: 8px; background: none; border: none; cursor: pointer; padding: 2px 0;
-  font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.86rem;
-  letter-spacing: 0.03em; color: var(--sepia); text-align: left;
+  margin-top: 10px; cursor: pointer; padding: 6px 12px;
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.84rem;
+  letter-spacing: 0.03em; text-align: left;
+  background: var(--ink); color: var(--parchment); border: 1px solid var(--ink);
+  transition: background 0.15s, color 0.15s;
 }
-.lecture-toggle:hover { color: var(--ink); text-decoration: underline; }
-.gm-informants-panel .lecture-toggle { color: var(--ink); }
-.lecture-body { display: none; margin-top: 10px; max-height: 42vh; overflow-y: auto; padding-right: 6px; }
-.lecture-body.open { display: block; }
-.lecture-para {
-  font-family: 'IM Fell English', Georgia, serif; font-size: 0.96rem; line-height: 1.6;
-  color: var(--parchment-dark); margin: 0 0 12px;
-}
-.gm-informants-panel .lecture-para { color: var(--ink); }
-.lecture-para:last-child { margin-bottom: 0; }
+.lecture-toggle:hover { background: var(--sepia); border-color: var(--sepia); color: var(--paper); }
 
 /* ── "How to play" header button (small, circular ?) ── */
 .rules-btn { font-weight: 700; min-width: 32px; padding-left: 0; padding-right: 0; text-align: center; }
