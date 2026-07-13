@@ -2,9 +2,10 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Every 3 days at 08:17 UTC — comfortably inside Supabase's 7-day free-tier
-    # inactivity window, so the project never auto-pauses.
-    - cron: '17 8 */3 * *'
+    # Daily at 08:17 UTC. A 3-day cadence still let the project pause once
+    # (Supabase's real inactivity detection appears stricter than the
+    # documented 7-day window), so this uses a tighter safety margin.
+    - cron: '17 8 * * *'
   workflow_dispatch:
 
 jobs:
