@@ -776,7 +776,7 @@ export function createGMScreen(): GMScreenHandle {
   }
 
   function renderNewspaper(s: AppState): void {
-    const papers = s.newspapers;
+    const papers = selectors.caseNewspapers(s);
     if (!papers.length) {
       clear(newspaperPanel);
       newspaperPanel.append(h('div', { class: 'empty-state', text: 'No newspapers enabled for this case. Use Printing Press to add some.' }));
@@ -882,7 +882,7 @@ export function createGMScreen(): GMScreenHandle {
     // The Map tab only appears when a map is attached; fall back to Clues if it
     // vanishes while selected.
     const hasMap = !!current?.map_id;
-    const hasNews = s.newspapers.length > 0;
+    const hasNews = selectors.caseNewspapers(s).length > 0;
     if (tabButtons.map) tabButtons.map.style.display = hasMap ? '' : 'none';
     if (tabButtons.newspaper) tabButtons.newspaper.style.display = hasNews ? '' : 'none';
     if ((activeTab === 'map' && !hasMap) || (activeTab === 'newspaper' && !hasNews)) {

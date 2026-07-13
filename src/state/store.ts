@@ -131,6 +131,12 @@ export const selectors = {
   activePlayers(s: AppState): PlayerRow[] {
     return s.players.filter((p) => !p.is_kicked);
   },
+  // Newspapers enabled for the current case (GM role only — s.newspapers holds
+  // the GM's full upload library, not just what's attached to this case).
+  caseNewspapers(s: AppState): NewspaperRow[] {
+    const enabled = new Set(s.caseNewspaperIds);
+    return s.newspapers.filter((n) => enabled.has(n.id));
+  },
   sharedNotes(s: AppState): NoteRow[] {
     return s.notes.filter((n) => !n.is_private);
   },
