@@ -122,14 +122,24 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     .then((d) => { doc = d; status.remove(); return renderPages(); })
     .catch(() => { status.textContent = 'Could not load this document.'; });
 
-  // Wheel: CSS-scale immediately for smoothness, re-raster when settled.
+  // Wheel: plain scroll/swipe pans the page (matches reading a document).
+  // Ctrl+scroll zooms — browsers already report trackpad pinch-zoom as wheel
+  // events with ctrlKey set, so this covers both mouse Ctrl+scroll and
+  // trackpad pinch through the same path. CSS-scale immediately for
+  // smoothness, re-raster once the gesture settles.
   let rerenderTimer: number | undefined;
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
-    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+    if (e.ctrlKey || e.metaKey) {
+      zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+      applyTransform();
+      window.clearTimeout(rerenderTimer);
+      rerenderTimer = window.setTimeout(() => void renderPages(), 160);
+      return;
+    }
+    tx -= e.deltaX;
+    ty -= e.deltaY;
     applyTransform();
-    window.clearTimeout(rerenderTimer);
-    rerenderTimer = window.setTimeout(() => void renderPages(), 160);
   }
 
   // Drag-to-pan (mouse + touch).
