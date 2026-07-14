@@ -17,12 +17,18 @@ export interface NotebookTab {
 export interface NotebookHandle {
   readonly element: HTMLElement;
   setActive(id: string): void;
+  /** Show/hide the small unread dot on a tab (e.g. a new team note arrived). */
+  setUnread(id: string, unread: boolean): void;
+  /** The currently active tab id. */
+  activeId(): string | undefined;
 }
 
 export interface NotebookOptions {
   /** On mobile, add collapse + fullscreen action tabs so the notebook can be
    *  tucked away or expanded without losing state. */
   mobileControls?: boolean;
+  /** Fired when the user switches tabs (not on the initial activation). */
+  onTabChange?: (id: string) => void;
 }
 
 export function createNotebook(
@@ -36,9 +42,14 @@ export function createNotebook(
   const tabBar = h('div', { class: 'nb-tabs' });
   const paper = h('div', { class: 'nb-paper' }, h('div', { class: 'nb-ruled' }));
 
+  let currentActive = activeId;
+
   function setActive(id: string): void {
+    currentActive = id;
     for (const [tid, tab] of tabEls) tab.classList.toggle('active', tid === id);
     for (const [pid, page] of pageEls) page.classList.toggle('active', pid === id);
+    // Viewing a tab clears its unread marker.
+    tabEls.get(id)?.classList.remove('has-unread');
   }
 
   for (const tab of tabs) {
@@ -47,9 +58,10 @@ export function createNotebook(
       : null;
     const tabEl = h(
       'label',
-      { class: 'nb-tab', on: { click: () => setActive(tab.id) } },
+      { class: 'nb-tab', on: { click: () => { setActive(tab.id); opts.onTabChange?.(tab.id); } } },
       dot,
       tab.label,
+      h('span', { class: 'nb-tab-unread', attrs: { 'aria-hidden': 'true' } }),
     );
     tabEls.set(tab.id, tabEl);
     tabBar.append(tabEl);
@@ -97,7 +109,13 @@ export function createNotebook(
 
   if (activeId) setActive(activeId);
 
-  return { element, setActive };
+  function setUnread(id: string, unread: boolean): void {
+    // Never flag the tab you're already looking at.
+    if (unread && currentActive === id) return;
+    tabEls.get(id)?.classList.toggle('has-unread', unread);
+  }
+
+  return { element, setActive, setUnread, activeId: () => currentActive };
 }
 
 // ── Building blocks owners compose into tab content ──

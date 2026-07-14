@@ -268,11 +268,32 @@ export function createPlayerScreen(): ScreenHandle {
     noteComposer({ placeholder: 'Share your deductions with the team…', onSubmit: (t) => addNote(t, false) }),
     sharedFeed,
   );
+  // Unread indicator for the Team Notes tab: a small dot appears when another
+  // player posts a shared note while you're not viewing that tab, and clears
+  // when you open it. Existing notes at join are seeded as already-seen so the
+  // dot only reflects notes that arrive live.
+  const seenSharedIds = new Set<string>();
   const notebook = createNotebook([
     { id: 'private', label: 'My Notes', content: privateContent },
     { id: 'shared',  label: 'Team Notes', content: sharedContent },
-  ], undefined, { mobileControls: true });
+  ], undefined, { mobileControls: true, onTabChange: () => refreshUnread(store.getState()) });
   const notebookWrap = h('aside', { class: 'player-notebook' }, notebook.element);
+
+  function refreshUnread(s: AppState): void {
+    const me = s.identity;
+    const shared = selectors.sharedNotes(s);
+    const mine = (n: NoteRow) => !!me && n.player_name === me.name && n.player_color === me.color;
+    if (notebook.activeId() === 'shared') {
+      // Viewing the team feed — everything currently there counts as seen.
+      for (const n of shared) seenSharedIds.add(n.id);
+      notebook.setUnread('shared', false);
+      return;
+    }
+    // Own notes never flag; mark them seen so they don't light up later.
+    for (const n of shared) if (mine(n)) seenSharedIds.add(n.id);
+    const hasNew = shared.some((n) => !mine(n) && !seenSharedIds.has(n.id));
+    notebook.setUnread('shared', hasNew);
+  }
 
   const element = h('div', { class: 'player-screen' },
     header,
@@ -775,7 +796,12 @@ export function createPlayerScreen(): ScreenHandle {
     renderChrome(s);
     renderPanel(s);
     renderNotes(s);
+    refreshUnread(s);
   }
+
+  // Seed all shared notes present at mount as already-seen, so the unread dot
+  // only ever reflects notes that arrive after the player has joined.
+  for (const n of selectors.sharedNotes(store.getState())) seenSharedIds.add(n.id);
 
   const unsubscribe = store.subscribe(render);
   render(store.getState());

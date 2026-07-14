@@ -100,6 +100,16 @@
   display: inline-block; width: 7px; height: 7px; border-radius: 50%;
   margin-right: 5px; vertical-align: middle; position: relative; top: -1px;
 }
+/* Unread marker: a small dot after the label, shown only when the tab carries
+   an unseen team note. Hidden by default; revealed via .has-unread. */
+.nb-tab-unread {
+  display: none; width: 6px; height: 6px; border-radius: 50%;
+  margin-left: 6px; vertical-align: middle; position: relative; top: -1px;
+  background: #7a2e12; box-shadow: 0 0 0 1px rgba(255, 240, 200, 0.45);
+}
+.nb-tab.has-unread .nb-tab-unread { display: inline-block; }
+/* On the active (lighter) tab, keep the dot legible if it ever shows briefly. */
+.nb-tab.active .nb-tab-unread { background: #9a3a16; }
 .nb-paper {
   position: relative; border: 1px solid #7a5010; padding: 18px 20px 20px;
   background:
