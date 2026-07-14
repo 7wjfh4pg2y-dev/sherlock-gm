@@ -1092,17 +1092,15 @@ input[type="date"].gm-input { color-scheme: dark; }
 
 @media (max-width: 860px) {
   /* The two-column grid collapses to a vertical stack. The whole body scrolls
-     as one page; the notebook sticks to the bottom of the viewport once
-     scrolled that far, but otherwise sits directly under the content — no
-     space is reserved for it up front, so short content never leaves a dead
-     gap above it. */
+     as one page in plain block flow (NOT flex — sticky positioning inside a
+     flex container is unreliable on WebKit/iOS and was overlapping content).
+     The notebook sticks to the bottom of the viewport once scrolled that far,
+     but otherwise sits directly under the content — no space is reserved for
+     it up front, so short content never leaves a dead gap above it. */
   .player-body {
-    display: flex; flex-direction: column;
+    display: block;
     grid-template-columns: unset; grid-template-rows: unset;
     overflow-y: auto;
-  }
-  .player-main {
-    flex: none;
   }
 
   /* Notebook sticks to the bottom of the viewport, ~40vh tall when
@@ -1110,7 +1108,6 @@ input[type="date"].gm-input { color-scheme: dark; }
      has it sit flush underneath with no reserved gap. */
   .player-notebook {
     position: sticky; bottom: 0; z-index: 600;
-    flex: none;
     height: 40vh; margin: 0;
     display: flex; flex-direction: column;
   }
