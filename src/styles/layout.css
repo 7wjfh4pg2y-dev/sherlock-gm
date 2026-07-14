@@ -1091,29 +1091,31 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 
 @media (max-width: 860px) {
-  /* The two-column grid collapses to a vertical stack. The notebook is pinned
-     to the bottom of the screen (always flush) and the main content scrolls
-     above it, with bottom room reserved so nothing hides behind the notebook. */
+  /* The two-column grid collapses to a vertical stack. The whole body scrolls
+     as one page; the notebook sticks to the bottom of the viewport once
+     scrolled that far, but otherwise sits directly under the content — no
+     space is reserved for it up front, so short content never leaves a dead
+     gap above it. */
   .player-body {
     display: flex; flex-direction: column;
     grid-template-columns: unset; grid-template-rows: unset;
+    overflow-y: auto;
   }
   .player-main {
-    flex: 1; min-height: 0; overflow-y: auto;
-    /* Reserve space for the pinned notebook (a touch under half the screen). */
-    padding-bottom: calc(40vh + 10px);
+    flex: none;
   }
 
-  /* Notebook pinned flush to the bottom, ~40vh tall when uncollapsed. */
+  /* Notebook sticks to the bottom of the viewport, ~40vh tall when
+     uncollapsed — but only once scrolling reaches it; short content just
+     has it sit flush underneath with no reserved gap. */
   .player-notebook {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 600;
+    position: sticky; bottom: 0; z-index: 600;
+    flex: none;
     height: 40vh; margin: 0;
     display: flex; flex-direction: column;
   }
-  /* Collapsed: notebook shrinks to just its tab bar (it docks itself, below),
-     so the main content reclaims nearly the whole screen. */
+  /* Collapsed: notebook shrinks to just its tab bar. */
   .player-notebook:has(.notebook--collapsed) { height: auto; }
-  .player-main:has(~ .player-notebook .notebook--collapsed) { padding-bottom: 52px; }
   /* Fullscreen notebook covers everything; don't cap its height. */
   .player-notebook:has(.notebook--fullscreen) { height: auto; }
 
@@ -1121,9 +1123,8 @@ input[type="date"].gm-input { color-scheme: dark; }
   /* Group the two icon tabs at the right edge of the tab row. */
   .nb-action-tab:first-of-type { margin-left: auto; }
   .player-notebook .nb-tabs { flex-wrap: nowrap; }
-  /* Collapsed: dock the tab bar to the bottom of the screen. */
+  /* Collapsed: give the tab bar the same scrim the old fixed dock had. */
   .notebook.notebook--collapsed {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 600;
     margin: 0; padding: 6px 14px env(safe-area-inset-bottom, 6px);
     background: linear-gradient(180deg, rgba(20,14,6,0) 0%, rgba(20,14,6,0.92) 38%);
   }
