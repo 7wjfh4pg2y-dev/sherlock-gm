@@ -105,6 +105,17 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
   const status = h('div', { class: 'pdf-viewer-status', text: 'Loading…' });
   const element = h('div', { class: 'pdf-inlay-scroll' }, status, pagesEl);
 
+  // Default "fit to width": the zoom at which one page fills the container's
+  // width (minus the pages' 16px side padding). On a phone BASE_WIDTH (820) is
+  // wider than the viewport, so zoom 1 overflows — fitting shows the full page.
+  // Capped at 1 so a wide desktop container doesn't blow the page up past its
+  // natural size. Falls back to 1 before the element has been laid out.
+  function fitZoom(): number {
+    const avail = element.clientWidth - 32;
+    if (avail <= 0) return 1;
+    return Math.min(1, avail / BASE_WIDTH);
+  }
+
   // Single source of truth for the live visual transform.
   function applyTransform(): void {
     const s = zoom / renderedZoom;
@@ -119,7 +130,7 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
   }
 
   loadDoc(url)
-    .then((d) => { doc = d; status.remove(); return renderPages(); })
+    .then((d) => { doc = d; status.remove(); zoom = fitZoom(); return renderPages(); })
     .catch(() => { status.textContent = 'Could not load this document.'; });
 
   // Wheel: plain scroll/swipe pans the page (matches reading a document).
@@ -245,7 +256,7 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     element,
     zoomIn()  { setZoom(zoom + ZOOM_STEP); },
     zoomOut() { setZoom(zoom - ZOOM_STEP); },
-    reset()   { zoom = 1; tx = 0; ty = 0; void renderPages(); },
+    reset()   { zoom = fitZoom(); tx = 0; ty = 0; void renderPages(); },
     destroy() {
       element.removeEventListener('wheel', onWheel);
       element.removeEventListener('mousedown', onMouseDown);
