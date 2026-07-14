@@ -353,9 +353,16 @@ export function createPlayerScreen(): ScreenHandle {
   }
 
   function openClue(c: ClueRow): void {
-    selectedClueId = selectedClueId === c.id ? null : c.id;
+    const opening = selectedClueId !== c.id;
+    selectedClueId = opening ? c.id : null;
     renderDetail(store.getState());
     renderClues(store.getState());
+    // On mobile, the detail panel opens above the grid but tapping a card
+    // further down leaves it out of view with no obvious sign anything
+    // happened — snap it into view so the clue is immediately visible.
+    if (opening && window.matchMedia('(max-width: 860px)').matches) {
+      clueDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function closeDetail(): void {
