@@ -15,6 +15,12 @@ import type { MapRow, MapStrokeRow, MapStrokePoint } from '../data/types';
 
 type Tool = 'pan' | 'draw' | 'pin' | 'erase';
 
+// A round outline cursor (like a physical eraser tip) instead of the browser's
+// default 'cell' cross, which reads as a spreadsheet-selection cursor, not an
+// eraser. Hotspot is centred in the circle.
+const ERASER_CURSOR =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='rgba(255,255,255,0.35)' stroke='%23222' stroke-width='1.5'/%3E%3C/svg%3E\") 10 10, auto";
+
 export interface MapInlayHandle {
   element: HTMLElement;
   detach(): void;
@@ -471,7 +477,7 @@ export function buildMapInlay(opts: MapInlayOpts): MapInlayHandle {
     tool = next;
     const drawingTool = next !== 'pan';
     canvas.style.pointerEvents = drawingTool ? 'auto' : 'none';
-    canvas.style.cursor = next === 'erase' ? 'cell' : next === 'pan' ? 'default' : 'crosshair';
+    canvas.style.cursor = next === 'erase' ? ERASER_CURSOR : next === 'pan' ? 'default' : 'crosshair';
     pz.setPanEnabled(!drawingTool);
     for (const [t, btn] of Object.entries(toolButtons)) btn.classList.toggle('active', t === next);
   }
