@@ -8,9 +8,7 @@
 export const LECTURE_INTRO =
   "Found among Wiggins's papers were notes from an 1886 lecture given by Holmes " +
   'to the Baker Street Irregulars, covering his view of London and the many ' +
-  'personalities who would be of help. Holmes stood next to a map of London on ' +
-  'the wall at 221B Baker Street, his black brier in his right hand, pacing ' +
-  'before a group of attentive youths.';
+  'personalities who would be of help.';
 
 /** The lecture itself, paragraph by paragraph. */
 export const LECTURE_PARAGRAPHS: string[] = [

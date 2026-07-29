@@ -4,12 +4,13 @@
 
 import { h } from '../util/dom';
 import { openTitledModal } from './modal';
-import { LECTURE_INTRO, LECTURE_PARAGRAPHS } from '../data/lecture';
+import { LECTURE_PARAGRAPHS } from '../data/lecture';
 
 export function openLectureModal(): void {
   const { body } = openTitledModal("Holmes's Lecture", { contentClass: 'rules-modal' });
 
-  body.append(h('p', { class: 'rules-intro', text: LECTURE_INTRO }));
+  // The framing note (LECTURE_INTRO) already sits above the informants list, so
+  // the modal opens straight into the lecture itself.
   for (const p of LECTURE_PARAGRAPHS) {
     body.append(h('p', { class: 'rules-para', text: p }));
   }
