@@ -10,6 +10,11 @@
 import './styles/index.css';
 import { store, type AppState } from './state/store';
 import { createLandingScreen } from './landing';
+import { startAutoUpdate } from './util/autoUpdate';
+
+// Reload already-open tabs when a newer build is deployed (no more manual
+// hard-refresh for GM or players). Safe if it fails — falls back to manual.
+startAutoUpdate();
 
 const app = document.getElementById('app');
 
