@@ -763,14 +763,45 @@ input[type="date"].gm-input { color-scheme: dark; }
 .gm-informants-panel .informants-intro p { color: var(--ink); }
 
 /* ── Holmes's lecture (opens in a modal, inside informants intro) ── */
+.lecture-row { position: relative; display: flex; align-items: center; gap: 8px; }
 .lecture-toggle {
-  margin-top: 10px; cursor: pointer; padding: 6px 12px;
+  cursor: pointer; padding: 6px 12px;
   font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.84rem;
   letter-spacing: 0.03em; text-align: left;
   background: var(--ink); color: var(--parchment); border: 1px solid var(--ink);
   transition: background 0.15s, color 0.15s;
 }
 .lecture-toggle:hover { background: var(--sepia); border-color: var(--sepia); color: var(--paper); }
+
+/* ⓘ affordance for the framing blurb — on touch this is its only tap target,
+   so tapping it never competes with the lecture button's own tap. */
+.lecture-info-btn {
+  flex-shrink: 0; cursor: pointer; padding: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif;
+  font-size: 0.9rem; font-style: italic; line-height: 1;
+  background: transparent; color: var(--sepia); border: 1px solid var(--sepia);
+  transition: background 0.15s, color 0.15s;
+}
+.lecture-info-btn:hover { background: var(--sepia); color: var(--paper); }
+
+.lecture-tip {
+  display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 20;
+  width: max-content; max-width: 340px; padding: 10px 14px;
+  background: #1a1208; color: var(--parchment);
+  border: 1px solid var(--sepia); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.88rem; font-style: italic; line-height: 1.55;
+}
+.lecture-tip.open { display: block; }
+/* Pointer devices get it on hover of the row (the lecture button included). */
+@media (hover: hover) {
+  .lecture-row:hover .lecture-tip { display: block; }
+}
+/* Narrow screens: span the panel rather than overflow off the side. */
+@media (max-width: 600px) {
+  .lecture-tip { right: 0; width: auto; max-width: none; }
+}
 
 /* ── "How to play" header button (small, circular ?) ── */
 .rules-btn { font-weight: 700; min-width: 32px; padding-left: 0; padding-right: 0; text-align: center; }
