@@ -18,7 +18,7 @@ import {
   removeChannel,
 } from '../data/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution, loadGMMapStrokes } from './load';
+import { loadGMCase, loadGMRightPanel, loadGMClues, loadGMNewspapers, loadGMQuestions, loadGMSolution, loadGMMapStrokes, loadGMBoard } from './load';
 import { openMapsLibrary } from './mapsLibrary';
 import { openNewspaperModal } from './newspaperModal';
 import { openScotlandYard } from './scotlandYard';
@@ -32,6 +32,7 @@ import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
 import { openRulesModal } from '../components/rules';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
+import { buildBoardInlay, type BoardInlayHandle } from '../components/boardInlay';
 import type { InlinePdfHandle } from '../components/pdfViewer';
 import { createFullscreener, type Fullscreener } from '../util/fullscreen';
 import { createDropdown } from '../components/dropdown';
@@ -46,6 +47,7 @@ export function createGMScreen(): GMScreenHandle {
   let caseChannels: RealtimeChannel[] = [];
   let presenceChannel: RealtimeChannel | null = null;
   let onlineSet = new Set<string>();
+  let boardInlay: BoardInlayHandle | null = null;
 
   // ── Top bar ──
   const caseDropdown = createDropdown({ className: 'gm-case-select', onChange: handleCaseChange });
@@ -127,7 +129,7 @@ export function createGMScreen(): GMScreenHandle {
   );
 
   // ── Tab bar: all case content lives in inline tabs (like the player view) ──
-  type GMTab = 'clues' | 'briefing' | 'questions' | 'solution' | 'directory' | 'informants' | 'map' | 'newspaper' | 'notebook';
+  type GMTab = 'clues' | 'briefing' | 'questions' | 'solution' | 'directory' | 'informants' | 'map' | 'board' | 'newspaper' | 'notebook';
   let activeTab: GMTab = 'clues';
   const tabButtons: Partial<Record<GMTab, HTMLElement>> = {};
   const tabBar = h('div', { class: 'gm-tab-bar' });
@@ -138,6 +140,7 @@ export function createGMScreen(): GMScreenHandle {
     { id: 'directory' as const, label: 'Directory' },
     { id: 'informants' as const, label: 'Informants' },
     { id: 'map' as const, label: 'Map' },
+    { id: 'board' as const, label: 'Board' },
     { id: 'questions' as const, label: 'Questions' },
     { id: 'solution' as const, label: 'Solution' },
     { id: 'notebook' as const, label: 'Notebook' },
@@ -173,6 +176,7 @@ export function createGMScreen(): GMScreenHandle {
   const directoryPanel = h('div', { class: 'gm-directory-panel' });
   const informantsPanel = h('div', { class: 'gm-informants-panel' }, buildInformants());
   const mapPanel = h('div', { class: 'gm-map-panel' });
+  const boardPanel = h('div', { class: 'gm-board-panel' });
   const newspaperPanel = h('div', { class: 'gm-newspaper-panel' });
   const gmNotebook = buildGMNotebook();
   const gmQuestions = buildGMQuestionsPanel();
@@ -442,6 +446,8 @@ export function createGMScreen(): GMScreenHandle {
         question_answers: () => void loadGMQuestions(caseId),
         case_solutions: () => void loadGMSolution(caseId),
         map_strokes: () => void loadGMMapStrokes(caseId),
+        board_items: () => void loadGMBoard(caseId),
+        board_links: () => void loadGMBoard(caseId),
       }),
     );
     presenceChannel = watchPresence(caseId, (list) => {
@@ -788,10 +794,19 @@ export function createGMScreen(): GMScreenHandle {
     buildNewspaperInlay(papers.find((p) => p.image_url === currentNewspaperUrl)!, papers);
   }
 
+  // Built once, then patched — see the player screen's renderBoard for why.
+  function renderBoard(): void {
+    if (boardInlay) { boardInlay.refresh(); return; }
+    clear(boardPanel);
+    boardInlay = buildBoardInlay({ isGM: true, author: { name: 'Game Master', color: '#e8c34a' } });
+    boardPanel.append(boardInlay.element);
+  }
+
   function renderPanel(s: AppState): void {
     if (!s.currentCaseId) { replaceChildren(panelEl, empty); return; }
     // Tear down the map's window listeners whenever we're not on the map tab.
     if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
+    if (activeTab !== 'board' && boardInlay) { boardInlay.detach(); boardInlay = null; clear(boardPanel); }
     if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperFullscreen?.dispose(); newspaperFullscreen = null; newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
       // While editing, skip the rebuild so a realtime store update (e.g. a player
@@ -810,6 +825,9 @@ export function createGMScreen(): GMScreenHandle {
       replaceChildren(panelEl, directoryPanel);
     } else if (activeTab === 'informants') {
       replaceChildren(panelEl, informantsPanel);
+    } else if (activeTab === 'board') {
+      renderBoard();
+      replaceChildren(panelEl, boardPanel);
     } else if (activeTab === 'map') {
       renderMap(s);
       replaceChildren(panelEl, mapPanel);
@@ -891,6 +909,7 @@ export function createGMScreen(): GMScreenHandle {
     }
     renderPanel(s);
     renderPlayers(s);
+    if (activeTab === 'board' && boardInlay) boardInlay.refresh();
   }
 
   // ── Init ──
@@ -908,6 +927,7 @@ export function createGMScreen(): GMScreenHandle {
     destroy() {
       teardownCase();
       mapInlay?.detach();
+      boardInlay?.detach();
       newspaperFullscreen?.dispose();
       newspaperPdfHandle?.destroy();
       unsubscribe();

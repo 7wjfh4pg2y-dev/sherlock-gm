@@ -13,6 +13,7 @@ import type {
   QuestionRow, QuestionInsert,
   QuestionAnswerRow, SolutionRow,
   MapStrokeRow, MapStrokeInsert, MapStrokePoint,
+  BoardItemRow, BoardItemInsert, BoardLinkRow, BoardLinkInsert,
   DirectoryOverrides,
 } from './types';
 
@@ -467,6 +468,63 @@ export const storage = {
   },
 };
 
+// ── Deduction board ──
+// Cards and the string between them. Move is a bare position update (anyone may
+// move); delete is guarded in the client to the author or the GM.
+export const boardItems = {
+  async listForCase(caseId: string): Promise<BoardItemRow[]> {
+    const res = await sb.from('board_items').select('*').eq('case_id', caseId).order('created_at');
+    if (res.error) return [];
+    return (res.data as BoardItemRow[]) ?? [];
+  },
+  async create(payload: BoardItemInsert): Promise<BoardItemRow> {
+    return unwrap(await sb.from('board_items').insert(payload).select().single());
+  },
+  async move(id: string, x: number, y: number): Promise<void> {
+    unwrap(await sb.from('board_items').update({ x, y }).eq('id', id).select());
+  },
+  async setText(id: string, text: string): Promise<void> {
+    unwrap(await sb.from('board_items').update({ text }).eq('id', id).select());
+  },
+  async remove(id: string): Promise<void> {
+    unwrap(await sb.from('board_items').delete().eq('id', id).select());
+  },
+  async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+    unwrap(
+      await sb.from('board_items')
+        .update({ player_color: newColor })
+        .eq('case_id', caseId)
+        .eq('player_name', playerName)
+        .eq('player_color', oldColor)
+        .select(),
+    );
+  },
+};
+
+export const boardLinks = {
+  async listForCase(caseId: string): Promise<BoardLinkRow[]> {
+    const res = await sb.from('board_links').select('*').eq('case_id', caseId).order('created_at');
+    if (res.error) return [];
+    return (res.data as BoardLinkRow[]) ?? [];
+  },
+  async create(payload: BoardLinkInsert): Promise<BoardLinkRow> {
+    return unwrap(await sb.from('board_links').insert(payload).select().single());
+  },
+  async remove(id: string): Promise<void> {
+    unwrap(await sb.from('board_links').delete().eq('id', id).select());
+  },
+  async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+    unwrap(
+      await sb.from('board_links')
+        .update({ player_color: newColor })
+        .eq('case_id', caseId)
+        .eq('player_name', playerName)
+        .eq('player_color', oldColor)
+        .select(),
+    );
+  },
+};
+
 // ── Realtime ──
 // One channel per case carrying clues/players/notes changes. Callers pass a
 // single handler invoked (debounced upstream if desired) on any change to the
@@ -474,6 +532,7 @@ export const storage = {
 type TableName =
   | 'clues' | 'players' | 'notes' | 'newspapers' | 'case_newspapers'
   | 'case_questions' | 'question_answers' | 'case_solutions' | 'map_strokes'
+  | 'board_items' | 'board_links'
   | 'cases';
 
 // Tables with no case_id at all — subscribe to all rows.

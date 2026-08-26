@@ -5,6 +5,7 @@
 
 import type {
   CaseRow, ClueRow, PlayerRow, NoteRow, MapRow, NewspaperRow,
+  BoardItemRow, BoardLinkRow,
   QuestionRow, QuestionAnswerRow, SolutionRow, MapStrokeRow,
 } from '../data/types';
 
@@ -40,6 +41,9 @@ export interface AppState {
   solution: SolutionRow | null;
   // Collaborative markings on the case map (freehand strokes + pins).
   mapStrokes: MapStrokeRow[];
+  // Deduction board: cards the team pinned and the string between them.
+  boardItems: BoardItemRow[];
+  boardLinks: BoardLinkRow[];
   // Player identity (player role only).
   identity: Identity | null;
 }
@@ -59,6 +63,8 @@ const initialState: AppState = {
   questionAnswers: [],
   solution: null,
   mapStrokes: [],
+  boardItems: [],
+  boardLinks: [],
   identity: null,
 };
 
@@ -98,6 +104,8 @@ function createStore(initial: AppState) {
       questionAnswers: [],
       solution: null,
       mapStrokes: [],
+      boardItems: [],
+      boardLinks: [],
       identity: null,
     });
   }

@@ -7,7 +7,7 @@ import type { MapRow } from '../data/types';
 import type { PresenceMeta } from '../data/supabase';
 import {
   cases, players, clues, notes, maps, newspapers,
-  questions, questionAnswers, solutions, mapStrokes,
+  questions, questionAnswers, solutions, mapStrokes, boardItems, boardLinks,
   subscribeToCase, joinPresence, removeChannel,
 } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
@@ -53,7 +53,7 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
   // Directory data isn't needed until the Directory tab opens — load it in the
   // background so it doesn't block the case room from appearing.
   void loadDirectory(caseId);
-  const [revealed, allNotes, allNewspapers, allQuestions, allAnswers, solution, strokes] = await Promise.all([
+  const [revealed, allNotes, allNewspapers, allQuestions, allAnswers, solution, strokes, bItems, bLinks] = await Promise.all([
     clues.listRevealed(caseId),
     notes.listForCase(caseId),
     newspapers.listForCase(caseId), // papers the GM enabled for this case
@@ -61,6 +61,8 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
     questionAnswers.listForCase(caseId),
     solutions.getForPlayer(caseId),
     mapStrokes.listForCase(caseId),
+    boardItems.listForCase(caseId),
+    boardLinks.listForCase(caseId),
   ]);
 
   store.set({
@@ -76,6 +78,8 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
     questionAnswers: allAnswers,
     solution,
     mapStrokes: strokes,
+    boardItems: bItems,
+    boardLinks: bLinks,
     players: [],
   });
 
@@ -90,6 +94,8 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
       question_answers: () => void questionAnswers.listForCase(caseId).then((a) => store.set({ questionAnswers: a })),
       case_solutions: () => void solutions.getForPlayer(caseId).then((sol) => store.set({ solution: sol })),
       map_strokes: () => void mapStrokes.listForCase(caseId).then((m) => store.set({ mapStrokes: m })),
+      board_items: () => void boardItems.listForCase(caseId).then((b) => store.set({ boardItems: b })),
+      board_links: () => void boardLinks.listForCase(caseId).then((b) => store.set({ boardLinks: b })),
       cases: () => void cases.get(caseId).then(async (c) => {
         if (!c) return;
         const mapList = c.map_id ? [await maps.get(c.map_id)].filter(Boolean) as import('../data/types').MapRow[] : [];

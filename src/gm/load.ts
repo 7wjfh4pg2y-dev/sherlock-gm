@@ -2,13 +2,13 @@
 // Called when a case is selected (or re-selected after realtime events).
 // Fetches all case data in parallel and pushes it into the store.
 
-import { cases, clues, players, notes, maps, newspapers, questions, questionAnswers, solutions, mapStrokes } from '../data/supabase';
+import { cases, clues, players, notes, maps, newspapers, questions, questionAnswers, solutions, mapStrokes, boardItems, boardLinks } from '../data/supabase';
 import { loadDirectory } from '../data/directory';
 import { store } from '../state/store';
 import type { MapRow } from '../data/types';
 
 export async function loadGMCase(caseId: string): Promise<void> {
-  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds, allQuestions, allAnswers, solution, strokes] =
+  const [caseData, allClues, allPlayers, allNotes, allMaps, allNewspapers, enabledIds, allQuestions, allAnswers, solution, strokes, bItems, bLinks] =
     await Promise.all([
       cases.get(caseId),
       clues.listForCase(caseId),
@@ -21,6 +21,8 @@ export async function loadGMCase(caseId: string): Promise<void> {
       questionAnswers.listForCase(caseId),
       solutions.getForGM(caseId),
       mapStrokes.listForCase(caseId),
+      boardItems.listForCase(caseId),
+      boardLinks.listForCase(caseId),
     ]);
 
   const mapList: MapRow[] = allMaps;
@@ -41,12 +43,23 @@ export async function loadGMCase(caseId: string): Promise<void> {
     questionAnswers: allAnswers,
     solution,
     mapStrokes: strokes,
+    boardItems: bItems,
+    boardLinks: bLinks,
   });
 }
 
 /** Reload the collaborative map markings (map_strokes realtime handler). */
 export async function loadGMMapStrokes(caseId: string): Promise<void> {
   store.set({ mapStrokes: await mapStrokes.listForCase(caseId) });
+}
+
+/** Reload the deduction board (board_items / board_links realtime handler). */
+export async function loadGMBoard(caseId: string): Promise<void> {
+  const [items, links] = await Promise.all([
+    boardItems.listForCase(caseId),
+    boardLinks.listForCase(caseId),
+  ]);
+  store.set({ boardItems: items, boardLinks: links });
 }
 
 /** Reload the GM's questions + team answers (questions realtime handler). */

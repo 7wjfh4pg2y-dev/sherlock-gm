@@ -18,6 +18,7 @@ import { buildDirectory } from '../components/directory';
 import { buildInformants } from '../components/informants';
 import { openRulesModal } from '../components/rules';
 import { buildMapInlay, type MapInlayHandle } from '../components/mapInlay';
+import { buildBoardInlay, type BoardInlayHandle } from '../components/boardInlay';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
 import { leaveCase } from './join';
@@ -28,7 +29,7 @@ export interface ScreenHandle {
   destroy(): void;
 }
 
-type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'directory' | 'informants' | 'map';
+type TabId = 'briefing' | 'clues' | 'questions' | 'solution' | 'newspaper' | 'directory' | 'informants' | 'map' | 'board';
 
 export function createPlayerScreen(): ScreenHandle {
   let editingId: string | null = null;
@@ -39,6 +40,7 @@ export function createPlayerScreen(): ScreenHandle {
   let answerDraft = '';
   let activeTab: TabId = 'clues';
   let mapInlay: MapInlayHandle | null = null;
+  let boardInlay: BoardInlayHandle | null = null;
   let builtMapId: string | null = null;
   let newspaperPdfHandle: { destroy(): void; zoomIn(): void; zoomOut(): void; reset(): void } | null = null;
   let newspaperFullscreen: Fullscreener | null = null;
@@ -195,6 +197,7 @@ export function createPlayerScreen(): ScreenHandle {
     { id: 'directory', label: 'Directory' },
     { id: 'informants', label: 'Informants' },
     { id: 'map',       label: 'Map' },
+    { id: 'board',     label: 'Board' },
     { id: 'questions', label: 'Questions' },
     { id: 'solution',  label: 'Solution' },
   ];
@@ -256,6 +259,7 @@ export function createPlayerScreen(): ScreenHandle {
 
   // ── Map panel (inline image + expand-to-overlay) ──
   const mapPanel = h('div', { class: 'player-map-panel' });
+  const boardPanel = h('div', { class: 'player-board-panel' });
 
   // ── Notebook (always right) ──
   const privateFeed = h('div', { class: 'nb-notes' });
@@ -700,9 +704,21 @@ export function createPlayerScreen(): ScreenHandle {
     mapPanel.append(mapInlay.element);
   }
 
+  // Built once, then patched. Rebuilding on every store update would drop the
+  // card you are mid-drag on, and every optimistic drag writes to the store.
+  // Guard on boardInlay !== null, never on childElementCount — see renderMap.
+  function renderBoard(): void {
+    if (boardInlay) { boardInlay.refresh(); return; }
+    const me = store.getState().identity ?? { name: 'Player', color: '#e8c34a' };
+    clear(boardPanel);
+    boardInlay = buildBoardInlay({ isGM: false, author: me });
+    boardPanel.append(boardInlay.element);
+  }
+
   function renderPanel(s: AppState): void {
     // Tear down the map's window listeners whenever we're not showing the map.
     if (activeTab !== 'map' && mapInlay) { mapInlay.detach(); mapInlay = null; builtMapId = null; }
+    if (activeTab !== 'board' && boardInlay) { boardInlay.detach(); boardInlay = null; clear(boardPanel); }
     // Tear down newspaper PDF when leaving; builtNewspaperUrl resets so it rebuilds on re-enter.
     if (activeTab !== 'newspaper' && newspaperPdfHandle) { newspaperFullscreen?.dispose(); newspaperFullscreen = null; newspaperPdfHandle.destroy(); newspaperPdfHandle = null; builtNewspaperUrl = null; }
     if (activeTab === 'briefing') {
@@ -726,6 +742,9 @@ export function createPlayerScreen(): ScreenHandle {
       replaceChildren(panelEl, directoryPanel);
     } else if (activeTab === 'informants') {
       replaceChildren(panelEl, informantsPanel);
+    } else if (activeTab === 'board') {
+      renderBoard();
+      replaceChildren(panelEl, boardPanel);
     } else if (activeTab === 'map') {
       renderMap(s);
       replaceChildren(panelEl, mapPanel);
@@ -797,6 +816,7 @@ export function createPlayerScreen(): ScreenHandle {
     renderPanel(s);
     renderNotes(s);
     refreshUnread(s);
+    if (activeTab === 'board' && boardInlay) boardInlay.refresh();
   }
 
   // Seed all shared notes present at mount as already-seen, so the unread dot
@@ -812,6 +832,7 @@ export function createPlayerScreen(): ScreenHandle {
       unsubscribe();
       setPresenceSync(() => {});
       mapInlay?.detach();
+      boardInlay?.detach();
       newspaperFullscreen?.dispose();
       newspaperPdfHandle?.destroy();
     },

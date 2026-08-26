@@ -78,6 +78,57 @@ export type MapStrokeInsert = {
   label?: string;
 };
 
+// ── Deduction board ──
+// A shared pin-board per case. Coordinates are absolute px in a fixed logical
+// board (BOARD_W/BOARD_H in components/boardInlay.ts) rather than normalised to
+// an image, so an arrangement reads the same on every screen. Anyone may move a
+// card; only the author (or the GM) may delete one.
+export interface BoardItemRow {
+  id: string;
+  case_id: string;
+  /** 'clue' mirrors a revealed clue; 'note' is free text the team wrote. */
+  kind: 'clue' | 'note';
+  /** Set when kind is 'clue' — the clue whose text the card shows. */
+  clue_id: string | null;
+  /** Body text for a 'note'. Empty for a 'clue' card. */
+  text: string;
+  x: number;
+  y: number;
+  player_name: string;
+  player_color: string;
+  created_at: string;
+}
+
+export type BoardItemInsert = {
+  case_id: string;
+  kind: 'clue' | 'note';
+  clue_id?: string | null;
+  text?: string;
+  x: number;
+  y: number;
+  player_name: string;
+  player_color: string;
+};
+
+/** String between two cards. Cascades away with either endpoint. */
+export interface BoardLinkRow {
+  id: string;
+  case_id: string;
+  from_id: string;
+  to_id: string;
+  player_name: string;
+  player_color: string;
+  created_at: string;
+}
+
+export type BoardLinkInsert = {
+  case_id: string;
+  from_id: string;
+  to_id: string;
+  player_name: string;
+  player_color: string;
+};
+
 // ── End-of-case questions + solution ──
 
 // A GM-authored question. `answer` is the official answer, hidden from players

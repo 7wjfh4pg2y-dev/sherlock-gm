@@ -1352,3 +1352,131 @@ input[type="date"].gm-input { color-scheme: dark; }
 .map-label-ok:hover { background: rgba(109,220,139,0.2); }
 .map-label-dismiss { color: rgba(255,255,255,0.55); }
 .map-label-dismiss:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+/* ── Deduction board ──
+   DOM cards over an SVG string layer, both inside one pan/zoom surface. No
+   canvas: cards carry wrapping text, and CSS-scaling a big canvas is what used
+   to crash the map on iOS. */
+.gm-board-panel { padding: 0; height: 100%; min-height: 0; display: flex; }
+.player-board-panel { padding: 0; flex: 1; min-height: 0; display: flex; }
+
+.board-inlay {
+  position: relative; flex: 1; min-width: 0; min-height: 0;
+  border: 1px solid var(--parchment-darker);
+  overflow: hidden; isolation: isolate;
+}
+.board-viewport {
+  position: absolute; inset: 0; overflow: hidden; cursor: grab;
+  background-color: #6d5636;
+  background-image:
+    radial-gradient(ellipse at 30% 20%, #8a6f47 0%, transparent 60%),
+    radial-gradient(circle at 70% 75%, #5c4830 0%, transparent 55%);
+}
+.board-viewport:active { cursor: grabbing; }
+.board-inlay.linking .board-viewport { cursor: crosshair; }
+.board-surface { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+/* The string. Only the lines take clicks, so the board stays pannable. */
+.board-links { position: absolute; top: 0; left: 0; pointer-events: none; }
+.board-link {
+  stroke-width: 3; stroke-linecap: round; opacity: 0.85;
+  pointer-events: stroke; cursor: pointer;
+}
+.board-link:hover { stroke-width: 5; opacity: 1; }
+
+.board-cards { position: absolute; top: 0; left: 0; }
+.board-card {
+  position: absolute; top: 0; left: 0;
+  background: #f7f1e2; border: 1px solid #cbb489;
+  box-shadow: 5px 7px 14px rgba(20, 16, 10, 0.4);
+  padding: 14px 15px 13px; cursor: grab; touch-action: none;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.board-card.dragging { cursor: grabbing; box-shadow: 9px 12px 22px rgba(20, 16, 10, 0.5); z-index: 5; }
+.board-card--note { background: #e8d98a; border-color: #cbb055; }
+.board-card.link-source { outline: 2px solid #a8451f; outline-offset: 3px; }
+.board-inlay.linking .board-card { cursor: pointer; }
+.board-pin {
+  position: absolute; top: -9px; left: 50%; margin-left: -9px;
+  width: 18px; height: 18px; border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.board-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.board-card-code {
+  font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--ink);
+}
+.board-card-kind {
+  font-family: 'Courier Prime', monospace; font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #8a6a20;
+}
+.board-card-del {
+  background: none; border: none; cursor: pointer; padding: 2px 4px;
+  font-size: 13px; line-height: 1; color: #a08a5c;
+}
+.board-card-del:hover { color: var(--red); }
+.board-card-body {
+  font-family: 'IM Fell English', Georgia, serif; font-size: 14px;
+  line-height: 1.5; color: #3a2c18; white-space: pre-wrap;
+}
+.board-card--note .board-card-body { font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.35; }
+
+/* Toolbar + drawer float over the surface. */
+.board-toolbar {
+  position: absolute; top: 12px; left: 12px; display: flex; gap: 4px;
+  background: rgba(20, 14, 6, 0.9); border: 1px solid #8a6f47; padding: 6px; z-index: 3;
+}
+.board-btn {
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 13px;
+  background: none; border: none; cursor: pointer;
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: 11.5px;
+  letter-spacing: 0.06em; color: #c0a678;
+}
+.board-btn:hover { color: #f2e6cd; }
+.board-btn.active { background: rgba(216, 167, 90, 0.18); color: #f2e6cd; }
+.board-btn:focus-visible { outline: 2px solid #d8a75a; outline-offset: -2px; }
+
+.board-drawer {
+  position: absolute; top: 68px; left: 12px; width: 320px; max-width: calc(100% - 24px);
+  max-height: 60%; overflow-y: auto; z-index: 3;
+  background: rgba(20, 14, 6, 0.96); border: 1px solid #8a6f47; padding: 12px 14px;
+}
+.board-drawer-title {
+  font-family: 'Courier Prime', monospace; font-size: 9.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #c0a678; margin-bottom: 10px;
+}
+.board-drawer-list { display: flex; flex-direction: column; gap: 6px; }
+.board-drawer-item {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  min-height: 44px; padding: 8px 11px; cursor: pointer;
+  background: rgba(247, 241, 226, 0.06); border: 1px solid #6b5730;
+}
+.board-drawer-item:hover { background: rgba(247, 241, 226, 0.13); border-color: #a08a5c; }
+.board-drawer-code {
+  font-family: 'Courier Prime', monospace; font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.1em; color: #f2e6cd;
+}
+.board-drawer-text {
+  font-family: 'IM Fell English', Georgia, serif; font-size: 12.5px; color: #c0a678;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.board-empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  pointer-events: none; text-align: center; padding: 0 24px;
+}
+.board-empty-title {
+  font-family: 'Special Elite', 'Courier New', monospace; font-size: 1.05rem;
+  color: #f2e6cd; margin: 0;
+}
+.board-empty-sub {
+  font-family: 'IM Fell English', Georgia, serif; font-style: italic;
+  font-size: 0.95rem; color: #d8c7a2; margin: 0; max-width: 34ch;
+}
+
+@media (max-width: 860px) {
+  .board-toolbar { top: 8px; left: 8px; padding: 4px; }
+  .board-btn { padding: 0 10px; font-size: 11px; }
+  .board-drawer { top: 60px; left: 8px; right: 8px; width: auto; }
+}
