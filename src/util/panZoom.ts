@@ -18,7 +18,13 @@ export interface PanZoomHandle {
 export function attachPanZoom(
   viewport: HTMLElement,
   img: HTMLElement,
-  opts: { min?: number; max?: number; step?: number; onTransform?: () => void } = {},
+  opts: {
+    min?: number; max?: number; step?: number;
+    onTransform?: () => void;
+    /** Where the layer's transform-origin sits. Must match its CSS, or the
+     *  point under the cursor drifts on every zoom step. Default 'center'. */
+    origin?: 'center' | 'top-left';
+  } = {},
 ): PanZoomHandle {
   let min = opts.min ?? 0.5;
   const max = opts.max ?? 6;
@@ -54,8 +60,14 @@ export function attachPanZoom(
     const clamped = Math.min(max, Math.max(min, nextScale));
     const k = clamped / scale;
     const rect = viewport.getBoundingClientRect();
-    const fxr = fx - (rect.left + rect.width / 2);
-    const fyr = fy - (rect.top + rect.height / 2);
+    // Focal point expressed relative to the layer's transform-origin. Getting
+    // this wrong doesn't look like a zoom bug — the content just slides away
+    // from the cursor a little on every step.
+    const topLeft = opts.origin === 'top-left';
+    const ox = topLeft ? rect.left : rect.left + rect.width / 2;
+    const oy = topLeft ? rect.top : rect.top + rect.height / 2;
+    const fxr = fx - ox;
+    const fyr = fy - oy;
     tx = fxr - k * (fxr - tx);
     ty = fyr - k * (fyr - ty);
     scale = clamped;

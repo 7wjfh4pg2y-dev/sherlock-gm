@@ -7,7 +7,7 @@ import { h, replaceChildren, clear, formatCaseDate } from '../util/dom';
 import { renderRichText, hasImagePlaceholder, stripMarkup } from '../util/richText';
 import { store, selectors, type AppState } from '../state/store';
 import type { ClueRow, NoteRow, NewspaperRow, QuestionRow } from '../data/types';
-import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo } from '../data/supabase';
+import { notes as noteRepo, questionAnswers, mapStrokes as strokeRepo, players as playersRepo, boardItems as boardItemRepo, boardLinks as boardLinkRepo } from '../data/supabase';
 import type { PresenceMeta } from '../data/supabase';
 import { setPresenceSync, updatePresenceMeta } from './join';
 import { PLAYER_COLORS } from '../data/colors';
@@ -76,11 +76,16 @@ export function createPlayerScreen(): ScreenHandle {
     if (!me || !caseId || newColor === me.color) { closeColorPopup(); return; }
     const oldColor = me.color;
     // Optimistic: update all owned strokes in the store and identity.
+    const recolor = <T extends { player_name: string; player_color: string }>(rows: T[], from: string, to: string): T[] =>
+      rows.map((r) => (r.player_name === me.name && r.player_color === from ? { ...r, player_color: to } : r));
     store.set({
       identity: { ...me, color: newColor },
-      mapStrokes: state.mapStrokes.map((m) =>
-        m.player_name === me.name && m.player_color === oldColor ? { ...m, player_color: newColor } : m,
-      ),
+      mapStrokes: recolor(state.mapStrokes, oldColor, newColor),
+      // Board cards and string carry the author's colour too, and canDelete
+      // matches on name AND colour — miss these and a player loses the right to
+      // delete their own cards the moment they change colour.
+      boardItems: recolor(state.boardItems, oldColor, newColor),
+      boardLinks: recolor(state.boardLinks, oldColor, newColor),
     });
     closeColorPopup();
     // Re-broadcast presence so other players see the new colour immediately.
@@ -88,6 +93,8 @@ export function createPlayerScreen(): ScreenHandle {
     try {
       await Promise.all([
         strokeRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
+        boardItemRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
+        boardLinkRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         playersRepo.updateColor(caseId, me.name, newColor),
       ]);
     } catch {
@@ -95,9 +102,9 @@ export function createPlayerScreen(): ScreenHandle {
       const cur = store.getState();
       store.set({
         identity: { ...cur.identity!, color: oldColor },
-        mapStrokes: cur.mapStrokes.map((m) =>
-          m.player_name === me.name && m.player_color === newColor ? { ...m, player_color: oldColor } : m,
-        ),
+        mapStrokes: recolor(cur.mapStrokes, newColor, oldColor),
+        boardItems: recolor(cur.boardItems, newColor, oldColor),
+        boardLinks: recolor(cur.boardLinks, newColor, oldColor),
       });
       toast('Could not change colour.');
     }

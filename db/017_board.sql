@@ -19,14 +19,16 @@ create table if not exists public.board_items (
   case_id      uuid not null references public.cases(id) on delete cascade,
   -- 'clue' -> mirrors a revealed clue, body comes from clues.clue_text
   -- 'note'  -> free text the team wrote, body is `text`
-  kind         text not null default 'note',
+  kind         text not null default 'note' check (kind in ('clue', 'note')),
   clue_id      uuid references public.clues(id) on delete cascade,
   text         text not null default '',
   x            double precision not null default 0,
   y            double precision not null default 0,
   player_name  text not null default '',
   player_color text not null default '',
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  -- A clue card is meaningless without the clue it mirrors.
+  constraint board_items_clue_needs_ref check (kind <> 'clue' or clue_id is not null)
 );
 
 -- A link between two cards. Cascading on both ends means deleting a card takes
@@ -38,11 +40,21 @@ create table if not exists public.board_links (
   to_id        uuid not null references public.board_items(id) on delete cascade,
   player_name  text not null default '',
   player_color text not null default '',
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  constraint board_links_no_self check (from_id <> to_id)
 );
 
 create index if not exists board_items_case_idx on public.board_items(case_id);
 create index if not exists board_links_case_idx on public.board_links(case_id);
+-- Postgres does not index the referencing side of a foreign key, so without
+-- these every board_items delete sequentially scans board_links twice.
+create index if not exists board_links_from_idx on public.board_links(from_id);
+create index if not exists board_links_to_idx on public.board_links(to_id);
+-- One string per pair, whichever end it was drawn from. The client checks for a
+-- duplicate before inserting, but two players linking the same pair at the same
+-- moment would both pass that check and leave an unremovable double line.
+create unique index if not exists board_links_pair_uniq on public.board_links
+  (case_id, least(from_id, to_id), greatest(from_id, to_id));
 
 alter table public.board_items enable row level security;
 alter table public.board_links enable row level security;

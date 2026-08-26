@@ -72,7 +72,8 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   const drawer = h('div', { class: 'board-drawer' });
   const element = h('div', { class: 'board-inlay' }, viewport, toolbar, drawer, empty);
 
-  const pz: PanZoomHandle = attachPanZoom(viewport, surface, { min: 0.2, max: 2 });
+  // origin must match .board-surface's transform-origin, or zoom drifts.
+  const pz: PanZoomHandle = attachPanZoom(viewport, surface, { min: 0.2, max: 2, origin: 'top-left' });
   pz.setFitScale(0.5);
 
   // ── Live interaction state (never in the store — this is view-local) ──
@@ -105,6 +106,17 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
 
   function posOf(item: BoardItemRow): { x: number; y: number } {
     return localPos.get(item.id) ?? { x: item.x, y: item.y };
+  }
+
+  /** The row as it is NOW. Card elements outlive the row they were built from
+   *  (refresh patches in place), so handlers must never close over one. */
+  function rowOf(id: string): BoardItemRow | null {
+    return store.getState().boardItems.find((i) => i.id === id) ?? null;
+  }
+
+  /** An id the server has never seen — its INSERT is still in flight. */
+  function isPending(id: string): boolean {
+    return id.startsWith('tmp-');
   }
 
   function canDelete(row: { player_name: string; player_color: string }): boolean {
@@ -161,18 +173,31 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   }
 
   async function commitMove(id: string, x: number, y: number): Promise<void> {
-    store.set({ boardItems: store.getState().boardItems.map((i) => (i.id === id ? { ...i, x, y } : i)) });
+    const before = store.getState().boardItems;
+    store.set({ boardItems: before.map((i) => (i.id === id ? { ...i, x, y } : i)) });
+    // Still being inserted: the create carries its own position, and the row
+    // has no server id to update yet.
+    if (isPending(id)) { localPos.delete(id); return; }
     try {
       await itemRepo.move(id, x, y);
+      // A realtime refetch can land while the write is in flight and replace
+      // the optimistic row with the pre-move one. The server now holds the new
+      // position, so re-assert it before releasing the local override —
+      // otherwise the card visibly snaps back until the next realtime event.
+      store.set({ boardItems: store.getState().boardItems.map((i) => (i.id === id ? { ...i, x, y } : i)) });
     } catch {
+      store.set({ boardItems: before });
       toast('Could not save that move.');
     } finally {
-      localPos.delete(id);
+      // Only clear the override if no NEW gesture has since claimed this card —
+      // otherwise a slow request from the previous drag wipes the live one.
+      if (dragId !== id) localPos.delete(id);
     }
   }
 
   async function removeItem(item: BoardItemRow): Promise<void> {
     if (!canDelete(item)) { toast('Only the author or the GM can remove this card.'); return; }
+    if (isPending(item.id)) { toast('Still saving that card — try again in a moment.'); return; }
     const before = store.getState();
     // Links cascade server-side; drop them locally too so the string vanishes now.
     store.set({
@@ -190,6 +215,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   async function addLink(fromId: string, toId: string): Promise<void> {
     const caseId = store.getState().currentCaseId;
     if (!caseId || fromId === toId) return;
+    if (isPending(fromId) || isPending(toId)) { toast('Still saving that card — try again in a moment.'); return; }
     const existing = store.getState().boardLinks.find(
       (l) => (l.from_id === fromId && l.to_id === toId) || (l.from_id === toId && l.to_id === fromId),
     );
@@ -207,6 +233,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
 
   async function removeLink(link: BoardLinkRow): Promise<void> {
     if (!canDelete(link)) { toast('Only the author or the GM can cut this string.'); return; }
+    if (isPending(link.id)) return;
     const before = store.getState().boardLinks;
     store.set({ boardLinks: before.filter((l) => l.id !== link.id) });
     try {
@@ -218,44 +245,50 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   }
 
   // ── Card building ──
-  function buildCard(item: BoardItemRow): HTMLElement {
+  // Only the id is captured. The ROW is looked up per gesture: this element
+  // outlives many versions of its row, and closing over the build-time one made
+  // every drag after the first jump, because the stale x/y was used as the
+  // grab offset.
+  function buildCard(id: string): HTMLElement {
     const card = h('div', { class: 'board-card' });
-    card.dataset['id'] = item.id;
+    card.dataset['id'] = id;
     card.style.width = `${CARD_W}px`;
-    paintCard(card, item);
 
     card.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
-      if (linkMode) return; // link mode uses click, not drag
+      if (linkMode) return;         // link mode uses click, not drag
+      if (dragId !== null) return;  // a second finger must not hijack the drag
+      const row = rowOf(id);
+      if (!row) return;
       const p = toBoard(e.clientX, e.clientY);
-      const cur = posOf(item);
-      dragId = item.id;
+      const cur = posOf(row);
+      dragId = id;
       dragDX = p.x - cur.x;
       dragDY = p.y - cur.y;
       dragOrigin = cur;
-      localPos.set(item.id, cur);
+      localPos.set(id, cur);
       card.setPointerCapture(e.pointerId);
       card.classList.add('dragging');
       pz.setPanEnabled(false);
     });
 
     card.addEventListener('pointermove', (e) => {
-      if (dragId !== item.id) return;
+      if (dragId !== id) return;
       e.stopPropagation();
       const p = toBoard(e.clientX, e.clientY);
       const next = {
         x: Math.max(0, Math.min(BOARD_W - CARD_W, p.x - dragDX)),
         y: Math.max(0, Math.min(BOARD_H - 60, p.y - dragDY)),
       };
-      localPos.set(item.id, next);
+      localPos.set(id, next);
       place(card, next);
       drawLinks();
     });
 
     function endDrag(e: PointerEvent): void {
-      if (dragId !== item.id) return;
+      if (dragId !== id) return;
       e.stopPropagation();
-      const next = localPos.get(item.id);
+      const next = localPos.get(id);
       const origin = dragOrigin;
       dragId = null;
       dragOrigin = null;
@@ -263,8 +296,8 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       pz.setPanEnabled(true);
       if (!next) return;
       const moved = origin ? Math.hypot(next.x - origin.x, next.y - origin.y) > DRAG_MIN : true;
-      if (moved) void commitMove(item.id, next.x, next.y);
-      else localPos.delete(item.id);
+      if (moved) void commitMove(id, next.x, next.y);
+      else localPos.delete(id);
     }
     card.addEventListener('pointerup', endDrag);
     card.addEventListener('pointercancel', endDrag);
@@ -273,13 +306,13 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       if (!linkMode) return;
       e.stopPropagation();
       if (linkFrom === null) {
-        linkFrom = item.id;
+        linkFrom = id;
         card.classList.add('link-source');
-      } else if (linkFrom === item.id) {
+      } else if (linkFrom === id) {
         linkFrom = null;
         card.classList.remove('link-source');
       } else {
-        void addLink(linkFrom, item.id);
+        void addLink(linkFrom, id);
         cardEls.get(linkFrom)?.classList.remove('link-source');
         linkFrom = null;
         setLinkMode(false);
@@ -351,9 +384,10 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       seen.add(item.id);
       let card = cardEls.get(item.id);
       if (!card) {
-        card = buildCard(item);
+        card = buildCard(item.id);
         cardEls.set(item.id, card);
         cardLayer.appendChild(card);
+        paintCard(card, item);
       } else if (dragId !== item.id) {
         // Repaint content, but never disturb the card the viewer is holding.
         paintCard(card, item);
@@ -362,6 +396,16 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     }
     for (const [id, el] of cardEls) {
       if (seen.has(id)) continue;
+      // Someone else deleted this card, or the GM un-revealed its clue, while
+      // it might be under this viewer's finger. Removing the node kills the
+      // pointerup that would have released the drag, so unwind it here or the
+      // board stays unpannable until the tab is switched.
+      if (dragId === id) {
+        dragId = null;
+        dragOrigin = null;
+        pz.setPanEnabled(!linkMode);
+      }
+      if (linkFrom === id) linkFrom = null;
       el.remove();
       cardEls.delete(id);
       localPos.delete(id);
