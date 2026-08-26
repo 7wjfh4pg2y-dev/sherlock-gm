@@ -602,6 +602,66 @@
   </div>
   </section>
 
+  <section class="round" data-round="4b">
+  <!-- ROUND 4b -->
+  <div class="round-head"><span class="round-num">ROUND 4b</span><h2>The board</h2></div>
+  <p class="round-sub">Brand new, and the part I most want opinions on. Pin what you know and draw string between what connects.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-open">
+    <p class="do">Open the <strong>Board</strong> tab. Drag the background to move around; pinch or scroll to zoom.</p>
+    <p class="expect">An empty cork board with a toolbar. Zooming should keep the spot under your finger roughly put.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-pin">
+    <p class="do">Hit <strong>Add clue</strong> and pin two or three clues.</p>
+    <p class="expect">The drawer only offers clues that are revealed and not already pinned. Everyone else sees them appear.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-drag">
+    <p class="do">Drag a card somewhere else. Then drag the <em>same</em> card a second time.</p>
+    <p class="expect">It follows your finger both times — the second drag shouldn't jump or fly off. Others see it move.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-note">
+    <p class="do">Hit <strong>Note</strong> and write a deduction.</p>
+    <p class="expect">A proper in-app box, not a grey browser pop-up. It lands as a yellow card.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-link">
+    <p class="do">Hit <strong>Link</strong>, then tap two cards.</p>
+    <p class="expect">String joins them and follows the cards when either is moved. Tap the string to cut it.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-perms">
+    <p class="do">Try to remove a card <em>someone else</em> pinned, then one of your own.</p>
+    <p class="expect">No <code>&times;</code> on other people's cards; yours goes, and any string attached to it goes too.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-together">
+    <div class="chips"><span class="chip">Phone</span><span class="chip">Desktop</span></div>
+    <p class="do">Now all move cards around <em>at the same time</em> for a minute. Deliberately grab the same card as someone else.</p>
+    <p class="expect">No cards vanish, freeze, or snap back to old spots, and the board stays pannable throughout.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-worth">
+    <p class="do">Honestly: did the board help you think, or was it just extra work?</p>
+    <p class="expect">Say so plainly below. It's a big feature and I'd rather cut it than keep something nobody uses.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n4b">Round 4b &mdash; anything off?</label>
+    <textarea id="n4b" data-k="n4b" placeholder="Leave blank if all fine"></textarea>
+  </div>
+  </section>
+
   <section class="round" data-round="5">
   <!-- ROUND 5 -->
   <div class="round-head"><span class="round-num">ROUND 5</span><h2>The newspapers</h2></div>
@@ -902,7 +962,7 @@
 
   var ROUNDS = [
     ['Round 0 (setup)', 'n0'], ['Round 1 (joining)', 'n1'], ['Round 2 (reading in)', 'n2'],
-    ['Round 3 (clues)', 'n3'], ['Round 4 (map)', 'n4'], ['Round 5 (newspapers)', 'n5'],
+    ['Round 3 (clues)', 'n3'], ['Round 4 (map)', 'n4'], ['Round 4b (board)', 'n4b'], ['Round 5 (newspapers)', 'n5'],
     ['Round 6 (notepad)', 'n6'], ['Round 7 (reckoning)', 'n7'], ['Round 8 (breaking it)', 'n8']
   ];
   var QUESTIONS = [
