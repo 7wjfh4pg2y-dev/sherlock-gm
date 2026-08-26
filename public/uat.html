@@ -31,6 +31,8 @@
   }
 
   * { box-sizing: border-box; }
+  /* .check sets display:grid, which would otherwise win over [hidden]. */
+  [hidden] { display: none !important; }
 
   body {
     margin: 0;
@@ -380,47 +382,53 @@
     </div>
   </div>
 
+  <div class="note warn" id="gate">
+    <strong>Pick your seat first.</strong> Choose Player or Game Master above &mdash; the
+    checklist below changes to match, so you only get the steps that apply to you.
+  </div>
+
+  <section class="round" data-round="0">
   <!-- ROUND 0 -->
   <div class="round-head"><span class="round-num">ROUND 0</span><h2>Opening the case</h2></div>
   <p class="round-sub">Game Master only. Everyone else, skip to Round 1.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-login">
+    <input type="checkbox" data-c="gm-login" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Open the GM link and sign in.</p>
     <p class="expect">The case list, with <strong>The Case of the Prized Meeple</strong> among them.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-select">
+    <input type="checkbox" data-c="gm-select" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Select <strong>The Case of the Prized Meeple</strong>, then find the invite code and share the join link with everyone.</p>
     <p class="expect">A date — <em>1 January 1888</em> — sitting just under the case name.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-addclue">
+    <input type="checkbox" data-c="gm-addclue" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Add a clue of your own. Give it a code like <code>EC 99</code>, some text, and attach a picture if you have one handy.</p>
     <p class="expect">It saves and appears in the unrevealed list, ready to reveal later.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-format">
+    <input type="checkbox" data-c="gm-format" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Edit that clue. Select a word and use the <strong>B</strong> / <strong>I</strong> / <strong>U</strong> buttons above the box. If it has a picture, type <code>[image]</code> between two paragraphs.</p>
     <p class="expect">Saved, the word is bold/italic/underlined and the picture sits where you put <code>[image]</code> rather than at the end.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-brief">
+    <input type="checkbox" data-c="gm-brief" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Open <strong>Case Brief</strong> and edit it.</p>
     <p class="expect">The editing box is the same width as the players' column, so what you see is how it'll look to them.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="gm-press">
+    <input type="checkbox" data-c="gm-press" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Open <strong>Printing Press</strong> and turn a newspaper on for this case, then off again.</p>
     <p class="expect">Your Newspaper tab — and the players' — updates straight away. With none turned on, the tab disappears entirely.</p>
@@ -430,25 +438,27 @@
     <label for="n0">Round 0 — anything off?</label>
     <textarea id="n0" data-k="n0" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="1">
   <!-- ROUND 1 -->
   <div class="round-head"><span class="round-num">ROUND 1</span><h2>Getting everyone in</h2></div>
   <p class="round-sub">Everybody, at the same time if you can — that's when the live bits get interesting.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="join">
+    <input type="checkbox" data-c="join" data-role="player">
     <p class="do">Open the join link, enter your name, pick a colour.</p>
     <p class="expect">You land on the <strong>Clues</strong> tab with the case name in the header.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="presence">
+    <input type="checkbox" data-c="presence" data-role="player">
     <p class="do">Watch the <code>N online</code> counter as the others join, then tap it.</p>
     <p class="expect">The count climbs as people arrive, and tapping lists who's here.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="colour">
+    <input type="checkbox" data-c="colour" data-role="player">
     <p class="do">Change your colour using the coloured dot in the header.</p>
     <p class="expect">It updates for everyone else too, without a refresh.</p>
   </div>
@@ -457,7 +467,9 @@
     <label for="n1">Round 1 — anything off?</label>
     <textarea id="n1" data-k="n1" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="2">
   <!-- ROUND 2 -->
   <div class="round-head"><span class="round-num">ROUND 2</span><h2>Reading in</h2></div>
   <p class="round-sub">The reference material — brief, rules, contacts, addresses.</p>
@@ -503,33 +515,35 @@
     <label for="n2">Round 2 — anything off?</label>
     <textarea id="n2" data-k="n2" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="3">
   <!-- ROUND 3 -->
   <div class="round-head"><span class="round-num">ROUND 3</span><h2>Following the leads</h2></div>
   <p class="round-sub">The heart of it. GM reveals clues; players watch them land.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="reveal">
+    <input type="checkbox" data-c="reveal" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Reveal a clue — start with <code>SE 08</code>.</p>
     <p class="expect">It appears on every player's screen within a second or two. Nobody should need to refresh.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="clue-open">
+    <input type="checkbox" data-c="clue-open" data-role="player">
     <p class="do">Tap the clue to open it.</p>
     <p class="expect">The full text with any picture, an <code>&times;</code> to close, and no stray <code>**</code> markers showing.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="clue-scroll">
+    <input type="checkbox" data-c="clue-scroll" data-role="player">
     <div class="chips"><span class="chip">Phone</span></div>
     <p class="do">With several clues revealed, tap one near the <em>bottom</em> of the list.</p>
     <p class="expect">The page jumps you to the opened clue rather than leaving you hunting for it.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="clue-gap">
+    <input type="checkbox" data-c="clue-gap" data-role="player">
     <div class="chips"><span class="chip">Phone</span></div>
     <p class="do">With a clue open, look at the space between the clue and the notepad below.</p>
     <p class="expect">No big empty black gap, and the notepad shouldn't cover the text. <strong>This is the bug I've been chasing</strong> — please look hard here.</p>
@@ -542,7 +556,7 @@
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="leads">
+    <input type="checkbox" data-c="leads" data-role="player">
     <p class="do">Keep an eye on the 🔍 counter in the header as clues are revealed.</p>
     <p class="expect">It counts the leads you've followed — this is what your score is measured against.</p>
   </div>
@@ -551,7 +565,9 @@
     <label for="n3">Round 3 — anything off?</label>
     <textarea id="n3" data-k="n3" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="4">
   <!-- ROUND 4 -->
   <div class="round-head"><span class="round-num">ROUND 4</span><h2>The map</h2></div>
   <p class="round-sub">Everyone draws on the same map at once. Try to get in each other's way.</p>
@@ -584,7 +600,9 @@
     <label for="n4">Round 4 — anything off?</label>
     <textarea id="n4" data-k="n4" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="5">
   <!-- ROUND 5 -->
   <div class="round-head"><span class="round-num">ROUND 5</span><h2>The newspapers</h2></div>
   <p class="round-sub">Reading a broadsheet on a phone is the hard case here.</p>
@@ -618,37 +636,39 @@
     <label for="n5">Round 5 — anything off?</label>
     <textarea id="n5" data-k="n5" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="6">
   <!-- ROUND 6 -->
   <div class="round-head"><span class="round-num">ROUND 6</span><h2>The notepad</h2></div>
   <p class="round-sub">Private notes are yours alone; team notes are shared. Test both.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="note-private">
+    <input type="checkbox" data-c="note-private" data-role="player">
     <p class="do">Write a note under <strong>My Notes</strong>.</p>
     <p class="expect">It saves, and nobody else can see it — check with someone.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="note-team">
+    <input type="checkbox" data-c="note-team" data-role="player">
     <p class="do">Post one under <strong>Team Notes</strong>.</p>
     <p class="expect">Everyone sees it straight away, in your colour.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="note-unread">
+    <input type="checkbox" data-c="note-unread" data-role="player">
     <p class="do">Sit on <strong>My Notes</strong> while somebody else posts a team note.</p>
     <p class="expect">A small dot appears on the Team Notes tab and clears when you open it. Also new — tell me if you'd rather it were louder, quieter, or gone.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="note-edit">
+    <input type="checkbox" data-c="note-edit" data-role="player">
     <p class="do">Edit one of your notes, share a private one to the team, then delete one.</p>
     <p class="expect">All three work, and a shared note gets marked as shared.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="note-collapse">
+    <input type="checkbox" data-c="note-collapse" data-role="player">
     <div class="chips"><span class="chip">Phone</span></div>
     <p class="do">Use the <code>&#9662;</code> to fold the notepad away, then the <code>&#10530;</code> to make it fullscreen.</p>
     <p class="expect">Folded, the case content gets most of the screen back. Fullscreen, the notepad fills it.</p>
@@ -658,26 +678,28 @@
     <label for="n6">Round 6 — anything off?</label>
     <textarea id="n6" data-k="n6" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="7">
   <!-- ROUND 7 -->
   <div class="round-head"><span class="round-num">ROUND 7</span><h2>The reckoning</h2></div>
   <p class="round-sub">Now you may look at the solution.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="questions">
+    <input type="checkbox" data-c="questions" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">GM opens the <strong>Questions</strong> to the players.</p>
     <p class="expect">A Questions tab appears for everyone — it stays hidden until the GM allows it.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="answers">
+    <input type="checkbox" data-c="answers" data-role="player">
     <p class="do">Agree on answers as a team and write them in.</p>
     <p class="expect">One shared answer per question that everyone sees, and anyone can edit.</p>
   </div>
 
   <div class="check">
-    <input type="checkbox" data-c="solution">
+    <input type="checkbox" data-c="solution" data-role="gm">
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">GM reveals the <strong>Solution</strong>. Read it out.</p>
     <p class="expect">Holmes's explanation, and your score set against his 100.</p>
@@ -693,13 +715,15 @@
     <label for="n7">Round 7 — anything off?</label>
     <textarea id="n7" data-k="n7" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
+  <section class="round" data-round="8">
   <!-- ROUND 8 -->
   <div class="round-head"><span class="round-num">ROUND 8</span><h2>Trying to break it</h2></div>
   <p class="round-sub">Deliberately awkward things. This is where the good bugs hide.</p>
 
   <div class="check">
-    <input type="checkbox" data-c="rejoin">
+    <input type="checkbox" data-c="rejoin" data-role="player">
     <p class="do">Leave the case and rejoin with the same name.</p>
     <p class="expect">Your notes and colour are still yours.</p>
   </div>
@@ -727,6 +751,7 @@
     <label for="n8">Round 8 — anything off?</label>
     <textarea id="n8" data-k="n8" placeholder="Leave blank if all fine"></textarea>
   </div>
+  </section>
 
   <!-- WRAP UP -->
   <div class="wrapup">
@@ -802,10 +827,47 @@
     if (card) card.classList.toggle('done', box.checked);
   }
 
+  // Only the checks on show count toward progress and get submitted, so a
+  // player is never marked down for skipping Game Master steps.
+  function visible() {
+    return boxes.filter(function (b) { return !b.hidden && !b.closest('.round').hidden; });
+  }
+
   function tally() {
-    var done = boxes.filter(function (b) { return b.checked; }).length;
-    document.getElementById('count').textContent = done + ' / ' + boxes.length;
-    document.getElementById('fill').style.width = (boxes.length ? (done / boxes.length) * 100 : 0) + '%';
+    var shown = visible();
+    var done = shown.filter(function (b) { return b.checked; }).length;
+    document.getElementById('count').textContent = done + ' / ' + shown.length;
+    document.getElementById('fill').style.width = (shown.length ? (done / shown.length) * 100 : 0) + '%';
+  }
+
+  var gate = document.getElementById('gate');
+  var wrapup = document.querySelector('.wrapup');
+  var rounds = Array.prototype.slice.call(document.querySelectorAll('.round'));
+
+  function applyRole() {
+    var role = (document.getElementById('role').value || '').toLowerCase();
+    var picked = role === 'player' || role === 'game master';
+    var want = role === 'game master' ? 'gm' : 'player';
+
+    gate.hidden = picked;
+    wrapup.hidden = !picked;
+    document.querySelector('.progress').hidden = !picked;
+
+    rounds.forEach(function (section) {
+      section.hidden = !picked;
+      if (!picked) return;
+      var mine = 0;
+      section.querySelectorAll('[data-c]').forEach(function (b) {
+        var only = b.getAttribute('data-role');
+        var show = !only || only === want;
+        b.closest('.check').hidden = !show;
+        b.hidden = !show;
+        if (show) mine++;
+      });
+      // A round with nothing left for this role disappears entirely.
+      section.hidden = mine === 0;
+    });
+    tally();
   }
 
   boxes.forEach(function (box) {
@@ -829,7 +891,8 @@
     });
   });
 
-  tally();
+  document.getElementById('role').addEventListener('change', applyRole);
+  applyRole();
 
   function labelFor(box) {
     var card = box.closest('.check');
@@ -854,7 +917,12 @@
 
   function gather() {
     var notes = {};
-    ROUNDS.forEach(function (r) { var v = val(r[1]); if (v) notes[r[0]] = v; });
+    ROUNDS.forEach(function (r) {
+      var el = document.getElementById(r[1]);
+      if (!el || el.closest('.round').hidden) return;
+      var v = val(r[1]);
+      if (v) notes[r[0]] = v;
+    });
     var answers = {};
     QUESTIONS.forEach(function (q) { var v = val(q[1]); if (v) answers[q[0]] = v; });
     return {
@@ -862,9 +930,9 @@
       role: val('role'),
       device: val('device'),
       minutes: val('mins'),
-      done: boxes.filter(function (b) { return b.checked; }).length,
-      total: boxes.length,
-      missed: boxes.filter(function (b) { return !b.checked; }).map(labelFor),
+      done: visible().filter(function (b) { return b.checked; }).length,
+      total: visible().length,
+      missed: visible().filter(function (b) { return !b.checked; }).map(labelFor),
       notes: notes,
       answers: answers
     };
