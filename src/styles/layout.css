@@ -9,7 +9,12 @@ body {
   background: #0e0b06;
   color: var(--ink);
   font-family: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
+  /* dvh, not vh: on mobile, 100vh is the viewport with the browser toolbars
+     hidden, so it forces the document taller than the screen and lets the
+     whole page scroll behind position:fixed chrome. dvh tracks the height
+     actually visible. vh line first as a fallback for older browsers. */
   min-height: 100vh;
+  min-height: 100dvh;
   background-image:
     radial-gradient(ellipse at 15% 40%, #241a07 0%, transparent 55%),
     radial-gradient(ellipse at 85% 15%, #1a1005 0%, transparent 50%),
@@ -27,7 +32,7 @@ body::before {
   opacity: 0.5;
 }
 
-#app { min-height: 100vh; }
+#app { min-height: 100vh; min-height: 100dvh; }
 
 .empty-state {
   color: var(--fog);
@@ -50,7 +55,7 @@ body::before {
 
 /* ── Landing ── */
 .landing {
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,7 +102,7 @@ body::before {
 
 /* ── GM login screen ── */
 .gm-login-screen {
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 24px; max-width: 380px; margin: 0 auto;
 }
@@ -1100,14 +1105,21 @@ input[type="date"].gm-input { color-scheme: dark; }
   }
   .player-main {
     flex: 1; min-height: 0; overflow-y: auto;
-    /* Reserve space for the pinned notebook (a touch under half the screen). */
+    /* Reserve space for the pinned notebook (a touch under half the screen).
+       MUST use the same unit as .player-notebook's height below, and the same
+       unit .player-screen sizes itself with (100dvh). On mobile, vh measures
+       the viewport with browser toolbars *hidden*, so mixing vh here with a
+       dvh-sized container made the reservation and the notebook disagree by
+       the height of the URL bar — the phantom gap that never reproduced in
+       DevTools, where vh and dvh are identical. vh line first as a fallback. */
     padding-bottom: calc(40vh + 10px);
+    padding-bottom: calc(40dvh + 10px);
   }
 
-  /* Notebook pinned flush to the bottom, ~40vh tall when uncollapsed. */
+  /* Notebook pinned flush to the bottom, ~40dvh tall when uncollapsed. */
   .player-notebook {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 600;
-    height: 40vh; margin: 0;
+    height: 40vh; height: 40dvh; margin: 0;
     display: flex; flex-direction: column;
   }
   /* Collapsed: notebook shrinks to just its tab bar (it docks itself, below),
