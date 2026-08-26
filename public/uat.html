@@ -259,7 +259,7 @@
     color: var(--sepia-light);
     margin-bottom: 6px;
   }
-  textarea, input[type="text"] {
+  textarea, input[type="text"], select {
     width: 100%;
     background: var(--ink-raised);
     border: 1px solid var(--sepia);
@@ -271,7 +271,8 @@
     resize: vertical;
   }
   textarea { min-height: 76px; }
-  textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--sepia-light); box-shadow: 0 0 0 1px var(--sepia-light); }
+  textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--sepia-light); box-shadow: 0 0 0 1px var(--sepia-light); }
+  select { font-family: var(--mono); font-size: 0.9rem; }
   textarea::placeholder, input::placeholder { color: rgba(168, 144, 112, 0.55); font-style: italic; }
 
   .round-notes { margin: 4px 0 0; }
@@ -356,9 +357,27 @@
     <strong>No peeking.</strong> The Solution tab spoils the case. Leave it alone until Round 7, and if you're the GM, don't read it aloud early.
   </div>
 
-  <div class="field" style="margin-bottom:8px">
-    <label for="who">Your name &amp; what you're testing on</label>
-    <input type="text" id="who" data-k="who" placeholder="e.g. Hazwar — iPhone 14, Chrome">
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="field">
+      <label for="who">Your name</label>
+      <input type="text" id="who" data-k="who" placeholder="e.g. Hazwar">
+    </div>
+    <div class="field">
+      <label for="device">Device &amp; browser</label>
+      <input type="text" id="device" data-k="device" placeholder="e.g. iPhone 14, Chrome">
+    </div>
+    <div class="field">
+      <label for="role">Playing as</label>
+      <select id="role" data-k="role">
+        <option value="">Choose…</option>
+        <option value="Player">Player</option>
+        <option value="Game Master">Game Master</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="mins">Roughly how long did this take?</label>
+      <input type="text" id="mins" data-k="mins" placeholder="e.g. 25 minutes">
+    </div>
   </div>
 
   <!-- ROUND 0 -->
@@ -377,6 +396,34 @@
     <div class="chips"><span class="chip chip--gm">GM</span></div>
     <p class="do">Select <strong>The Case of the Prized Meeple</strong>, then find the invite code and share the join link with everyone.</p>
     <p class="expect">A date — <em>1 January 1888</em> — sitting just under the case name.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-addclue">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Add a clue of your own. Give it a code like <code>EC 99</code>, some text, and attach a picture if you have one handy.</p>
+    <p class="expect">It saves and appears in the unrevealed list, ready to reveal later.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-format">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Edit that clue. Select a word and use the <strong>B</strong> / <strong>I</strong> / <strong>U</strong> buttons above the box. If it has a picture, type <code>[image]</code> between two paragraphs.</p>
+    <p class="expect">Saved, the word is bold/italic/underlined and the picture sits where you put <code>[image]</code> rather than at the end.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-brief">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Open <strong>Case Brief</strong> and edit it.</p>
+    <p class="expect">The editing box is the same width as the players' column, so what you see is how it'll look to them.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-press">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Open <strong>Printing Press</strong> and turn a newspaper on for this case, then off again.</p>
+    <p class="expect">Your Newspaper tab — and the players' — updates straight away. With none turned on, the tab disappears entirely.</p>
   </div>
 
   <div class="field round-notes">
@@ -418,7 +465,7 @@
   <div class="check">
     <input type="checkbox" data-c="brief">
     <p class="do">Read the <strong>Case Brief</strong> tab.</p>
-    <p class="expect">Text that's comfortable to read at arm's length — flag it if the lines run too wide or too cramped.</p>
+    <p class="expect">Proper paragraphs, and no stray <code>**</code> or <code>[image]</code> markers left showing in the text.</p>
   </div>
 
   <div class="check">
@@ -471,7 +518,7 @@
   <div class="check">
     <input type="checkbox" data-c="clue-open">
     <p class="do">Tap the clue to open it.</p>
-    <p class="expect">The full text, with any picture, and an <code>&times;</code> to close.</p>
+    <p class="expect">The full text with any picture, an <code>&times;</code> to close, and no stray <code>**</code> markers showing.</p>
   </div>
 
   <div class="check">
@@ -607,12 +654,6 @@
     <p class="expect">Folded, the case content gets most of the screen back. Fullscreen, the notepad fills it.</p>
   </div>
 
-  <div class="check">
-    <input type="checkbox" data-c="note-typing">
-    <p class="do">Start typing a note and leave it half-finished for a minute or two.</p>
-    <p class="expect">Your unfinished text is still there — the app shouldn't reload underneath you mid-sentence.</p>
-  </div>
-
   <div class="field round-notes">
     <label for="n6">Round 6 — anything off?</label>
     <textarea id="n6" data-k="n6" placeholder="Leave blank if all fine"></textarea>
@@ -678,8 +719,8 @@
 
   <div class="check">
     <input type="checkbox" data-c="offline">
-    <p class="do">Turn wifi off for thirty seconds, then on again.</p>
-    <p class="expect">It recovers without a refresh. Tell me if it needed one.</p>
+    <p class="do">Put the device in airplane mode for thirty seconds, then turn it off again. (Wifi alone isn't enough on a phone — it'll just switch to mobile data.)</p>
+    <p class="expect">It reconnects on its own. Tell me if it needed a refresh.</p>
   </div>
 
   <div class="field round-notes">
@@ -691,6 +732,11 @@
   <div class="wrapup">
     <div class="round-head" style="margin-top:0"><span class="round-num">FINALLY</span><h2>The bit I actually care about</h2></div>
     <p class="round-sub">Ticks tell me it works. These tell me whether it's any good.</p>
+
+    <div class="field" style="margin-bottom:20px">
+      <label for="q0">Did anything actually stop you playing?</label>
+      <textarea id="q0" data-k="q0" placeholder="Things that broke, froze, or made you give up on a step. Leave blank if nothing did — this is the one I'll fix first."></textarea>
+    </div>
 
     <div class="grid2">
       <div class="field">
@@ -717,20 +763,21 @@
     </div>
 
     <div class="actions">
-      <button class="primary" id="copy">Copy my feedback</button>
+      <button class="primary" id="send">Send my feedback</button>
+      <button class="ghost" id="copy">Copy instead</button>
       <button class="ghost" id="reset">Start over</button>
       <span class="status" id="status"></span>
     </div>
 
     <div id="out">
       <div class="field">
-        <label for="outtext">Copy this and send it to me</label>
+        <label for="outtext">Copy this and send it to Zim</label>
         <textarea id="outtext" readonly></textarea>
       </div>
     </div>
   </div>
 
-  <footer>Your answers are saved on this device as you go &middot; The Case of the Prized Meeple</footer>
+  <footer>Your answers save on this device as you go &mdash; don't forget to hit send at the end &middot; The Case of the Prized Meeple</footer>
 
 </div>
 
@@ -790,47 +837,63 @@
     return doEl ? doEl.textContent.replace(/\s+/g, ' ').trim() : box.getAttribute('data-c');
   }
 
-  function compose() {
-    var lines = [];
-    var who = document.getElementById('who').value.trim();
-    lines.push('SHCD FIELD TRIAL — FEEDBACK');
-    lines.push(who ? 'Tester: ' + who : 'Tester: (not given)');
-    var done = boxes.filter(function (b) { return b.checked; }).length;
-    lines.push('Checks confirmed: ' + done + ' of ' + boxes.length);
-    lines.push('');
+  var ROUNDS = [
+    ['Round 0 (setup)', 'n0'], ['Round 1 (joining)', 'n1'], ['Round 2 (reading in)', 'n2'],
+    ['Round 3 (clues)', 'n3'], ['Round 4 (map)', 'n4'], ['Round 5 (newspapers)', 'n5'],
+    ['Round 6 (notepad)', 'n6'], ['Round 7 (reckoning)', 'n7'], ['Round 8 (breaking it)', 'n8']
+  ];
+  var QUESTIONS = [
+    ['Stopped you playing', 'q0'], ['What annoyed you', 'q1'], ["Couldn't work out", 'q2'],
+    ['Worked well', 'q3'], ['Missing', 'q4'], ['Would play a full case', 'q5']
+  ];
 
-    var missed = boxes.filter(function (b) { return !b.checked; });
-    if (missed.length) {
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function gather() {
+    var notes = {};
+    ROUNDS.forEach(function (r) { var v = val(r[1]); if (v) notes[r[0]] = v; });
+    var answers = {};
+    QUESTIONS.forEach(function (q) { var v = val(q[1]); if (v) answers[q[0]] = v; });
+    return {
+      tester: val('who'),
+      role: val('role'),
+      device: val('device'),
+      minutes: val('mins'),
+      done: boxes.filter(function (b) { return b.checked; }).length,
+      total: boxes.length,
+      missed: boxes.filter(function (b) { return !b.checked; }).map(labelFor),
+      notes: notes,
+      answers: answers
+    };
+  }
+
+  function compose(d) {
+    var lines = [];
+    lines.push('FIELD TRIAL - FEEDBACK');
+    lines.push('Tester: ' + (d.tester || '(not given)'));
+    lines.push('Role:   ' + (d.role || '(not given)'));
+    lines.push('Device: ' + (d.device || '(not given)'));
+    if (d.minutes) lines.push('Took:   ' + d.minutes);
+    lines.push('Checks confirmed: ' + d.done + ' of ' + d.total);
+    lines.push('');
+    if (d.missed.length) {
       lines.push('NOT CONFIRMED');
-      missed.forEach(function (b) { lines.push('  - ' + labelFor(b)); });
+      d.missed.forEach(function (m) { lines.push('  - ' + m); });
       lines.push('');
     }
-
-    var rounds = [
-      ['Round 0 (setup)', 'n0'], ['Round 1 (joining)', 'n1'], ['Round 2 (reading in)', 'n2'],
-      ['Round 3 (clues)', 'n3'], ['Round 4 (map)', 'n4'], ['Round 5 (newspapers)', 'n5'],
-      ['Round 6 (notepad)', 'n6'], ['Round 7 (reckoning)', 'n7'], ['Round 8 (breaking it)', 'n8']
-    ];
-    var any = false;
-    rounds.forEach(function (r) {
-      var el = document.getElementById(r[1]);
-      if (el && el.value.trim()) {
-        if (!any) { lines.push('NOTES BY ROUND'); any = true; }
-        lines.push('  ' + r[0] + ': ' + el.value.trim());
-      }
-    });
-    if (any) lines.push('');
-
-    var qs = [
-      ['What annoyed you', 'q1'], ['Couldn’t work out', 'q2'], ['Worked well', 'q3'],
-      ['Missing', 'q4'], ['Would you play a full case', 'q5']
-    ];
+    var noteKeys = Object.keys(d.notes);
+    if (noteKeys.length) {
+      lines.push('NOTES BY ROUND');
+      noteKeys.forEach(function (k) { lines.push('  ' + k + ': ' + d.notes[k]); });
+      lines.push('');
+    }
     lines.push('OVERALL');
-    qs.forEach(function (q) {
-      var el = document.getElementById(q[1]);
-      lines.push('  ' + q[0] + ': ' + ((el && el.value.trim()) || '—'));
+    QUESTIONS.forEach(function (q) {
+      lines.push('  ' + q[0] + ': ' + (d.answers[q[0]] || '-'));
     });
-
     return lines.join('\n');
   }
 
@@ -838,22 +901,68 @@
   var out = document.getElementById('out');
   var outtext = document.getElementById('outtext');
 
-  document.getElementById('copy').addEventListener('click', function () {
-    var text = compose();
+  function showCopyBox(text, message) {
     outtext.value = text;
-    function fallback() {
-      out.classList.add('show');
-      outtext.focus();
-      outtext.select();
-      status.textContent = 'Select the text below and copy it';
-    }
+    out.classList.add('show');
+    outtext.focus();
+    outtext.select();
+    status.textContent = message;
+  }
+
+  // Submissions land in the project's own database; if that fails for any
+  // reason the tester still gets pasteable text, so feedback is never lost.
+  var ENDPOINT = 'https://aczebumbhhqhagtshtpm.supabase.co/rest/v1/uat_feedback';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjemVidW1iaGhxaGFndHNodHBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMzA0MTYsImV4cCI6MjA5NTcwNjQxNn0.3EAwEphZBq4x6b6IjGbRTa5NHdJGymiz0Lnu3875tIA';
+
+  document.getElementById('send').addEventListener('click', function () {
+    var btn = this;
+    var d = gather();
+    var text = compose(d);
+    if (!d.tester) { status.textContent = 'Pop your name in at the top first'; return; }
+    btn.disabled = true;
+    status.textContent = 'Sending...';
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        tester: d.tester,
+        tester_role: d.role,
+        device: d.device,
+        minutes: d.minutes,
+        checks_done: d.done,
+        checks_total: d.total,
+        payload: { missed: d.missed, notes: d.notes, answers: d.answers },
+        raw: text
+      })
+    }).then(function (res) {
+      btn.disabled = false;
+      if (res.ok) {
+        status.textContent = 'Sent - thank you!';
+        out.classList.remove('show');
+      } else {
+        showCopyBox(text, "Couldn't send - copy this to Zim instead");
+      }
+    }).catch(function () {
+      btn.disabled = false;
+      showCopyBox(text, "Couldn't send - copy this to Zim instead");
+    });
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = compose(gather());
+    outtext.value = text;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () {
-        status.textContent = 'Copied — now paste it to Zim';
+        status.textContent = 'Copied - now paste it to Zim';
         out.classList.remove('show');
-      }, fallback);
+      }, function () { showCopyBox(text, 'Select the text below and copy it'); });
     } else {
-      fallback();
+      showCopyBox(text, 'Select the text below and copy it');
     }
   });
 
