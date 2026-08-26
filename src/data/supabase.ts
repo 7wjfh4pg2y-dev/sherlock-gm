@@ -483,9 +483,6 @@ export const boardItems = {
   async move(id: string, x: number, y: number): Promise<void> {
     unwrap(await sb.from('board_items').update({ x, y }).eq('id', id).select());
   },
-  async setText(id: string, text: string): Promise<void> {
-    unwrap(await sb.from('board_items').update({ text }).eq('id', id).select());
-  },
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('board_items').delete().eq('id', id).select());
   },

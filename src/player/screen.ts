@@ -823,7 +823,6 @@ export function createPlayerScreen(): ScreenHandle {
     renderPanel(s);
     renderNotes(s);
     refreshUnread(s);
-    if (activeTab === 'board' && boardInlay) boardInlay.refresh();
   }
 
   // Seed all shared notes present at mount as already-seen, so the unread dot

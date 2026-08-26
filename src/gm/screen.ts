@@ -461,6 +461,10 @@ export function createGMScreen(): GMScreenHandle {
     caseChannels = [];
     if (presenceChannel) { removeChannel(presenceChannel); presenceChannel = null; }
     onlineSet = new Set();
+    // The board holds view-local state the store knows nothing about — link
+    // mode, an open drawer, an in-flight drag. refresh() clears out the old
+    // case's cards, but that state would otherwise ride into the new case.
+    if (boardInlay) { boardInlay.detach(); boardInlay = null; clear(boardPanel); }
   }
 
   // ── Rendering ──
@@ -909,7 +913,6 @@ export function createGMScreen(): GMScreenHandle {
     }
     renderPanel(s);
     renderPlayers(s);
-    if (activeTab === 'board' && boardInlay) boardInlay.refresh();
   }
 
   // ── Init ──

@@ -24,6 +24,7 @@ import { store, selectors } from '../state/store';
 import { boardItems as itemRepo, boardLinks as linkRepo } from '../data/supabase';
 import { stripMarkup } from '../util/richText';
 import { toast } from './toast';
+import { openTitledModal } from './modal';
 import type { BoardItemRow, BoardLinkRow, ClueRow } from '../data/types';
 
 /** The logical board everyone shares. Cards store absolute px inside it. */
@@ -443,14 +444,39 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     renderDrawer();
   });
 
+  // The app's own modal rather than window.prompt: a browser prompt looks
+  // nothing like the rest of the UI, and is a silent no-op in a standalone
+  // home-screen web app, which would leave Note quietly dead on a phone.
+  function askForNote(): void {
+    const { handle, body } = openTitledModal('Pin a note', { contentClass: 'board-note-modal' });
+    const field = h('textarea', {
+      class: 'gm-textarea',
+      attrs: { rows: '4', placeholder: 'What have you worked out?' },
+    }) as HTMLTextAreaElement;
+    const pin = h('button', { class: 'btn btn-primary btn-sm', text: 'Pin it' });
+    const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
+
+    function submit(): void {
+      const text = field.value.trim();
+      if (!text) { field.focus(); return; }
+      handle.close();
+      const c = viewCentre();
+      void addItem('note', { x: c.x - CARD_W / 2, y: c.y - 40 }, undefined, text);
+    }
+    pin.addEventListener('click', submit);
+    cancel.addEventListener('click', () => handle.close());
+    // Enter submits, Shift+Enter keeps writing.
+    field.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    });
+
+    body.append(field, h('div', { class: 'board-note-actions' }, cancel, pin));
+    field.focus();
+  }
+
   const noteBtn = h('button', { class: 'board-btn', attrs: { type: 'button' } },
     h('span', { text: '📝' }), h('span', { text: 'Note' }));
-  noteBtn.addEventListener('click', () => {
-    const text = window.prompt('What do you want to note?');
-    if (!text || !text.trim()) return;
-    const c = viewCentre();
-    void addItem('note', { x: c.x - CARD_W / 2, y: c.y - 40 }, undefined, text.trim());
-  });
+  noteBtn.addEventListener('click', askForNote);
 
   const linkBtn = h('button', { class: 'board-btn', attrs: { type: 'button' } },
     h('span', { text: '🧵' }), h('span', { text: 'Link' }));
