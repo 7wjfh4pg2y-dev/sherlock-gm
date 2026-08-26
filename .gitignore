@@ -3,3 +3,8 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# Seeded design-canvas output (2.5MB, editor baked in). The .dc.html
+# artboards and canvas.json beside it are the real source.
+design/*.html
+!design/*.dc.html

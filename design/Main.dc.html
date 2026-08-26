@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #7a5c12; } a:hover { color: #5c4409; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; background: #14100a; background-image: radial-gradient(ellipse at 20% 10%, #241a07 0%, transparent 55%), radial-gradient(ellipse at 85% 80%, #1a1005 0%, transparent 50%); display: flex; flex-direction: column; font-family: 'IM Fell English', Georgia, serif; overflow: hidden;">
+
+  <!-- Masthead -->
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; padding: 22px 40px 0; gap: 32px;">
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 700; color: #f4e8ce; letter-spacing: -0.01em;">The Case of the Prized Meeple</div>
+      <div style="font-family: 'Special Elite', monospace; font-size: 12px; letter-spacing: 0.16em; color: #a89070; text-transform: uppercase;">1 January 1888 &nbsp;·&nbsp; Baker Street Irregulars</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 7px; border: 1px solid #7a5c12; padding: 6px 12px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b8892a" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L21 21"/></svg>
+        <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; color: #f4e8ce;">6</span>
+        <span style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.14em; color: #a89070; text-transform: uppercase;">leads</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #7a5c12; padding: 7px 12px;">
+        <div style="width: 9px; height: 9px; border-radius: 50%; background: #c2564a;"></div>
+        <div style="width: 9px; height: 9px; border-radius: 50%; background: #6f9464;"></div>
+        <div style="width: 9px; height: 9px; border-radius: 50%; background: #7a9ec2;"></div>
+        <span style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.12em; color: #a89070; margin-left: 3px;">3 ONLINE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder tabs: three, not eight -->
+  <div style="display: flex; align-items: flex-end; gap: 4px; padding: 18px 40px 0;">
+    <div style="font-family: 'Special Elite', monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 26px 10px; background: linear-gradient(180deg, #c0ab84 0%, #ad9670 100%); color: #4a3a1c; border: 1px solid #8a7448; border-bottom: none;">Case Brief</div>
+    <div style="font-family: 'Special Elite', monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; padding: 14px 30px 12px; background: linear-gradient(180deg, #e2d3ae 0%, #d9c9a3 100%); color: #241a0d; border: 1px solid #8a7448; border-bottom: none; position: relative; z-index: 2;">Investigate</div>
+    <div style="font-family: 'Special Elite', monospace; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 26px 10px; background: linear-gradient(180deg, #c0ab84 0%, #ad9670 100%); color: #4a3a1c; border: 1px solid #8a7448; border-bottom: none;">The Reckoning</div>
+  </div>
+
+  <!-- Folder body -->
+  <div style="flex: 1; margin: 0 40px 28px; background: #d9c9a3; background-image: linear-gradient(155deg, #e4d6b6 0%, #d9c9a3 55%, #cdbb92 100%); border: 1px solid #8a7448; display: flex; min-height: 0;">
+
+    <!-- Left: the work surface -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 20px 24px;">
+
+      <!-- Reference rail — lookups, not tabs -->
+      <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid rgba(36,26,13,0.2);">
+        <span style="font-family: 'Courier Prime', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a5c12; margin-right: 4px;">Look up</span>
+        <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #a08a5c; padding: 5px 11px; background: rgba(255,252,242,0.45);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c4409" stroke-width="1.7"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+          <span style="font-family: 'Special Elite', monospace; font-size: 11.5px; color: #3a2c12;">Map</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #a08a5c; padding: 5px 11px; background: rgba(255,252,242,0.45);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c4409" stroke-width="1.7"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
+          <span style="font-family: 'Special Elite', monospace; font-size: 11.5px; color: #3a2c12;">Directory</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #a08a5c; padding: 5px 11px; background: rgba(255,252,242,0.45);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c4409" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c0-3.4 2.9-5.4 6.5-5.4s6.5 2 6.5 5.4"/></svg>
+          <span style="font-family: 'Special Elite', monospace; font-size: 11.5px; color: #3a2c12;">Informants</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #a08a5c; padding: 5px 11px; background: rgba(255,252,242,0.45);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c4409" stroke-width="1.7"><path d="M4 6h16v13H4z"/><path d="M7 10h6M7 14h6M16 10v4"/></svg>
+          <span style="font-family: 'Special Elite', monospace; font-size: 11.5px; color: #3a2c12;">Papers</span>
+        </div>
+        <div style="flex-grow: 1;"></div>
+        <div style="display: flex; align-items: center; gap: 7px; border-bottom: 1px solid #a08a5c; padding: 4px 2px; width: 200px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a7448" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L21 21"/></svg>
+          <span style="font-family: 'Courier Prime', monospace; font-size: 11.5px; color: #9a8355;">Search the leads…</span>
+        </div>
+      </div>
+
+      <!-- Clue cards -->
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding-top: 18px;">
+
+        <div style="background: #f6efe1; border: 1px solid #b8a077; box-shadow: 4px 4px 0 rgba(20,16,10,0.22); padding: 14px 16px 13px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">SE 08</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: #8c2b20; border: 1px solid #8c2b20; padding: 2px 5px; transform: rotate(-3deg);">FOLLOWED</span>
+          </div>
+          <div style="font-size: 14px; line-height: 1.55; color: #3a2c18;">The pram sat by the window all evening. Beneath the blanket, a wooden meeple-shaped indentation…</div>
+        </div>
+
+        <div style="background: #f6efe1; border: 1px solid #b8a077; box-shadow: 4px 4px 0 rgba(20,16,10,0.22); padding: 14px 16px 13px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">SW 04</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: #8c2b20; border: 1px solid #8c2b20; padding: 2px 5px; transform: rotate(-3deg);">FOLLOWED</span>
+          </div>
+          <div style="font-size: 14px; line-height: 1.55; color: #3a2c18;">“I did nothing,” said San, with the glare of someone daring you to prove otherwise. “Though Shah did ask…”</div>
+        </div>
+
+        <div style="background: #f6efe1; border: 1px solid #b8a077; box-shadow: 4px 4px 0 rgba(20,16,10,0.22); padding: 0; display: flex; flex-direction: column;">
+          <div style="height: 92px; background: linear-gradient(150deg, #c4ae86 0%, #9c8560 100%); border-bottom: 1px solid #b8a077;"></div>
+          <div style="padding: 12px 16px 13px; display: flex; flex-direction: column; gap: 7px;">
+            <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">WC 02</span>
+            <div style="font-size: 14px; line-height: 1.55; color: #3a2c18;">A hand-mirror and a folded card, dropped in haste beneath the tablecloth.</div>
+          </div>
+        </div>
+
+        <div style="background: #f6efe1; border: 1px solid #b8a077; box-shadow: 4px 4px 0 rgba(20,16,10,0.22); padding: 14px 16px 13px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">SW 22</span>
+          </div>
+          <div style="font-size: 14px; line-height: 1.55; color: #3a2c18;">The handwriting matches neither San's nor Rashwan's — nor, upon comparison, Haz's.</div>
+        </div>
+
+        <div style="background: #f6efe1; border: 1px solid #b8a077; box-shadow: 4px 4px 0 rgba(20,16,10,0.22); padding: 14px 16px 13px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">NW 01</span>
+          <div style="font-size: 14px; line-height: 1.55; color: #3a2c18;">On the coat hook where Hazwar's overcoat hung, a faint smear of dark basswood varnish.</div>
+        </div>
+
+        <div style="border: 1px dashed #a89070; display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 108px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a7448" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>
+          <span style="font-family: 'Special Elite', monospace; font-size: 12px; color: #8a7448; letter-spacing: 0.05em;">Follow a new lead</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Notebook: a drawer, closed -->
+    <div style="width: 58px; border-left: 1px solid #8a7448; background: linear-gradient(180deg, #c7b489 0%, #b9a478 100%); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 18px 0 20px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4a3a1c" stroke-width="1.6"><path d="M6 4h11a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M9 8h7M9 12h7"/></svg>
+      <div style="font-family: 'Special Elite', monospace; font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #4a3a1c; writing-mode: vertical-rl; transform: rotate(180deg);">Notebook &nbsp;·&nbsp; 4</div>
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: #8c2b20;"></div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

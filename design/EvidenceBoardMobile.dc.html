@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Caveat:wght@400;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #a8451f; } a:hover { color: #7d3216; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #6d5636; background-image: radial-gradient(ellipse at 40% 15%, #8a6f47 0%, transparent 62%); font-family: 'Courier Prime', monospace; position: relative; overflow: hidden;">
+
+  <!-- On a phone the board becomes a single thread you scroll, string still linking beats -->
+  <div style="position: absolute; top: 0; left: 0; right: 0; padding: 15px 16px 13px; background: linear-gradient(180deg, rgba(22,16,8,0.94) 0%, rgba(22,16,8,0.7) 72%, transparent 100%); display: flex; align-items: center; justify-content: space-between; gap: 10px; z-index: 3;">
+    <span style="font-family: 'Special Elite', monospace; font-size: 15px; color: #f2e6cd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">The Prized Meeple</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #8a6f47; background: rgba(20,14,6,0.7); padding: 5px 9px; flex-shrink: 0;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d8a75a" stroke-width="1.9"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L21 21"/></svg>
+      <span style="font-size: 11.5px; font-weight: 700; color: #f2e6cd;">6</span>
+    </div>
+  </div>
+
+  <!-- The thread -->
+  <svg width="390" height="700" style="position: absolute; left: 0; top: 74px;" fill="none" stroke="#a8451f" stroke-width="2.4" stroke-linecap="round">
+    <path d="M64 60 C 40 130, 330 150, 300 214" opacity="0.8"/>
+    <path d="M300 300 C 330 372, 44 388, 66 452" opacity="0.8"/>
+    <path d="M66 540 C 44 604, 300 620, 296 664" opacity="0.55" stroke-dasharray="7 8"/>
+  </svg>
+
+  <div style="position: absolute; left: 0; right: 0; top: 82px; display: flex; flex-direction: column; gap: 16px; padding: 0 16px;">
+
+    <div style="align-self: flex-start; width: 262px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 6px 13px rgba(20,14,6,0.42); padding: 13px 15px; transform: rotate(-1.4deg); display: flex; flex-direction: column; gap: 6px; position: relative;">
+      <div style="position: absolute; top: -8px; left: 50%; margin-left: -8px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #d9584a 0%, #8c2b20 75%); box-shadow: 0 2px 4px rgba(0,0,0,0.4);"></div>
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">SE 08</span>
+      <div style="font-family: 'Special Elite', monospace; font-size: 13px; line-height: 1.5; color: #3a2c18;">A meeple-shaped indentation beneath the pram blanket.</div>
+    </div>
+
+    <div style="align-self: flex-end; width: 262px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 6px 13px rgba(20,14,6,0.42); padding: 13px 15px; transform: rotate(1.3deg); display: flex; flex-direction: column; gap: 6px; position: relative;">
+      <div style="position: absolute; top: -8px; left: 50%; margin-left: -8px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #d9584a 0%, #8c2b20 75%); box-shadow: 0 2px 4px rgba(0,0,0,0.4);"></div>
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">SW 04</span>
+      <div style="font-family: 'Special Elite', monospace; font-size: 13px; line-height: 1.5; color: #3a2c18;">San: “Shah asked what would happen if the lights went out. I refused.”</div>
+    </div>
+
+    <div style="align-self: flex-start; width: 252px; background: #e8d98a; box-shadow: 4px 6px 12px rgba(20,14,6,0.36); padding: 13px 15px 15px; transform: rotate(-1.1deg); display: flex; flex-direction: column; gap: 5px;">
+      <div style="font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.35; color: #3a2c0f;">Both of them left at 8:23. One minute after.</div>
+      <div style="font-size: 8.5px; letter-spacing: 0.12em; color: #7a6420; text-transform: uppercase;">— Haz</div>
+    </div>
+
+    <div style="align-self: flex-end; width: 262px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 6px 13px rgba(20,14,6,0.42); padding: 13px 15px; transform: rotate(0.9deg); display: flex; flex-direction: column; gap: 6px; position: relative;">
+      <div style="position: absolute; top: -8px; left: 50%; margin-left: -8px; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #d9584a 0%, #8c2b20 75%); box-shadow: 0 2px 4px rgba(0,0,0,0.4);"></div>
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #241a0d;">NW 01</span>
+      <div style="font-family: 'Special Elite', monospace; font-size: 13px; line-height: 1.5; color: #3a2c18;">Basswood varnish on Hazwar's coat lining.</div>
+    </div>
+
+  </div>
+
+  <!-- Dock -->
+  <div style="position: absolute; left: 12px; right: 12px; bottom: 14px; display: flex; align-items: stretch; gap: 3px; background: rgba(20,14,6,0.92); border: 1px solid #8a6f47; padding: 7px;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 4px; background: rgba(216,167,90,0.16); border: 1px solid #d8a75a;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d8a75a" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg>
+      <span style="font-size: 9px; letter-spacing: 0.08em; color: #f2e6cd; text-transform: uppercase;">Board</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 4px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c0a678" stroke-width="1.8"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      <span style="font-size: 9px; letter-spacing: 0.08em; color: #c0a678; text-transform: uppercase;">Map</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 4px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c0a678" stroke-width="1.8"><path d="M4 6h16v13H4z"/><path d="M7 10h6M7 14h6M16 10v4"/></svg>
+      <span style="font-size: 9px; letter-spacing: 0.08em; color: #c0a678; text-transform: uppercase;">Papers</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 4px;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c0a678" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+      <span style="font-size: 9px; letter-spacing: 0.08em; color: #c0a678; text-transform: uppercase;">Pin</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

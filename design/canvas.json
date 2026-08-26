@@ -1,0 +1,43 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "A · Dossier — Desktop", "x": 0, "y": 0, "w": 1440, "h": 900 },
+    { "file": "DossierMobile.dc.html", "title": "A · Dossier — Mobile", "x": 1560, "y": 0, "w": 390, "h": 844 },
+
+    { "file": "EvidenceBoardDesktop.dc.html", "title": "B · Evidence Board — Desktop", "x": 0, "y": 1080, "w": 1440, "h": 900 },
+    { "file": "EvidenceBoardMobile.dc.html", "title": "B · Evidence Board — Mobile", "x": 1560, "y": 1080, "w": 390, "h": 844 },
+
+    { "file": "GaslightDesktop.dc.html", "title": "C · Gaslight — Desktop", "x": 0, "y": 2160, "w": 1440, "h": 900 },
+    { "file": "GaslightMobile.dc.html", "title": "C · Gaslight — Mobile", "x": 1560, "y": 2160, "w": 390, "h": 844 }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": -430,
+      "y": 0,
+      "w": 340,
+      "text": "Three revamps, three different bets.\n\nEach one attacks a problem the current build actually has:\n\n· 8 tabs is a lot of navigation for a game where you mostly ping-pong between clues, map and notes.\n· The mobile notebook permanently owns 40% of the screen.\n· Clues are a flat grid, so the relationships between leads — the actual detective work — live only in players' heads.\n\nSame case content in all three (The Prized Meeple) so you can compare like for like."
+    },
+    {
+      "id": "note-dossier",
+      "x": 2050,
+      "y": 0,
+      "w": 330,
+      "text": "A · DOSSIER\nKeep the world, cut the chrome.\n\nEight tabs collapse to three folder tabs — Brief / Investigate / Reckoning. Directory, Informants, Map and Papers stop being destinations and become lookups you pull up over your work, because that's how you actually use them.\n\nThe notebook is a drawer with a handle, not a permanent column.\n\nWHY: you said you like the current look. This keeps that identity and fixes the structure underneath it.\n\nTRADEOFF: the most conservative of the three. Textures still cost legibility on a phone, and skeuomorphism can tip into kitsch if the materials get any heavier."
+    },
+    {
+      "id": "note-board",
+      "x": 2050,
+      "y": 1080,
+      "w": 330,
+      "text": "B · EVIDENCE BOARD\nNavigation becomes space, not tabs.\n\nOne infinite corkboard. Clues are pinned cards you drag; red string links leads you think connect; the map and the newspaper are objects on the board, not tabs. Notes get pinned where they're relevant instead of filed in a column.\n\nOn a phone it becomes a single vertical thread with the string still linking beats.\n\nWHY: it makes deduction the interface. Nothing else here would feel like a genuinely new product.\n\nTRADEOFF: much the biggest build, and the riskiest. Five people dragging one board needs conflict rules you don't currently have, and the phone version is a real compromise rather than the same idea shrunk."
+    },
+    {
+      "id": "note-gaslight",
+      "x": 2050,
+      "y": 2160,
+      "w": 330,
+      "text": "C · GASLIGHT\nStrip the texture, let the writing carry it.\n\nCool blue-black instead of warm brown, one gaslight-amber accent, and no parchment at all. One lead at a time at a proper reading size — this is a game you read, and right now the textures fight the prose.\n\nTabs move to a slim rail; on mobile the notebook is a pull-up sheet, so the case gets the whole screen.\n\nWHY: fixes the mobile problems structurally rather than tuning around them, and the type does the atmosphere instead of the background.\n\nTRADEOFF: the furthest from what you have now, and it trades away most of the Victorian charm. If the typography isn't strong it just reads as another dark app."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

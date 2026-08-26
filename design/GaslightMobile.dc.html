@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600&family=Spectral:ital,wght@0,300;0,400;1,300&family=Courier+Prime:wght@400;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #e0a252; } a:hover { color: #f0bc78; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #0b0e14; display: flex; flex-direction: column; font-family: 'Spectral', Georgia, serif; overflow: hidden; position: relative;">
+
+  <!-- Header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 14px; gap: 12px; border-bottom: 1px solid #1c2230;">
+    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8894a8" stroke-width="1.8" style="flex-shrink: 0;"><path d="M15 5l-7 7 7 7"/></svg>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 10.5px; letter-spacing: 0.2em; color: #e0a252; text-transform: uppercase; white-space: nowrap;">Lead SW 04</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: #c2564a;"></div>
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: #6f9464;"></div>
+      <div style="width: 8px; height: 8px; border-radius: 50%; background: #7a9ec2;"></div>
+    </div>
+  </div>
+
+  <!-- The read. Full width, nothing competing for it. -->
+  <div style="flex: 1; padding: 28px 22px 0; display: flex; flex-direction: column; gap: 24px; min-height: 0;">
+
+    <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 400; line-height: 1.15; color: #f2ede3; margin: 0; letter-spacing: -0.01em; text-wrap: balance;">The Rival's Account</h1>
+
+    <div style="display: flex; flex-direction: column; gap: 18px; font-size: 18px; line-height: 1.68; color: #cdd3dd; font-weight: 300;">
+      <p style="margin: 0;">“I did nothing,” said San, with the serene confidence of a woman who has never once needed to raise her voice to be believed.</p>
+      <p style="margin: 0;">“Though I will say — Shah asked me, quite pointedly, what would happen if the lights <em style="color: #f2ede3;">accidentally</em> went out. I told him I don't do favours for free.”</p>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #2a3242; padding: 14px 10px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e0a252" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
+        <span style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.1em; color: #e0a252; text-transform: uppercase;">Note this</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; border: 1px solid #2a3242; padding: 14px 17px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8894a8" stroke-width="1.7"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Notebook as a pull-up sheet: a handle, not a permanent half-screen -->
+  <div style="flex-shrink: 0; border-top: 1px solid #2a3242; background: #10151e; padding: 0 20px calc(14px + env(safe-area-inset-bottom, 8px));">
+    <div style="display: flex; justify-content: center; padding: 9px 0 11px;">
+      <div style="width: 38px; height: 4px; border-radius: 2px; background: #2a3242;"></div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 4px;">
+      <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #c2564a; flex-shrink: 0;"></span>
+        <span style="font-size: 15px; color: #cdd3dd; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Haz: Both left at 8:23…</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 7px; flex-shrink: 0;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #e0a252;"></span>
+        <span style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5f6b80;">4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom rail -->
+  <div style="flex-shrink: 0; display: flex; align-items: stretch; border-top: 1px solid #1c2230; background: #0b0e14;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 4px 13px; border-top: 2px solid #e0a252; margin-top: -1px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#e0a252" stroke-width="1.6"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.09em; color: #e0a252; text-transform: uppercase;">Leads</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 4px 13px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5f6b80" stroke-width="1.6"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.09em; color: #5f6b80; text-transform: uppercase;">Map</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 4px 13px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5f6b80" stroke-width="1.6"><path d="M4 6h16v13H4z"/><path d="M7 10h6M7 14h6M16 10v4"/></svg>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.09em; color: #5f6b80; text-transform: uppercase;">Press</span>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 4px 13px;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5f6b80" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c0-3.4 2.9-5.4 6.5-5.4s6.5 2 6.5 5.4"/></svg>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 8.5px; letter-spacing: 0.09em; color: #5f6b80; text-transform: uppercase;">Who</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
