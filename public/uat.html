@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Playtest script and feedback sheet for the Consulting Detective companion app.">
+<meta name="robots" content="noindex">
+<title>Baker Street Field Trials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&display=swap">
+
+<style>
+  :root {
+    --ink: #14100a;
+    --ink-raised: #1e1810;
+    --parchment: #f4e8ce;
+    --parchment-dark: #e5d0a8;
+    --parchment-darker: #c9a96e;
+    --sepia: #7a5c12;
+    --sepia-light: #b8892a;
+    --red: #7a1515;
+    --red-light: #c2564a;
+    --green: #6f9464;
+    --fog: #a89070;
+    --paper: #faf2e0;
+
+    --display: 'Special Elite', 'Courier New', monospace;
+    --body: 'IM Fell English', Georgia, 'Palatino Linotype', serif;
+    --mono: 'Courier Prime', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    background-image:
+      radial-gradient(ellipse at 15% 20%, #241a07 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 70%, #1a1005 0%, transparent 50%);
+    background-attachment: fixed;
+    color: var(--parchment);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* ── Masthead ───────────────────────────────────────── */
+  .masthead { border-bottom: 2px solid var(--sepia); padding-bottom: 22px; margin-bottom: 34px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--sepia-light);
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(1.9rem, 6vw, 2.7rem);
+    line-height: 1.15;
+    font-weight: 400;
+    margin: 0 0 14px;
+    color: var(--paper);
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--fog);
+    margin: 0;
+    max-width: 56ch;
+  }
+
+  /* ── Progress ───────────────────────────────────────── */
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--ink-raised);
+    border: 1px solid var(--sepia);
+    padding: 14px 18px;
+    margin-bottom: 34px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(168, 144, 112, 0.25);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--sepia-light);
+    transition: width 0.25s ease;
+  }
+  .progress-count {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--fog);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ── Section headings ───────────────────────────────── */
+  h2 {
+    font-family: var(--display);
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--paper);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .round-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 44px 0 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(122, 92, 18, 0.55);
+  }
+  .round-num {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    color: var(--sepia-light);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .round-sub {
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--fog);
+    margin: 0 0 20px;
+  }
+
+  /* ── Check cards ────────────────────────────────────── */
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 14px;
+    background: var(--parchment);
+    background-image: linear-gradient(158deg, var(--paper) 0%, var(--parchment) 62%);
+    color: var(--ink);
+    border: 1px solid var(--parchment-darker);
+    box-shadow: 5px 5px 0 rgba(10, 7, 3, 0.45);
+    padding: 15px 17px;
+    margin-bottom: 14px;
+  }
+  .check input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 21px;
+    height: 21px;
+    margin: 2px 0 0;
+    border: 2px solid var(--sepia);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: grid;
+    place-content: center;
+    grid-row: 1 / span 2;
+  }
+  .check input[type="checkbox"]::before {
+    content: '\2713';
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--ink);
+    transform: scale(0);
+    transition: transform 0.12s ease;
+  }
+  .check input[type="checkbox"]:checked { background: var(--sepia-light); border-color: var(--sepia); }
+  .check input[type="checkbox"]:checked::before { transform: scale(1); }
+  .check input[type="checkbox"]:focus-visible { outline: 2px solid var(--red-light); outline-offset: 2px; }
+  .check.done { opacity: 0.62; }
+
+  .do { margin: 0; font-size: 1rem; line-height: 1.6; }
+  .expect {
+    margin: 7px 0 0;
+    font-size: 0.93rem;
+    font-style: italic;
+    color: #4c3a1a;
+    padding-left: 13px;
+    border-left: 2px solid var(--parchment-darker);
+  }
+  .expect::before {
+    content: 'Should see \00a0\00b7\00a0';
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sepia);
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: rgba(122, 92, 18, 0.15);
+    border: 1px solid rgba(122, 92, 18, 0.3);
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  /* ── Device chips ───────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; grid-column: 2; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border: 1px solid var(--sepia);
+    color: var(--sepia);
+    white-space: nowrap;
+  }
+  .chip--gm { background: var(--sepia); color: var(--paper); border-color: var(--sepia); }
+
+  /* ── Callouts ───────────────────────────────────────── */
+  .note {
+    border-left: 3px solid var(--sepia-light);
+    background: rgba(184, 137, 42, 0.09);
+    padding: 13px 16px;
+    margin: 0 0 22px;
+    font-size: 0.95rem;
+  }
+  .note strong { font-family: var(--display); font-weight: 400; color: var(--paper); }
+  .warn { border-left-color: var(--red-light); background: rgba(194, 86, 74, 0.11); }
+  .warn strong { color: var(--red-light); }
+
+  /* ── Notes fields ───────────────────────────────────── */
+  .field { margin: 6px 0 0; }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--sepia-light);
+    margin-bottom: 6px;
+  }
+  textarea, input[type="text"] {
+    width: 100%;
+    background: var(--ink-raised);
+    border: 1px solid var(--sepia);
+    color: var(--parchment);
+    font-family: var(--body);
+    font-size: 1rem;
+    line-height: 1.6;
+    padding: 10px 13px;
+    resize: vertical;
+  }
+  textarea { min-height: 76px; }
+  textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--sepia-light); box-shadow: 0 0 0 1px var(--sepia-light); }
+  textarea::placeholder, input::placeholder { color: rgba(168, 144, 112, 0.55); font-style: italic; }
+
+  .round-notes { margin: 4px 0 0; }
+
+  /* ── Wrap-up ────────────────────────────────────────── */
+  .wrapup { margin-top: 52px; border-top: 2px solid var(--sepia); padding-top: 30px; }
+  .grid2 { display: grid; gap: 18px; }
+  @media (min-width: 620px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; align-items: center; }
+  button.primary {
+    font-family: var(--display);
+    font-size: 0.92rem;
+    letter-spacing: 0.05em;
+    background: var(--sepia-light);
+    color: var(--ink);
+    border: 1px solid var(--sepia-light);
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  button.primary:hover { background: var(--paper); border-color: var(--paper); }
+  button.ghost {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--fog);
+    border: 1px solid var(--fog);
+    padding: 11px 16px;
+    cursor: pointer;
+  }
+  button.ghost:hover { color: var(--paper); border-color: var(--paper); }
+  button:focus-visible { outline: 2px solid var(--red-light); outline-offset: 2px; }
+  .status {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--green);
+    letter-spacing: 0.08em;
+  }
+
+  #out { display: none; margin-top: 18px; }
+  #out.show { display: block; }
+  #out textarea { min-height: 220px; font-family: var(--mono); font-size: 0.82rem; line-height: 1.5; }
+
+  footer {
+    margin-top: 52px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(122, 92, 18, 0.45);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--fog);
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Sherlock Holmes · Consulting Detective</p>
+    <h1>Baker Street Field Trials</h1>
+    <p class="standfirst">You're testing the app, not solving the case — though you'll do a bit of both. Work down the list, tick what works, and tell me what doesn't. Half an hour, give or take.</p>
+  </header>
+
+  <div class="progress">
+    <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+    <span class="progress-count" id="count">0 / 0</span>
+  </div>
+
+  <div class="note">
+    <strong>Before you start.</strong> You'll need the link I sent, a name to play under, and whichever device you're testing on. One of us is the Game Master; everyone else joins as a player. If you can, run through it twice on different devices — a phone and a laptop behave quite differently.
+  </div>
+
+  <div class="note warn">
+    <strong>No peeking.</strong> The Solution tab spoils the case. Leave it alone until Round 7, and if you're the GM, don't read it aloud early.
+  </div>
+
+  <div class="field" style="margin-bottom:8px">
+    <label for="who">Your name &amp; what you're testing on</label>
+    <input type="text" id="who" data-k="who" placeholder="e.g. Hazwar — iPhone 14, Chrome">
+  </div>
+
+  <!-- ROUND 0 -->
+  <div class="round-head"><span class="round-num">ROUND 0</span><h2>Opening the case</h2></div>
+  <p class="round-sub">Game Master only. Everyone else, skip to Round 1.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-login">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Open the GM link and sign in.</p>
+    <p class="expect">The case list, with <strong>Test Case</strong> among them.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="gm-select">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Select <strong>Test Case</strong>, then find the invite code and share the join link with everyone.</p>
+    <p class="expect">A date — <em>1 January 1888</em> — sitting just under the case name.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n0">Round 0 — anything off?</label>
+    <textarea id="n0" data-k="n0" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 1 -->
+  <div class="round-head"><span class="round-num">ROUND 1</span><h2>Getting everyone in</h2></div>
+  <p class="round-sub">Everybody, at the same time if you can — that's when the live bits get interesting.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="join">
+    <p class="do">Open the join link, enter your name, pick a colour.</p>
+    <p class="expect">You land on the <strong>Clues</strong> tab with the case name in the header.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="presence">
+    <p class="do">Watch the <code>N online</code> counter as the others join, then tap it.</p>
+    <p class="expect">The count climbs as people arrive, and tapping lists who's here.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="colour">
+    <p class="do">Change your colour using the coloured dot in the header.</p>
+    <p class="expect">It updates for everyone else too, without a refresh.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n1">Round 1 — anything off?</label>
+    <textarea id="n1" data-k="n1" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 2 -->
+  <div class="round-head"><span class="round-num">ROUND 2</span><h2>Reading in</h2></div>
+  <p class="round-sub">The reference material — brief, rules, contacts, addresses.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="brief">
+    <p class="do">Read the <strong>Case Brief</strong> tab.</p>
+    <p class="expect">Text that's comfortable to read at arm's length — flag it if the lines run too wide or too cramped.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="rules">
+    <p class="do">Tap the <code>?</code> in the header.</p>
+    <p class="expect">How to play — turns and scoring — in a pop-up you can close again.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="informants">
+    <p class="do">Open <strong>Informants</strong> and filter for <code>Murray</code>.</p>
+    <p class="expect">The list narrows as you type; each contact shows an address like <code>22 SW</code>.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="lecture-tip">
+    <div class="chips"><span class="chip">Phone</span><span class="chip">Desktop</span><span class="chip">iPad</span></div>
+    <p class="do">On a computer, hover the <strong>Read Holmes's lecture</strong> button. On a touchscreen, tap the small <code>i</code> beside it.</p>
+    <p class="expect">A short explanation appears, then goes away when you tap elsewhere. This one is brand new — I especially want to know if it feels awkward.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="lecture">
+    <p class="do">Now open the lecture itself.</p>
+    <p class="expect">Holmes's full talk, readable and scrollable, closing cleanly.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="directory">
+    <p class="do">Open <strong>Directory</strong> and look someone up.</p>
+    <p class="expect">Search works on names and on addresses.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n2">Round 2 — anything off?</label>
+    <textarea id="n2" data-k="n2" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 3 -->
+  <div class="round-head"><span class="round-num">ROUND 3</span><h2>Following the leads</h2></div>
+  <p class="round-sub">The heart of it. GM reveals clues; players watch them land.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="reveal">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Reveal a clue — start with <code>SE 08</code>.</p>
+    <p class="expect">It appears on every player's screen within a second or two. Nobody should need to refresh.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="clue-open">
+    <p class="do">Tap the clue to open it.</p>
+    <p class="expect">The full text, with any picture, and an <code>&times;</code> to close.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="clue-scroll">
+    <div class="chips"><span class="chip">Phone</span></div>
+    <p class="do">With several clues revealed, tap one near the <em>bottom</em> of the list.</p>
+    <p class="expect">The page jumps you to the opened clue rather than leaving you hunting for it.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="clue-gap">
+    <div class="chips"><span class="chip">Phone</span></div>
+    <p class="do">With a clue open, look at the space between the clue and the notepad below.</p>
+    <p class="expect">No big empty black gap, and the notepad shouldn't cover the text. <strong>This is the bug I've been chasing</strong> — please look hard here.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="search">
+    <p class="do">Use the search box: try a code (<code>SW 04</code>), then a word from inside a clue (<code>meeple</code>).</p>
+    <p class="expect">Both find matches — searching looks at titles <em>and</em> the clue text.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="leads">
+    <p class="do">Keep an eye on the 🔍 counter in the header as clues are revealed.</p>
+    <p class="expect">It counts the leads you've followed — this is what your score is measured against.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n3">Round 3 — anything off?</label>
+    <textarea id="n3" data-k="n3" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 4 -->
+  <div class="round-head"><span class="round-num">ROUND 4</span><h2>The map</h2></div>
+  <p class="round-sub">Everyone draws on the same map at once. Try to get in each other's way.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="map-pan">
+    <p class="do">Open <strong>Map</strong>. Drag to move, pinch or use <code>+</code> / <code>&minus;</code> to zoom, then <code>&#8634;</code> to reset.</p>
+    <p class="expect">Smooth movement, no stutter or blank patches.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="map-draw">
+    <p class="do">Pick the pencil ✏️ and scribble. Drop a pin 📍 and give it a label.</p>
+    <p class="expect">Your marks show in your colour, and everyone else sees them appear live.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="map-erase">
+    <p class="do">Switch to the eraser 🧽 and remove one of your own marks.</p>
+    <p class="expect">The cursor is a round eraser, not a crosshair. You can rub out your own marks but not other people's.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="map-fs">
+    <p class="do">Go fullscreen with <code>&#10530;</code>, then draw and drop a pin while you're in there.</p>
+    <p class="expect">You <em>stay</em> in fullscreen. Getting kicked out was an old bug — shout if it's back.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n4">Round 4 — anything off?</label>
+    <textarea id="n4" data-k="n4" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 5 -->
+  <div class="round-head"><span class="round-num">ROUND 5</span><h2>The newspapers</h2></div>
+  <p class="round-sub">Reading a broadsheet on a phone is the hard case here.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="paper-open">
+    <p class="do">Open the <strong>Newspaper</strong> tab.</p>
+    <p class="expect">The whole page width fits on screen from the start — not zoomed awkwardly into a corner.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="paper-scroll">
+    <div class="chips"><span class="chip">Desktop</span><span class="chip">iPad</span></div>
+    <p class="do">Scroll with the wheel or two fingers. Then hold <code>Ctrl</code> (or <code>&#8984;</code>) and scroll, or pinch.</p>
+    <p class="expect">Plain scrolling moves <em>down the page</em>; only ctrl-scroll or pinch zooms.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="paper-reset">
+    <p class="do">Zoom in a long way, then press <code>&#8634;</code>.</p>
+    <p class="expect">Back to the full page, not to some odd half-zoom.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="paper-switch">
+    <p class="do">If there's more than one paper, switch between the dated buttons along the top.</p>
+    <p class="expect">Each loads properly and stays readable.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n5">Round 5 — anything off?</label>
+    <textarea id="n5" data-k="n5" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 6 -->
+  <div class="round-head"><span class="round-num">ROUND 6</span><h2>The notepad</h2></div>
+  <p class="round-sub">Private notes are yours alone; team notes are shared. Test both.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-private">
+    <p class="do">Write a note under <strong>My Notes</strong>.</p>
+    <p class="expect">It saves, and nobody else can see it — check with someone.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-team">
+    <p class="do">Post one under <strong>Team Notes</strong>.</p>
+    <p class="expect">Everyone sees it straight away, in your colour.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-unread">
+    <p class="do">Sit on <strong>My Notes</strong> while somebody else posts a team note.</p>
+    <p class="expect">A small dot appears on the Team Notes tab and clears when you open it. Also new — tell me if you'd rather it were louder, quieter, or gone.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-edit">
+    <p class="do">Edit one of your notes, share a private one to the team, then delete one.</p>
+    <p class="expect">All three work, and a shared note gets marked as shared.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-collapse">
+    <div class="chips"><span class="chip">Phone</span></div>
+    <p class="do">Use the <code>&#9662;</code> to fold the notepad away, then the <code>&#10530;</code> to make it fullscreen.</p>
+    <p class="expect">Folded, the case content gets most of the screen back. Fullscreen, the notepad fills it.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="note-typing">
+    <p class="do">Start typing a note and leave it half-finished for a minute or two.</p>
+    <p class="expect">Your unfinished text is still there — the app shouldn't reload underneath you mid-sentence.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n6">Round 6 — anything off?</label>
+    <textarea id="n6" data-k="n6" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 7 -->
+  <div class="round-head"><span class="round-num">ROUND 7</span><h2>The reckoning</h2></div>
+  <p class="round-sub">Now you may look at the solution.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="questions">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">GM opens the <strong>Questions</strong> to the players.</p>
+    <p class="expect">A Questions tab appears for everyone — it stays hidden until the GM allows it.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="answers">
+    <p class="do">Agree on answers as a team and write them in.</p>
+    <p class="expect">One shared answer per question that everyone sees, and anyone can edit.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="solution">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">GM reveals the <strong>Solution</strong>. Read it out.</p>
+    <p class="expect">Holmes's explanation, and your score set against his 100.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="fair">
+    <p class="do">Now the important one: <em>was the case actually solvable from the clues?</em></p>
+    <p class="expect">Say so honestly if the answer felt like a leap — that's a writing problem worth knowing about.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n7">Round 7 — anything off?</label>
+    <textarea id="n7" data-k="n7" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- ROUND 8 -->
+  <div class="round-head"><span class="round-num">ROUND 8</span><h2>Trying to break it</h2></div>
+  <p class="round-sub">Deliberately awkward things. This is where the good bugs hide.</p>
+
+  <div class="check">
+    <input type="checkbox" data-c="rejoin">
+    <p class="do">Leave the case and rejoin with the same name.</p>
+    <p class="expect">Your notes and colour are still yours.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="rotate">
+    <div class="chips"><span class="chip">Phone</span><span class="chip">iPad</span></div>
+    <p class="do">Turn the device sideways, then back, on a few different tabs.</p>
+    <p class="expect">Nothing overlaps, nothing gets cut off, nothing needs a refresh.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="background">
+    <p class="do">Switch to another app for a few minutes, then come back.</p>
+    <p class="expect">It reconnects on its own and catches up on anything you missed.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="offline">
+    <p class="do">Turn wifi off for thirty seconds, then on again.</p>
+    <p class="expect">It recovers without a refresh. Tell me if it needed one.</p>
+  </div>
+
+  <div class="field round-notes">
+    <label for="n8">Round 8 — anything off?</label>
+    <textarea id="n8" data-k="n8" placeholder="Leave blank if all fine"></textarea>
+  </div>
+
+  <!-- WRAP UP -->
+  <div class="wrapup">
+    <div class="round-head" style="margin-top:0"><span class="round-num">FINALLY</span><h2>The bit I actually care about</h2></div>
+    <p class="round-sub">Ticks tell me it works. These tell me whether it's any good.</p>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="q1">What annoyed you?</label>
+        <textarea id="q1" data-k="q1" placeholder="However small — small annoyances are the ones I can fix"></textarea>
+      </div>
+      <div class="field">
+        <label for="q2">Anything you couldn't work out?</label>
+        <textarea id="q2" data-k="q2" placeholder="Buttons you didn't understand, things you looked for and couldn't find"></textarea>
+      </div>
+      <div class="field">
+        <label for="q3">What worked well?</label>
+        <textarea id="q3" data-k="q3" placeholder="Worth knowing so I don't break it later"></textarea>
+      </div>
+      <div class="field">
+        <label for="q4">What's missing?</label>
+        <textarea id="q4" data-k="q4" placeholder="What you reached for and it wasn't there"></textarea>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:18px">
+      <label for="q5">Would you actually want to play a full case on this?</label>
+      <textarea id="q5" data-k="q5" placeholder="Be blunt. Yes, no, and why."></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="copy">Copy my feedback</button>
+      <button class="ghost" id="reset">Start over</button>
+      <span class="status" id="status"></span>
+    </div>
+
+    <div id="out">
+      <div class="field">
+        <label for="outtext">Copy this and send it to me</label>
+        <textarea id="outtext" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <footer>Your answers are saved on this device as you go &middot; Test Case: The Purloined Prize Piece</footer>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'shcd-uat-v1';
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+  }
+
+  var state = load();
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('[data-c]'));
+  var fields = Array.prototype.slice.call(document.querySelectorAll('[data-k]'));
+
+  function paint(box) {
+    var card = box.closest('.check');
+    if (card) card.classList.toggle('done', box.checked);
+  }
+
+  function tally() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById('count').textContent = done + ' / ' + boxes.length;
+    document.getElementById('fill').style.width = (boxes.length ? (done / boxes.length) * 100 : 0) + '%';
+  }
+
+  boxes.forEach(function (box) {
+    var k = box.getAttribute('data-c');
+    if (state['c:' + k]) box.checked = true;
+    paint(box);
+    box.addEventListener('change', function () {
+      state['c:' + k] = box.checked;
+      save(state);
+      paint(box);
+      tally();
+    });
+  });
+
+  fields.forEach(function (el) {
+    var k = el.getAttribute('data-k');
+    if (typeof state['f:' + k] === 'string') el.value = state['f:' + k];
+    el.addEventListener('input', function () {
+      state['f:' + k] = el.value;
+      save(state);
+    });
+  });
+
+  tally();
+
+  function labelFor(box) {
+    var card = box.closest('.check');
+    var doEl = card ? card.querySelector('.do') : null;
+    return doEl ? doEl.textContent.replace(/\s+/g, ' ').trim() : box.getAttribute('data-c');
+  }
+
+  function compose() {
+    var lines = [];
+    var who = document.getElementById('who').value.trim();
+    lines.push('SHCD FIELD TRIAL — FEEDBACK');
+    lines.push(who ? 'Tester: ' + who : 'Tester: (not given)');
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    lines.push('Checks confirmed: ' + done + ' of ' + boxes.length);
+    lines.push('');
+
+    var missed = boxes.filter(function (b) { return !b.checked; });
+    if (missed.length) {
+      lines.push('NOT CONFIRMED');
+      missed.forEach(function (b) { lines.push('  - ' + labelFor(b)); });
+      lines.push('');
+    }
+
+    var rounds = [
+      ['Round 0 (setup)', 'n0'], ['Round 1 (joining)', 'n1'], ['Round 2 (reading in)', 'n2'],
+      ['Round 3 (clues)', 'n3'], ['Round 4 (map)', 'n4'], ['Round 5 (newspapers)', 'n5'],
+      ['Round 6 (notepad)', 'n6'], ['Round 7 (reckoning)', 'n7'], ['Round 8 (breaking it)', 'n8']
+    ];
+    var any = false;
+    rounds.forEach(function (r) {
+      var el = document.getElementById(r[1]);
+      if (el && el.value.trim()) {
+        if (!any) { lines.push('NOTES BY ROUND'); any = true; }
+        lines.push('  ' + r[0] + ': ' + el.value.trim());
+      }
+    });
+    if (any) lines.push('');
+
+    var qs = [
+      ['What annoyed you', 'q1'], ['Couldn’t work out', 'q2'], ['Worked well', 'q3'],
+      ['Missing', 'q4'], ['Would you play a full case', 'q5']
+    ];
+    lines.push('OVERALL');
+    qs.forEach(function (q) {
+      var el = document.getElementById(q[1]);
+      lines.push('  ' + q[0] + ': ' + ((el && el.value.trim()) || '—'));
+    });
+
+    return lines.join('\n');
+  }
+
+  var status = document.getElementById('status');
+  var out = document.getElementById('out');
+  var outtext = document.getElementById('outtext');
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = compose();
+    outtext.value = text;
+    function fallback() {
+      out.classList.add('show');
+      outtext.focus();
+      outtext.select();
+      status.textContent = 'Select the text below and copy it';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        status.textContent = 'Copied — now paste it to Zim';
+        out.classList.remove('show');
+      }, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!window.confirm('Clear every tick and note on this device?')) return;
+    state = {};
+    save(state);
+    boxes.forEach(function (b) { b.checked = false; paint(b); });
+    fields.forEach(function (f) { f.value = ''; });
+    out.classList.remove('show');
+    status.textContent = 'Cleared';
+    tally();
+  });
+})();
+</script>
+</body>
+</html>
