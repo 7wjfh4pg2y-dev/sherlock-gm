@@ -582,17 +582,23 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       ...PLAYER_COLORS.map((c) => ({ label: c.label, value: c.value, swatch: c.value })),
     ];
     const swatchEls = new Map<string, HTMLElement>();
+    // Which swatch is chosen is otherwise carried entirely by a ring of
+    // box-shadow, which a screen reader cannot see: aria-pressed says it out
+    // loud, and keeps saying it as the choice moves.
+    function markSelected(): void {
+      for (const [v, el] of swatchEls) {
+        const on = v === colour;
+        el.classList.toggle('selected', on);
+        el.setAttribute('aria-pressed', String(on));
+      }
+    }
     for (const c of choices) {
       const btn = h('button', {
         class: 'board-colour',
-        attrs: { type: 'button', title: c.label, 'aria-label': c.label },
+        attrs: { type: 'button', title: c.label, 'aria-label': c.label, 'aria-pressed': 'false' },
       });
       btn.style.setProperty('--swatch', c.swatch);
-      btn.classList.toggle('selected', c.value === colour);
-      btn.addEventListener('click', () => {
-        colour = c.value;
-        for (const [v, el] of swatchEls) el.classList.toggle('selected', v === colour);
-      });
+      btn.addEventListener('click', () => { colour = c.value; markSelected(); });
       // The author's own colour is usually also somewhere in the palette, so
       // without a divider the two identical dots read as a duplicate rather
       // than as "follow the author" vs "pin this hue".
@@ -601,6 +607,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       swatches.append(btn);
       if (!c.value) swatches.append(h('span', { class: 'board-colour-div' }));
     }
+    markSelected();
 
     const save = h('button', { class: 'btn btn-primary btn-sm', text: 'Save' });
     const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
@@ -633,16 +640,23 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   async function setLinkStyle(link: BoardLinkRow, label: string, color: string): Promise<void> {
     if (isPending(link.id)) return;
     const before = store.getState().boardLinks;
+    // What to put back on failure is read HERE, not taken from the `link` the
+    // modal was opened with: that snapshot can be minutes old, so rolling back
+    // to it would stamp stale text over an edit another player made while the
+    // modal sat open.
+    const prev = before.find((l) => l.id === link.id);
     store.set({ boardLinks: before.map((l) => (l.id === link.id ? { ...l, label, color } : l)) });
     try {
       await linkRepo.setStyle(link.id, label, color);
     } catch {
       // Restore just this string against CURRENT state, never the whole array.
-      store.set({
-        boardLinks: store.getState().boardLinks.map((l) => (
-          l.id === link.id ? { ...l, label: link.label ?? '', color: link.color ?? '' } : l
-        )),
-      });
+      if (prev) {
+        store.set({
+          boardLinks: store.getState().boardLinks.map((l) => (
+            l.id === link.id ? { ...l, label: prev.label ?? '', color: prev.color ?? '' } : l
+          )),
+        });
+      }
       toast('Could not save that string.');
     }
   }

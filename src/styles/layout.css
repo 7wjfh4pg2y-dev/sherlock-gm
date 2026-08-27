@@ -1576,6 +1576,13 @@ input[type="date"].gm-input { color-scheme: dark; }
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .board-colour:hover { transform: scale(1.1); }
+/* Selection is a ring; focus needs its own mark or the two are indistinguishable
+   when a keyboard user lands on the swatch that is already chosen. */
+.board-colour:focus-visible { outline: 2px solid #7a5a22; outline-offset: 3px; }
+/* Nine dots in a row are a thumb target on a phone, so give them the room. */
+@media (max-width: 860px) {
+  .board-colour { width: 38px; height: 38px; }
+}
 .board-colour--auto { border-style: dashed; }
 .board-colour-div {
   width: 1px; align-self: stretch; margin: 2px 3px;
