@@ -1382,17 +1382,24 @@ input[type="date"].gm-input { color-scheme: dark; }
    gaps read as the twist of the fibre. */
 .board-links { position: absolute; top: 0; left: 0; pointer-events: none; }
 .board-strand-shadow {
-  stroke-width: 6; stroke-linecap: round; opacity: 0.5;
-  transform: translateY(2px);
+  stroke-width: 8; stroke-linecap: round; opacity: 0.45;
+  transform: translateY(3px);
 }
-.board-strand-body { stroke-width: 4.5; stroke-linecap: round; opacity: 0.95; }
+.board-strand-body { stroke-width: 5.5; stroke-linecap: round; }
+/* Grooves span the full width of the strand, so the gaps between them read as
+   the individual fibres of a twisted yarn. */
 .board-strand-twist {
-  stroke-width: 2; stroke-linecap: butt; opacity: 0.55;
-  stroke-dasharray: 3 5;
+  stroke-width: 5.5; stroke-linecap: butt; opacity: 0.34;
+  stroke-dasharray: 1.8 4.6;
 }
-.board-strand-hit { stroke-width: 24; pointer-events: stroke; cursor: pointer; }
-.board-strand:hover .board-strand-body { stroke-width: 5.5; }
-.board-strand:hover .board-strand-twist { opacity: 0.8; }
+.board-strand-sheen {
+  stroke-width: 1.8; stroke-linecap: round; opacity: 0.4;
+  stroke-dasharray: 5 3;
+  transform: translateY(-1.4px);
+}
+.board-strand-hit { stroke-width: 26; pointer-events: stroke; cursor: pointer; }
+.board-strand:hover .board-strand-body { stroke-width: 6.5; }
+.board-strand:hover .board-strand-twist { stroke-width: 6.5; opacity: 0.46; }
 
 /* Label tags hang off the middle of a strand. */
 .board-link-labels { position: absolute; top: 0; left: 0; }

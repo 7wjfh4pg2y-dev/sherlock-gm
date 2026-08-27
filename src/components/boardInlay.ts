@@ -414,7 +414,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     const x1 = a.x + CARD_W / 2, y1 = a.y + 30;
     const x2 = b.x + CARD_W / 2, y2 = b.y + 30;
     // Sag grows with span, the way a longer piece of yarn droops further.
-    const sag = Math.min(70, Math.hypot(x2 - x1, y2 - y1) * 0.16);
+    const sag = Math.min(130, Math.hypot(x2 - x1, y2 - y1) * 0.22);
     return `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 + sag} ${x2} ${y2}`;
   }
 
@@ -422,7 +422,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   function strandMid(a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } {
     const x1 = a.x + CARD_W / 2, y1 = a.y + 30;
     const x2 = b.x + CARD_W / 2, y2 = b.y + 30;
-    const sag = Math.min(70, Math.hypot(x2 - x1, y2 - y1) * 0.16);
+    const sag = Math.min(130, Math.hypot(x2 - x1, y2 - y1) * 0.22);
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2 + sag;
     return { x: 0.25 * x1 + 0.5 * cx + 0.25 * x2, y: 0.25 * y1 + 0.5 * cy + 0.25 * y2 };
   }
@@ -453,9 +453,13 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
 
       const g = document.createElementNS(SVG_NS, 'g');
       g.setAttribute('class', 'board-strand');
-      g.appendChild(strand('board-strand-shadow', 'rgba(20,14,6,0.45)'));
+      g.appendChild(strand('board-strand-shadow', 'rgba(20,14,6,0.5)'));
       g.appendChild(strand('board-strand-body', colour));
-      g.appendChild(strand('board-strand-twist', 'rgba(255,246,226,0.5)'));
+      // Grooves between the fibres are DARK, not pale: a light twist vanished
+      // entirely on a yellow or cream strand. Dark reads on every hue.
+      g.appendChild(strand('board-strand-twist', 'rgba(26,18,8,0.55)'));
+      // A thin off-centre highlight gives the strand roundness.
+      g.appendChild(strand('board-strand-sheen', 'rgba(255,248,230,0.45)'));
       const hit = strand('board-strand-hit', 'transparent');
       hit.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
       g.appendChild(hit);
