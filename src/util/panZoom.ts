@@ -7,6 +7,9 @@ export interface PanZoomHandle {
   zoomIn(): void;
   zoomOut(): void;
   setFitScale(scale: number): void;
+  /** Re-apply the zoom floor and pan clamp after the viewport changes size
+   *  (window resize, rotation, a panel opening). No-op without `bounds`. */
+  refit(): void;
   reset(): void;
   setPanEnabled(enabled: boolean): void;
   /** Returns the current transform so external renderers (e.g. a canvas
@@ -24,6 +27,10 @@ export function attachPanZoom(
     /** Where the layer's transform-origin sits. Must match its CSS, or the
      *  point under the cursor drifts on every zoom step. Default 'center'. */
     origin?: 'center' | 'top-left';
+    /** The layer's intrinsic size in its own px. Supplying it keeps the content
+     *  on screen: you cannot pan it away into empty space, and zooming out
+     *  stops once the whole thing fits. Requires origin 'top-left'. */
+    bounds?: { width: number; height: number };
   } = {},
 ): PanZoomHandle {
   let min = opts.min ?? 0.5;
@@ -48,7 +55,27 @@ export function attachPanZoom(
   let pinchStartDist = 0;
   let pinchStartScale = 1;
 
+  /** Smallest scale worth allowing: with bounds, the one that just fits the
+   *  whole layer in the viewport, so zooming out can never reveal a void. */
+  function minScale(): number {
+    if (!opts.bounds) return min;
+    const r = viewport.getBoundingClientRect();
+    if (!r.width || !r.height) return min;
+    return Math.min(r.width / opts.bounds.width, r.height / opts.bounds.height);
+  }
+
+  /** Keep the layer covering the viewport (or centred, once it is smaller). */
+  function clampPan(): void {
+    if (!opts.bounds) return;
+    const r = viewport.getBoundingClientRect();
+    const w = opts.bounds.width * scale;
+    const hgt = opts.bounds.height * scale;
+    tx = w <= r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, tx));
+    ty = hgt <= r.height ? (r.height - hgt) / 2 : Math.min(0, Math.max(r.height - hgt, ty));
+  }
+
   function apply(): void {
+    clampPan();
     img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
     opts.onTransform?.();
   }
@@ -57,7 +84,7 @@ export function attachPanZoom(
   // cursor/fingers. The img's transform-origin is its centre, so we work in
   // coordinates relative to the viewport centre.
   function zoomTo(nextScale: number, fx: number, fy: number): void {
-    const clamped = Math.min(max, Math.max(min, nextScale));
+    const clamped = Math.min(max, Math.max(minScale(), nextScale));
     const k = clamped / scale;
     const rect = viewport.getBoundingClientRect();
     // Focal point expressed relative to the layer's transform-origin. Getting
@@ -184,13 +211,19 @@ export function attachPanZoom(
       fitScale = s;
       // Allow zooming/resetting below the default floor so the whole map fits.
       min = Math.min(min, s);
-      scale = s;
+      scale = Math.max(s, minScale());
       tx = 0;
       ty = 0;
       apply();
     },
+    refit() {
+      scale = Math.max(scale, minScale());
+      apply();
+    },
     reset() {
-      scale = fitScale;
+      // A bounded layer's floor is dynamic (it depends on viewport size), so a
+      // preferred fitScale set at build time may sit below it on a big screen.
+      scale = Math.max(fitScale, minScale());
       tx = 0;
       ty = 0;
       apply();

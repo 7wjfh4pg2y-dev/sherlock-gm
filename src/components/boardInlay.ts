@@ -27,7 +27,10 @@ import { toast } from './toast';
 import { openTitledModal } from './modal';
 import type { BoardItemRow, BoardLinkRow, ClueRow } from '../data/types';
 
-/** The logical board everyone shares. Cards store absolute px inside it. */
+/** The logical board everyone shares. Cards store absolute px inside it.
+ *  Deliberately finite: roughly 16 cards wide by 20 tall, which is generous
+ *  for a case's worth of leads, while bounded panning and a zoom floor that
+ *  fits the whole thing mean nobody can wander off into empty space. */
 const BOARD_W = 4000;
 const BOARD_H = 2500;
 const CARD_W = 240;
@@ -74,8 +77,21 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   const element = h('div', { class: 'board-inlay' }, viewport, toolbar, drawer, empty);
 
   // origin must match .board-surface's transform-origin, or zoom drifts.
-  const pz: PanZoomHandle = attachPanZoom(viewport, surface, { min: 0.2, max: 2, origin: 'top-left' });
+  // bounds keeps the board on screen: panning stops at its edges, and zooming
+  // out stops once the whole board fits rather than revealing a void around it.
+  const pz: PanZoomHandle = attachPanZoom(viewport, surface, {
+    min: 0.2, max: 2, origin: 'top-left',
+    bounds: { width: BOARD_W, height: BOARD_H },
+  });
+  // A comfortable reading zoom to start and to reset to; the floor above is
+  // whatever fits the board, which is usually further out than this.
   pz.setFitScale(0.5);
+
+  // The zoom floor depends on viewport size, so a rotation or a resized window
+  // has to re-clamp — otherwise you can end up below the floor, looking at the
+  // board with empty space around it.
+  const resizeObs = new ResizeObserver(() => pz.refit());
+  resizeObs.observe(viewport);
 
   // ── Live interaction state (never in the store — this is view-local) ──
   let dragId: string | null = null;
@@ -571,6 +587,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     element,
     refresh,
     detach() {
+      resizeObs.disconnect();
       pz.detach();
       cardEls.clear();
       localPos.clear();
