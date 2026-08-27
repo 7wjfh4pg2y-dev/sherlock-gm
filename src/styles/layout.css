@@ -1397,6 +1397,8 @@ input[type="date"].gm-input { color-scheme: dark; }
   stroke-dasharray: 5 3;
   transform: translateY(-1.4px);
 }
+/* The bit of wool the tag dangles from. */
+.board-strand-stub { stroke-width: 3; stroke-linecap: round; opacity: 0.9; }
 .board-strand-hit { stroke-width: 26; pointer-events: stroke; cursor: pointer; }
 .board-strand:hover .board-strand-body { stroke-width: 6.5; }
 .board-strand:hover .board-strand-twist { stroke-width: 6.5; opacity: 0.46; }
@@ -1410,7 +1412,7 @@ input[type="date"].gm-input { color-scheme: dark; }
 .board-link-tag {
   position: absolute; top: 0; left: 0;
   translate: -50% 0;
-  rotate: -2.5deg;
+  rotate: -2deg;
   min-width: 66px; max-width: 172px;
   padding: 17px 13px 9px; cursor: pointer;
   background: linear-gradient(168deg, #e7d6ae 0%, #d5bf90 100%);

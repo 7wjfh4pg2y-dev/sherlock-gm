@@ -36,6 +36,10 @@ const BOARD_H = 2500;
 const CARD_W = 240;
 /** Drag further than this (board px) and it counts as a move, not a tap. */
 const DRAG_MIN = 4;
+/** How far a label tag hangs below its strand, on its own stub of string.
+ *  Without the drop the strand runs diagonally behind the tag body instead of
+ *  above it, and the tag reads as impaled rather than hung. */
+const TAG_DROP = 54;
 
 export interface BoardInlayHandle {
   element: HTMLElement;
@@ -467,8 +471,19 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
 
       if (link.label.trim()) {
         const m = strandMid(a, b);
+        // A short stub of the same wool, so the tag hangs clear of the strand
+        // and the strand stays unbroken behind it.
+        const stub = document.createElementNS(SVG_NS, 'line');
+        stub.setAttribute('x1', String(m.x));
+        stub.setAttribute('y1', String(m.y));
+        stub.setAttribute('x2', String(m.x));
+        stub.setAttribute('y2', String(m.y + TAG_DROP));
+        stub.setAttribute('class', 'board-strand-stub');
+        stub.setAttribute('stroke', colour);
+        g.appendChild(stub);
+
         const tag = h('div', { class: 'board-link-tag', text: link.label });
-        tag.style.transform = `translate(${m.x}px, ${m.y}px)`;
+        tag.style.transform = `translate(${m.x}px, ${m.y + TAG_DROP}px)`;
         tag.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
         labelLayer.appendChild(tag);
       }
