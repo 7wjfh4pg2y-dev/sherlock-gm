@@ -538,7 +538,14 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
         const tag = h('div', { class: 'board-link-tag', text: label });
         // Tags ellipsise, so keep the full text reachable on hover.
         tag.setAttribute('title', label);
-        tag.style.transform = `translate(${m.x}px, ${m.y + TAG_DROP}px)`;
+        // One transform, ordered deliberately. The CSS `rotate` property is
+        // composed AFTER `transform`, so a separate rotate spins the
+        // positioning translation itself — at a board x of ~1000px a 2° tilt
+        // threw the tag ~25px off its stub. Applied right-to-left here, the
+        // tilt happens in the tag's own space first, then it is centred on the
+        // stub, then moved into place.
+        tag.style.transform =
+          `translate(${m.x}px, ${m.y + TAG_DROP}px) translate(-50%, 0) rotate(-2deg)`;
         tag.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
         labelLayer.appendChild(tag);
       }
@@ -723,6 +730,34 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   });
   zoomInBtn.addEventListener('click', () => pz.zoomIn());
 
+  // GM only: start the board over. Players can only remove their own cards, so
+  // without this the GM would have to delete a full board one card at a time.
+  const clearBtn = h('button', { class: 'board-btn board-btn--danger', attrs: { type: 'button' } },
+    h('span', { text: '\uD83D\uDDD1' }), h('span', { text: 'Clear' }));
+  clearBtn.addEventListener('click', () => void clearBoard());
+
+  async function clearBoard(): Promise<void> {
+    const caseId = store.getState().currentCaseId;
+    if (!caseId) return;
+    const items = store.getState().boardItems;
+    if (!items.length) { toast('The board is already empty.'); return; }
+    const links = store.getState().boardLinks.length;
+    const ok = await confirmDelete(
+      `Clear the whole board? That removes ${items.length} card${items.length === 1 ? '' : 's'}` +
+      `${links ? ` and ${links} string${links === 1 ? '' : 's'}` : ''} for everyone, and cannot be undone.`,
+    );
+    if (!ok) return;
+    const before = { items, links: store.getState().boardLinks };
+    store.set({ boardItems: [], boardLinks: [] });
+    try {
+      await itemRepo.clearForCase(caseId);
+      toast('Board cleared.');
+    } catch {
+      store.set({ boardItems: before.items, boardLinks: before.links });
+      toast('Could not clear the board.');
+    }
+  }
+
   const resetBtn = h('button', {
     class: 'board-btn board-btn--icon', text: '\u27F2',
     attrs: { type: 'button', title: 'Reset view', 'aria-label': 'Reset view' },
@@ -751,7 +786,8 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   // screen. This folds it away to a single handle without losing the board
   // position underneath.
   const tools = h('div', { class: 'board-tools', attrs: { id: 'board-tools' } },
-    drawerBtn, noteBtn, linkBtn, zoomOutBtn, zoomInBtn, resetBtn);
+    drawerBtn, noteBtn, linkBtn, zoomOutBtn, zoomInBtn, resetBtn,
+    ...(isGM ? [clearBtn] : []));
   let toolsOpen = true;
   const foldBtn = h('button', {
     class: 'board-fold',

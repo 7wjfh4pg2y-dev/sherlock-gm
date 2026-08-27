@@ -1411,8 +1411,9 @@ input[type="date"].gm-input { color-scheme: dark; }
    reads as a third kind of card. */
 .board-link-tag {
   position: absolute; top: 0; left: 0;
-  translate: -50% 0;
-  rotate: -2deg;
+  /* Centring and tilt live in the JS transform, not here: the `translate` and
+     `rotate` properties compose after `transform` and would rotate the
+     positioning translation itself. */
   min-width: 66px; max-width: 172px;
   padding: 17px 13px 9px; cursor: pointer;
   background: linear-gradient(168deg, #e7d6ae 0%, #d5bf90 100%);
@@ -1421,7 +1422,7 @@ input[type="date"].gm-input { color-scheme: dark; }
   font-family: 'Special Elite', 'Courier New', monospace;
   font-size: 12px; line-height: 1.3; color: #3a2c18; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  transition: background 0.15s, rotate 0.15s;
+  transition: background 0.15s;
 }
 /* The punched eyelet the strand runs through. */
 .board-link-tag::before {
@@ -1432,7 +1433,6 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 .board-link-tag:hover {
   background: linear-gradient(168deg, #f2e3c0 0%, #e0cb9d 100%);
-  rotate: -1deg;
 }
 
 .board-cards { position: absolute; top: 0; left: 0; }
@@ -1504,6 +1504,9 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 .board-btn:hover { color: #f2e6cd; }
 .board-btn.active { background: rgba(216, 167, 90, 0.18); color: #f2e6cd; }
+/* GM-only wipe: kept visually distinct from the everyday tools. */
+.board-btn--danger { color: #c2564a; border-left: 1px solid #6b5730; margin-left: 2px; }
+.board-btn--danger:hover { background: rgba(194, 86, 74, 0.16); color: #e88073; }
 .board-btn:focus-visible { outline: 2px solid #d8a75a; outline-offset: -2px; }
 /* Square icon buttons (zoom, reset) — still a 44px touch target. */
 .board-btn--icon {

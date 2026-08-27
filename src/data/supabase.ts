@@ -486,6 +486,10 @@ export const boardItems = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('board_items').delete().eq('id', id).select());
   },
+  /** GM only: wipe the case's board. Links cascade with the items. */
+  async clearForCase(caseId: string): Promise<void> {
+    unwrap(await sb.from('board_items').delete().eq('case_id', caseId).select());
+  },
   async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
     unwrap(
       await sb.from('board_items')
