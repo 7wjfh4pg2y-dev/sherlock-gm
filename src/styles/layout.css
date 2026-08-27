@@ -1498,4 +1498,5 @@ input[type="date"].gm-input { color-scheme: dark; }
   .board-drawer { top: 60px; left: 8px; right: 8px; width: auto; }
 }
 .board-note-modal { max-width: 440px; }
+.board-note-field { display: block; resize: vertical; min-height: 96px; line-height: 1.55; }
 .board-note-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }

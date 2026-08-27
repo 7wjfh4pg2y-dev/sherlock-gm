@@ -449,8 +449,10 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   // home-screen web app, which would leave Note quietly dead on a phone.
   function askForNote(): void {
     const { handle, body } = openTitledModal('Pin a note', { contentClass: 'board-note-modal' });
+    // gm-input is the app's real field style (paper ground, sepia focus) —
+    // the one the GM's clue and briefing textareas use.
     const field = h('textarea', {
-      class: 'gm-textarea',
+      class: 'gm-input board-note-field',
       attrs: { rows: '4', placeholder: 'What have you worked out?' },
     }) as HTMLTextAreaElement;
     const pin = h('button', { class: 'btn btn-primary btn-sm', text: 'Pin it' });
