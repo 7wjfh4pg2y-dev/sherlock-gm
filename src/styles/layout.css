@@ -1396,17 +1396,35 @@ input[type="date"].gm-input { color-scheme: dark; }
 
 /* Label tags hang off the middle of a strand. */
 .board-link-labels { position: absolute; top: 0; left: 0; }
+/* A luggage tag threaded onto the strand: its peak sits on the wool and the
+   punched hole rides the line, so the label hangs FROM the string rather than
+   sitting on top of it and fighting it. Kraft, not parchment, so it never
+   reads as a third kind of card. */
 .board-link-tag {
-  position: absolute; top: 0; left: 0; margin: -11px 0 0 0;
+  position: absolute; top: 0; left: 0;
   translate: -50% 0;
-  max-width: 190px; padding: 3px 9px 4px; cursor: pointer;
-  background: #f6efe1; border: 1px solid #b8a077;
-  box-shadow: 2px 2px 0 rgba(20, 16, 10, 0.32);
+  rotate: -2.5deg;
+  min-width: 66px; max-width: 172px;
+  padding: 17px 13px 9px; cursor: pointer;
+  background: linear-gradient(168deg, #e7d6ae 0%, #d5bf90 100%);
+  clip-path: polygon(50% 0%, 100% 16%, 100% 100%, 0% 100%, 0% 16%);
+  filter: drop-shadow(2px 3px 3px rgba(20, 16, 10, 0.45));
   font-family: 'Special Elite', 'Courier New', monospace;
-  font-size: 12px; line-height: 1.35; color: #3a2c18;
+  font-size: 12px; line-height: 1.3; color: #3a2c18; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background 0.15s, rotate 0.15s;
 }
-.board-link-tag:hover { background: #fffaf0; border-color: #8a6f47; }
+/* The punched eyelet the strand runs through. */
+.board-link-tag::before {
+  content: ''; position: absolute; top: 8px; left: 50%; margin-left: -3.5px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #6b5730;
+  box-shadow: inset 0 1px 1.5px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(58, 44, 24, 0.35);
+}
+.board-link-tag:hover {
+  background: linear-gradient(168deg, #f2e3c0 0%, #e0cb9d 100%);
+  rotate: -1deg;
+}
 
 .board-cards { position: absolute; top: 0; left: 0; }
 .board-card {
