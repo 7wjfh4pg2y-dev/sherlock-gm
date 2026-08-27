@@ -1,5 +1,5 @@
 // ── Pan / zoom ──
-// Attaches drag-to-pan + wheel-to-zoom (mouse) and one-finger drag + two-finger
+// Attaches drag-to-pan + scroll-to-pan / pinch-to-zoom and one-finger drag + two-finger
 // pinch-to-zoom (touch) to an <img>/layer inside a viewport element. Returns a
 // handle with reset() and a detach() that removes window listeners.
 
@@ -74,9 +74,20 @@ export function attachPanZoom(
     apply();
   }
 
+  // Two-finger trackpad scroll pans; pinch zooms. Browsers report a trackpad
+  // pinch as a wheel event with ctrlKey set, so that one check covers both the
+  // pinch gesture and a deliberate Ctrl/Cmd+scroll on a mouse. Matches how the
+  // newspaper viewer already behaves.
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
-    zoomTo(scale + (e.deltaY > 0 ? -step : step), e.clientX, e.clientY);
+    if (e.ctrlKey || e.metaKey) {
+      zoomTo(scale + (e.deltaY > 0 ? -step : step), e.clientX, e.clientY);
+      return;
+    }
+    if (!panEnabled) return;
+    tx -= e.deltaX;
+    ty -= e.deltaY;
+    apply();
   }
 
   // ── Mouse drag ──
