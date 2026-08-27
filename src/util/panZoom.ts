@@ -7,6 +7,8 @@ export interface PanZoomHandle {
   zoomIn(): void;
   zoomOut(): void;
   setFitScale(scale: number): void;
+  /** Nudge the view by a screen-px delta (then re-clamp). */
+  panBy(dx: number, dy: number): void;
   /** Re-apply the zoom floor and pan clamp after the viewport changes size
    *  (window resize, rotation, a panel opening). No-op without `bounds`. */
   refit(): void;
@@ -51,6 +53,13 @@ export function attachPanZoom(
   let startTy = 0;
 
   // Pinch state (two-finger): distance + scale captured at gesture start.
+  // How far the last clamp had to pull the layer back. A drag recomputes tx
+  // absolutely from startTx every move, so without folding this into the
+  // baseline the correction is thrown away on the very next move — which is
+  // why wheel-panning clamped but dragging did not.
+  let clampDX = 0;
+  let clampDY = 0;
+
   let pinching = false;
   let pinchStartDist = 0;
   let pinchStartScale = 1;
@@ -64,19 +73,41 @@ export function attachPanZoom(
     return Math.min(r.width / opts.bounds.width, r.height / opts.bounds.height);
   }
 
-  /** Keep the layer covering the viewport (or centred, once it is smaller). */
-  function clampPan(): void {
-    if (!opts.bounds) return;
-    const r = viewport.getBoundingClientRect();
-    const w = opts.bounds.width * scale;
-    const hgt = opts.bounds.height * scale;
-    tx = w <= r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, tx));
-    ty = hgt <= r.height ? (r.height - hgt) / 2 : Math.min(0, Math.max(r.height - hgt, ty));
+  /** Keep the layer covering the viewport (or centred, once it is smaller).
+   *  Measured from the rendered boxes rather than computed from `bounds`, so it
+   *  is correct for EITHER transform-origin — the map uses centre, the board
+   *  top-left — and applies to every caller. Without this, the wheel-to-pan
+   *  handler could slide a layer off screen with nothing to stop it.
+   *  tx/ty are screen-px translations applied after scaling, so a delta
+   *  measured on screen can be added to them directly. The rect reflects the
+   *  previously applied transform, so a fast gesture can overshoot by one event
+   *  and get pulled back — a slight rubber-band, and self-correcting. */
+  function clampPan(): boolean {
+    clampDX = 0;
+    clampDY = 0;
+    const vr = viewport.getBoundingClientRect();
+    const ir = img.getBoundingClientRect();
+    if (!vr.width || !ir.width) return false;
+    const axis = (i0: number, i1: number, v0: number, v1: number): number => {
+      const iSize = i1 - i0, vSize = v1 - v0;
+      if (iSize <= vSize) return (v0 + vSize / 2) - (i0 + iSize / 2); // centre it
+      if (i0 > v0) return v0 - i0;      // gap on the leading edge
+      if (i1 < v1) return v1 - i1;      // gap on the trailing edge
+      return 0;
+    };
+    clampDX = axis(ir.left, ir.right, vr.left, vr.right);
+    clampDY = axis(ir.top, ir.bottom, vr.top, vr.bottom);
+    tx += clampDX;
+    ty += clampDY;
+    return clampDX !== 0 || clampDY !== 0;
   }
 
   function apply(): void {
-    clampPan();
+    // Write first, THEN measure and correct. Measuring before the write reads
+    // the previous transform, so the clamp trails a gesture by one event and
+    // leaves a gap the size of its last delta sitting at the edge.
     img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    if (clampPan()) img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
     opts.onTransform?.();
   }
 
@@ -111,7 +142,10 @@ export function attachPanZoom(
       zoomTo(scale + (e.deltaY > 0 ? -step : step), e.clientX, e.clientY);
       return;
     }
-    if (!panEnabled) return;
+    // Deliberately not gated on panEnabled: that flag exists so a drag on the
+    // surface doesn't fight a drawing/linking tool, but a wheel gesture can't
+    // be mistaken for one — and a dead scroll wheel with no explanation is
+    // worse than a board that moves.
     tx -= e.deltaX;
     ty -= e.deltaY;
     apply();
@@ -132,6 +166,8 @@ export function attachPanZoom(
     tx = startTx + (e.clientX - startX);
     ty = startTy + (e.clientY - startY);
     apply();
+    startTx += clampDX;
+    startTy += clampDY;
   }
   function onMouseUp(): void {
     if (!dragging) return;
@@ -173,6 +209,8 @@ export function attachPanZoom(
       tx = startTx + (e.touches[0].clientX - startX);
       ty = startTy + (e.touches[0].clientY - startY);
       apply();
+      startTx += clampDX;
+      startTy += clampDY;
     }
   }
   function onTouchEnd(e: TouchEvent): void {
@@ -214,6 +252,11 @@ export function attachPanZoom(
       scale = Math.max(s, minScale());
       tx = 0;
       ty = 0;
+      apply();
+    },
+    panBy(dx: number, dy: number) {
+      tx += dx;
+      ty += dy;
       apply();
     },
     refit() {

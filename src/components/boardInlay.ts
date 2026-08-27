@@ -25,6 +25,7 @@ import { boardItems as itemRepo, boardLinks as linkRepo } from '../data/supabase
 import { stripMarkup } from '../util/richText';
 import { toast } from './toast';
 import { openTitledModal } from './modal';
+import { confirmDelete } from './confirmDelete';
 import type { BoardItemRow, BoardLinkRow, ClueRow } from '../data/types';
 
 /** The logical board everyone shares. Cards store absolute px inside it.
@@ -112,6 +113,19 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   const localPos = new Map<string, { x: number; y: number }>();
   // Card elements by item id, so refresh() can patch rather than rebuild.
   const cardEls = new Map<string, HTMLElement>();
+  // What each card was last painted from, so an unchanged card is left alone.
+  // refresh() runs on every realtime event, and repainting rebuilds each card's
+  // DOM including its tack — wasted work several times a second with four
+  // players rearranging.
+  const painted = new Map<string, string>();
+  // Redrawing the strands is the expensive part (every strand, several SVG
+  // nodes each). Coalesce to one per animation frame instead of one per
+  // pointermove, which on a 120Hz phone was twice per displayed frame.
+  let linkRaf = 0;
+  function scheduleLinks(): void {
+    if (linkRaf) return;
+    linkRaf = requestAnimationFrame(() => { linkRaf = 0; drawLinks(); });
+  }
 
   // ── Coordinate helpers ──
   function toBoard(clientX: number, clientY: number): { x: number; y: number } {
@@ -198,8 +212,8 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   }
 
   async function commitMove(id: string, x: number, y: number): Promise<void> {
-    const before = store.getState().boardItems;
-    store.set({ boardItems: before.map((i) => (i.id === id ? { ...i, x, y } : i)) });
+    const prev = store.getState().boardItems.find((i) => i.id === id);
+    store.set({ boardItems: store.getState().boardItems.map((i) => (i.id === id ? { ...i, x, y } : i)) });
     // Still being inserted: the create carries its own position, and the row
     // has no server id to update yet.
     if (isPending(id)) { localPos.delete(id); return; }
@@ -211,7 +225,14 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       // otherwise the card visibly snaps back until the next realtime event.
       store.set({ boardItems: store.getState().boardItems.map((i) => (i.id === id ? { ...i, x, y } : i)) });
     } catch {
-      store.set({ boardItems: before });
+      // Restore just this card against CURRENT state — replacing the whole
+      // array would silently discard everything other players did while the
+      // write was in flight.
+      if (prev) {
+        store.set({
+          boardItems: store.getState().boardItems.map((i) => (i.id === id ? { ...i, x: prev.x, y: prev.y } : i)),
+        });
+      }
       toast('Could not save that move.');
     } finally {
       // Only clear the override if no NEW gesture has since claimed this card —
@@ -223,6 +244,17 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   async function removeItem(item: BoardItemRow): Promise<void> {
     if (!canDelete(item)) { toast('Only the author or the GM can remove this card.'); return; }
     if (isPending(item.id)) { toast('Still saving that card — try again in a moment.'); return; }
+    // Removing a card cascades away every string attached to it, and the ✕ sits
+    // right where you grab the card to drag it. Too destructive to be one tap.
+    const attached = store.getState().boardLinks
+      .filter((l) => l.from_id === item.id || l.to_id === item.id).length;
+    const what = clueFor(item)?.location_name ?? 'this note';
+    const ok = await confirmDelete(
+      attached
+        ? `Take ${what} off the board? That cuts ${attached} string${attached === 1 ? '' : 's'} too.`
+        : `Take ${what} off the board?`,
+    );
+    if (!ok) return;
     const before = store.getState();
     // Links cascade server-side; drop them locally too so the string vanishes now.
     store.set({
@@ -265,7 +297,9 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     try {
       await linkRepo.remove(link.id);
     } catch {
-      store.set({ boardLinks: before });
+      if (!store.getState().boardLinks.some((l) => l.id === link.id)) {
+        store.set({ boardLinks: [...store.getState().boardLinks, link] });
+      }
       toast('Could not cut that string.');
     }
   }
@@ -282,6 +316,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
 
     card.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
+      if (e.button !== 0) return;   // primary button / touch only
       if (linkMode) return;         // link mode uses click, not drag
       if (dragId !== null) return;  // a second finger must not hijack the drag
       const row = rowOf(id);
@@ -302,13 +337,17 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       if (dragId !== id) return;
       e.stopPropagation();
       const p = toBoard(e.clientX, e.clientY);
+      // Clamp with the card's measured height: cards wrap their text, so a
+      // long clue is far taller than any constant, and the pan clamp stops at
+      // the board edge — anything past it is unreachable at any zoom.
+      const cardH = card.offsetHeight || 60;
       const next = {
         x: Math.max(0, Math.min(BOARD_W - CARD_W, p.x - dragDX)),
-        y: Math.max(0, Math.min(BOARD_H - 60, p.y - dragDY)),
+        y: Math.max(0, Math.min(BOARD_H - cardH, p.y - dragDY)),
       };
       localPos.set(id, next);
       place(card, next);
-      drawLinks();
+      scheduleLinks();
     });
 
     function endDrag(e: PointerEvent): void {
@@ -319,7 +358,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       dragId = null;
       dragOrigin = null;
       card.classList.remove('dragging');
-      pz.setPanEnabled(true);
+      pz.setPanEnabled(!linkMode);
       if (!next) return;
       const moved = origin ? Math.hypot(next.x - origin.x, next.y - origin.y) > DRAG_MIN : true;
       if (moved) void commitMove(id, next.x, next.y);
@@ -374,6 +413,16 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       el('ellipse', { cx: '9.2', cy: '6.4', rx: '2.9', ry: '2.1', fill: 'rgba(255,255,255,0.45)' }),
     );
     return svg;
+  }
+
+  /** Everything paintCard reads. Same signature, same pixels — skip the work. */
+  function cardSignature(item: BoardItemRow): string {
+    const clue = clueFor(item);
+    return [
+      item.kind, item.player_color, item.text,
+      clue?.location_name ?? '', clue?.clue_text ?? '',
+      canDelete(item) ? '1' : '0',
+    ].join('\u0000');
   }
 
   function paintCard(card: HTMLElement, item: BoardItemRow): void {
@@ -469,7 +518,11 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       g.appendChild(hit);
       linkLayer.appendChild(g);
 
-      if (link.label.trim()) {
+      // Never trust `label` to exist: if db/018 has not been applied yet the
+      // column is absent from select('*'), and a bare .trim() here would throw
+      // out of drawLinks -> refresh -> renderBoard and blank the whole tab.
+      const label = (link.label ?? '').trim();
+      if (label) {
         const m = strandMid(a, b);
         // A short stub of the same wool, so the tag hangs clear of the strand
         // and the strand stays unbroken behind it.
@@ -482,7 +535,9 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
         stub.setAttribute('stroke', colour);
         g.appendChild(stub);
 
-        const tag = h('div', { class: 'board-link-tag', text: link.label });
+        const tag = h('div', { class: 'board-link-tag', text: label });
+        // Tags ellipsise, so keep the full text reachable on hover.
+        tag.setAttribute('title', label);
         tag.style.transform = `translate(${m.x}px, ${m.y + TAG_DROP}px)`;
         tag.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
         labelLayer.appendChild(tag);
@@ -533,7 +588,9 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     try {
       await linkRepo.setLabel(link.id, label);
     } catch {
-      store.set({ boardLinks: before });
+      store.set({
+        boardLinks: store.getState().boardLinks.map((l) => (l.id === link.id ? { ...l, label: link.label ?? '' } : l)),
+      });
       toast('Could not save that label.');
     }
   }
@@ -551,9 +608,16 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
         cardEls.set(item.id, card);
         cardLayer.appendChild(card);
         paintCard(card, item);
+        painted.set(item.id, cardSignature(item));
       } else if (dragId !== item.id) {
-        // Repaint content, but never disturb the card the viewer is holding.
-        paintCard(card, item);
+        // Repaint only when something a viewer can see actually changed —
+        // refresh() runs on every realtime event, and paintCard rebuilds the
+        // card's DOM including its tack.
+        const sig = cardSignature(item);
+        if (painted.get(item.id) !== sig) {
+          paintCard(card, item);
+          painted.set(item.id, sig);
+        }
       }
       if (dragId !== item.id) place(card, posOf(item));
     }
@@ -571,6 +635,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       if (linkFrom === id) linkFrom = null;
       el.remove();
       cardEls.delete(id);
+      painted.delete(id);
       localPos.delete(id);
     }
 
@@ -662,16 +727,38 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     class: 'board-btn board-btn--icon', text: '\u27F2',
     attrs: { type: 'button', title: 'Reset view', 'aria-label': 'Reset view' },
   });
-  resetBtn.addEventListener('click', () => { pz.reset(); pz.setFitScale(0.5); });
+  resetBtn.addEventListener('click', () => {
+    // reset() alone lands on the board's top-left corner, which after any
+    // panning is usually empty — it reads as "my board got wiped". Go to the
+    // team's actual arrangement instead.
+    pz.setFitScale(0.5);
+    const items = visibleItems();
+    if (!items.length) return;
+    const xs = items.map((i) => posOf(i).x), ys = items.map((i) => posOf(i).y);
+    const cx = (Math.min(...xs) + Math.max(...xs) + CARD_W) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    centreOn(cx, cy);
+  });
+
+  /** Bring a point in board coordinates to the middle of the viewport. */
+  function centreOn(bx: number, by: number): void {
+    const r = viewport.getBoundingClientRect();
+    const t = pz.getTransform();
+    pz.panBy(r.width / 2 - (bx * t.scale + t.tx), r.height / 2 - (by * t.scale + t.ty));
+  }
 
   // The toolbar sits on top of the board, so it can cover cards on a small
   // screen. This folds it away to a single handle without losing the board
   // position underneath.
-  const tools = h('div', { class: 'board-tools' }, drawerBtn, noteBtn, linkBtn, zoomOutBtn, zoomInBtn, resetBtn);
+  const tools = h('div', { class: 'board-tools', attrs: { id: 'board-tools' } },
+    drawerBtn, noteBtn, linkBtn, zoomOutBtn, zoomInBtn, resetBtn);
   let toolsOpen = true;
   const foldBtn = h('button', {
     class: 'board-fold',
-    attrs: { type: 'button', title: 'Hide tools', 'aria-label': 'Hide tools', 'aria-expanded': 'true' },
+    attrs: {
+      type: 'button', title: 'Hide tools', 'aria-label': 'Hide tools',
+      'aria-expanded': 'true', 'aria-controls': 'board-tools',
+    },
   });
 
   function setToolsOpen(open: boolean): void {
@@ -695,12 +782,18 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   setToolsOpen(true);
 
   // ── Clue drawer: revealed clues not yet on the board ──
+  let drawerSig = '';
   function renderDrawer(): void {
     drawer.style.display = drawerOpen ? '' : 'none';
-    if (!drawerOpen) return;
+    if (!drawerOpen) { drawerSig = ''; return; }
     const s = store.getState();
     const pinned = new Set(s.boardItems.filter((i) => i.kind === 'clue').map((i) => i.clue_id));
     const available = selectors.revealedClues(s).filter((c) => !pinned.has(c.id));
+    // renderDrawer runs on every realtime event; rebuilding an unchanged list
+    // would throw away the viewer's scroll position mid-scroll.
+    const sig = available.map((c) => c.id).join(',');
+    if (sig === drawerSig) return;
+    drawerSig = sig;
     clear(drawer);
     drawer.append(h('div', { class: 'board-drawer-title', text: available.length ? 'Pin a clue' : 'Every revealed clue is already on the board' }));
     if (!available.length) return;
