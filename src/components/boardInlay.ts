@@ -23,6 +23,7 @@ import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
 import { store, selectors } from '../state/store';
 import { boardItems as itemRepo, boardLinks as linkRepo } from '../data/supabase';
 import { stripMarkup } from '../util/richText';
+import { PLAYER_COLORS } from '../data/colors';
 import { toast } from './toast';
 import { openTitledModal } from './modal';
 import { confirmDelete } from './confirmDelete';
@@ -480,6 +481,13 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     return { x: 0.25 * x1 + 0.5 * cx + 0.25 * x2, y: 0.25 * y1 + 0.5 * cy + 0.25 * y2 };
   }
 
+  /** A string is its author's colour unless someone has recoloured that one
+   *  string. As with `label`, never assume the column exists: an unapplied
+   *  db/019 would otherwise throw out of drawLinks and blank the whole tab. */
+  function strandColour(link: BoardLinkRow): string {
+    return (link.color ?? '').trim() || link.player_color || '#a8451f';
+  }
+
   function drawLinks(): void {
     const s = store.getState();
     const items = visibleItems();
@@ -493,7 +501,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       const a = posOf(byId.get(link.from_id)!);
       const b = posOf(byId.get(link.to_id)!);
       const d = strandPath(a, b);
-      const colour = link.player_color || '#a8451f';
+      const colour = strandColour(link);
 
       const strand = (cls: string, stroke: string) => {
         const el = document.createElementNS(SVG_NS, 'path');
@@ -562,6 +570,38 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     }) as HTMLInputElement;
     field.value = link.label ?? '';
 
+    // ── Colour ──
+    // Anyone may recolour any string, the same as anyone may label one: sorting
+    // the board by theory ("everything about the mirror in green") is worth more
+    // than each strand advertising who drew it. "Mine" clears the override, so
+    // the string goes back to following its author's colour.
+    let colour = (link.color ?? '').trim();
+    const swatches = h('div', { class: 'board-colour-row' });
+    const choices: { label: string; value: string; swatch: string }[] = [
+      { label: `${link.player_name}'s colour`, value: '', swatch: link.player_color || '#a8451f' },
+      ...PLAYER_COLORS.map((c) => ({ label: c.label, value: c.value, swatch: c.value })),
+    ];
+    const swatchEls = new Map<string, HTMLElement>();
+    for (const c of choices) {
+      const btn = h('button', {
+        class: 'board-colour',
+        attrs: { type: 'button', title: c.label, 'aria-label': c.label },
+      });
+      btn.style.setProperty('--swatch', c.swatch);
+      btn.classList.toggle('selected', c.value === colour);
+      btn.addEventListener('click', () => {
+        colour = c.value;
+        for (const [v, el] of swatchEls) el.classList.toggle('selected', v === colour);
+      });
+      // The author's own colour is usually also somewhere in the palette, so
+      // without a divider the two identical dots read as a duplicate rather
+      // than as "follow the author" vs "pin this hue".
+      if (!c.value) btn.classList.add('board-colour--auto');
+      swatchEls.set(c.value, btn);
+      swatches.append(btn);
+      if (!c.value) swatches.append(h('span', { class: 'board-colour-div' }));
+    }
+
     const save = h('button', { class: 'btn btn-primary btn-sm', text: 'Save' });
     const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
     const actions = h('div', { class: 'board-note-actions' }, cancel, save);
@@ -577,28 +617,33 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     function submit(): void {
       const next = field.value.trim();
       handle.close();
-      if (next !== (link.label ?? '')) void setLinkLabel(link, next);
+      if (next !== (link.label ?? '') || colour !== (link.color ?? '').trim()) {
+        void setLinkStyle(link, next, colour);
+      }
     }
     save.addEventListener('click', submit);
     cancel.addEventListener('click', () => handle.close());
     field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 
-    body.append(field, actions);
+    body.append(field, h('div', { class: 'board-colour-label', text: 'String colour' }), swatches, actions);
     field.focus();
     field.select();
   }
 
-  async function setLinkLabel(link: BoardLinkRow, label: string): Promise<void> {
+  async function setLinkStyle(link: BoardLinkRow, label: string, color: string): Promise<void> {
     if (isPending(link.id)) return;
     const before = store.getState().boardLinks;
-    store.set({ boardLinks: before.map((l) => (l.id === link.id ? { ...l, label } : l)) });
+    store.set({ boardLinks: before.map((l) => (l.id === link.id ? { ...l, label, color } : l)) });
     try {
-      await linkRepo.setLabel(link.id, label);
+      await linkRepo.setStyle(link.id, label, color);
     } catch {
+      // Restore just this string against CURRENT state, never the whole array.
       store.set({
-        boardLinks: store.getState().boardLinks.map((l) => (l.id === link.id ? { ...l, label: link.label ?? '' } : l)),
+        boardLinks: store.getState().boardLinks.map((l) => (
+          l.id === link.id ? { ...l, label: link.label ?? '', color: link.color ?? '' } : l
+        )),
       });
-      toast('Could not save that label.');
+      toast('Could not save that string.');
     }
   }
 

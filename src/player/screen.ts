@@ -200,11 +200,13 @@ export function createPlayerScreen(): ScreenHandle {
   const TAB_DEFS: { id: TabId; label: string }[] = [
     { id: 'briefing',  label: 'Case Brief' },
     { id: 'clues',     label: 'Clues' },
+    // The board sits next to the clues it is built from, not at the far end of
+    // the bar: pinning a lead is a continuation of reading it.
+    { id: 'board',     label: 'Board' },
     { id: 'newspaper', label: 'Newspaper' },
     { id: 'directory', label: 'Directory' },
     { id: 'informants', label: 'Informants' },
     { id: 'map',       label: 'Map' },
-    { id: 'board',     label: 'Board' },
     { id: 'questions', label: 'Questions' },
     { id: 'solution',  label: 'Solution' },
   ];

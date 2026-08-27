@@ -136,11 +136,13 @@ export function createGMScreen(): GMScreenHandle {
   for (const { id, label } of [
     { id: 'briefing' as const, label: 'Case Brief' },
     { id: 'clues' as const, label: 'Clues' },
+    // Same order as the player screen, so a GM talking someone through the tabs
+    // is describing what they are actually looking at.
+    { id: 'board' as const, label: 'Board' },
     { id: 'newspaper' as const, label: 'Newspaper' },
     { id: 'directory' as const, label: 'Directory' },
     { id: 'informants' as const, label: 'Informants' },
     { id: 'map' as const, label: 'Map' },
-    { id: 'board' as const, label: 'Board' },
     { id: 'questions' as const, label: 'Questions' },
     { id: 'solution' as const, label: 'Solution' },
     { id: 'notebook' as const, label: 'Notebook' },

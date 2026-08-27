@@ -118,6 +118,8 @@ export interface BoardLinkRow {
   to_id: string;
   /** Why these two are connected, e.g. "contradicts". Empty for a bare line. */
   label: string;
+  /** Per-string colour override. Empty means "use the author's colour". */
+  color: string;
   player_name: string;
   player_color: string;
   created_at: string;
@@ -128,6 +130,7 @@ export type BoardLinkInsert = {
   from_id: string;
   to_id: string;
   label?: string;
+  color?: string;
   player_name: string;
   player_color: string;
 };
