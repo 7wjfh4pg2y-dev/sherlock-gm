@@ -1376,13 +1376,37 @@ input[type="date"].gm-input { color-scheme: dark; }
 .board-inlay.linking .board-viewport { cursor: crosshair; }
 .board-surface { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
-/* The string. Only the lines take clicks, so the board stays pannable. */
+/* The string. Only the fat invisible hit-strand takes clicks, so the board
+   stays pannable everywhere else. Three visible strands stack into yarn:
+   a dark shadow beneath, the coloured body, and a dashed pale strand whose
+   gaps read as the twist of the fibre. */
 .board-links { position: absolute; top: 0; left: 0; pointer-events: none; }
-.board-link {
-  stroke-width: 3; stroke-linecap: round; opacity: 0.85;
-  pointer-events: stroke; cursor: pointer;
+.board-strand-shadow {
+  stroke-width: 6; stroke-linecap: round; opacity: 0.5;
+  transform: translateY(2px);
 }
-.board-link:hover { stroke-width: 5; opacity: 1; }
+.board-strand-body { stroke-width: 4.5; stroke-linecap: round; opacity: 0.95; }
+.board-strand-twist {
+  stroke-width: 2; stroke-linecap: butt; opacity: 0.55;
+  stroke-dasharray: 3 5;
+}
+.board-strand-hit { stroke-width: 24; pointer-events: stroke; cursor: pointer; }
+.board-strand:hover .board-strand-body { stroke-width: 5.5; }
+.board-strand:hover .board-strand-twist { opacity: 0.8; }
+
+/* Label tags hang off the middle of a strand. */
+.board-link-labels { position: absolute; top: 0; left: 0; }
+.board-link-tag {
+  position: absolute; top: 0; left: 0; margin: -11px 0 0 0;
+  translate: -50% 0;
+  max-width: 190px; padding: 3px 9px 4px; cursor: pointer;
+  background: #f6efe1; border: 1px solid #b8a077;
+  box-shadow: 2px 2px 0 rgba(20, 16, 10, 0.32);
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-size: 12px; line-height: 1.35; color: #3a2c18;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.board-link-tag:hover { background: #fffaf0; border-color: #8a6f47; }
 
 .board-cards { position: absolute; top: 0; left: 0; }
 .board-card {
@@ -1396,10 +1420,12 @@ input[type="date"].gm-input { color-scheme: dark; }
 .board-card--note { background: #e8d98a; border-color: #cbb055; }
 .board-card.link-source { outline: 2px solid #a8451f; outline-offset: 3px; }
 .board-inlay.linking .board-card { cursor: pointer; }
+/* A drawn thumbtack, overlapping the card's top edge so it reads as pushed
+   through the paper into the board. */
 .board-pin {
-  position: absolute; top: -9px; left: 50%; margin-left: -9px;
-  width: 18px; height: 18px; border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  position: absolute; top: -17px; left: 50%; margin-left: -12px;
+  width: 24px; height: 28px; pointer-events: none;
+  filter: drop-shadow(1px 2px 2px rgba(20, 14, 6, 0.5));
 }
 .board-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .board-card-code {

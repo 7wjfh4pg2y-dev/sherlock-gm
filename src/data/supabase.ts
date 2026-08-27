@@ -507,6 +507,9 @@ export const boardLinks = {
   async create(payload: BoardLinkInsert): Promise<BoardLinkRow> {
     return unwrap(await sb.from('board_links').insert(payload).select().single());
   },
+  async setLabel(id: string, label: string): Promise<void> {
+    unwrap(await sb.from('board_links').update({ label }).eq('id', id).select());
+  },
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('board_links').delete().eq('id', id).select());
   },

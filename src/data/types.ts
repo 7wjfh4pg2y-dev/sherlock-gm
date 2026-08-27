@@ -116,6 +116,8 @@ export interface BoardLinkRow {
   case_id: string;
   from_id: string;
   to_id: string;
+  /** Why these two are connected, e.g. "contradicts". Empty for a bare line. */
+  label: string;
   player_name: string;
   player_color: string;
   created_at: string;
@@ -125,6 +127,7 @@ export type BoardLinkInsert = {
   case_id: string;
   from_id: string;
   to_id: string;
+  label?: string;
   player_name: string;
   player_color: string;
 };

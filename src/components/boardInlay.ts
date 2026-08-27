@@ -66,7 +66,11 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   linkLayer.setAttribute('viewBox', `0 0 ${BOARD_W} ${BOARD_H}`);
 
   const cardLayer = h('div', { class: 'board-cards' });
-  const surface = h('div', { class: 'board-surface' }, linkLayer as unknown as HTMLElement, cardLayer);
+  // Labels are HTML, not SVG <text>: they need wrapping, a parchment tag and
+  // the app's fonts, none of which SVG text gives cheaply.
+  const labelLayer = h('div', { class: 'board-link-labels' });
+  const surface = h('div', { class: 'board-surface' },
+    linkLayer as unknown as HTMLElement, labelLayer, cardLayer);
   surface.style.width = `${BOARD_W}px`;
   surface.style.height = `${BOARD_H}px`;
 
@@ -240,7 +244,8 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     const me = currentAuthor();
     try {
       const saved = await linkRepo.create({
-        case_id: caseId, from_id: fromId, to_id: toId, player_name: me.name, player_color: me.color,
+        case_id: caseId, from_id: fromId, to_id: toId, label: '',
+        player_name: me.name, player_color: me.color,
       });
       store.set({ boardLinks: [...store.getState().boardLinks, saved] });
     } catch {
@@ -339,14 +344,41 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     return card;
   }
 
+  /** A thumbtack in the author's colour: needle, metal collar, domed head with
+   *  a highlight. Drawn rather than a flat dot so it reads as pushed IN.
+   *  Built as nodes, never innerHTML — player_color is a free-text column, so
+   *  interpolating it into markup would be an injection hole. */
+  function makeTack(colour: string): SVGSVGElement {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'board-pin');
+    svg.setAttribute('viewBox', '0 0 24 28');
+    svg.setAttribute('width', '24');
+    svg.setAttribute('height', '28');
+
+    const el = (tag: string, attrs: Record<string, string>): SVGElement => {
+      const n = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+      return n;
+    };
+
+    svg.append(
+      // needle, angled so the head sits above where it bites the board
+      el('path', { d: 'M12 15 L13.4 27', stroke: '#6b6b6b', 'stroke-width': '1.6', 'stroke-linecap': 'round', fill: 'none' }),
+      el('ellipse', { cx: '12', cy: '14.4', rx: '4.2', ry: '1.9', fill: '#8d8d8d' }),
+      el('ellipse', { cx: '12', cy: '9', rx: '8', ry: '7', fill: colour }),
+      el('ellipse', { cx: '12', cy: '9', rx: '8', ry: '7', fill: 'none', stroke: 'rgba(20,14,6,0.35)', 'stroke-width': '1' }),
+      el('ellipse', { cx: '9.2', cy: '6.4', rx: '2.9', ry: '2.1', fill: 'rgba(255,255,255,0.45)' }),
+    );
+    return svg;
+  }
+
   function paintCard(card: HTMLElement, item: BoardItemRow): void {
     clear(card);
     const clue = clueFor(item);
     const title = clue ? clue.location_name : 'Note';
     const body = clue ? stripMarkup(clue.clue_text) : item.text;
 
-    const pin = h('div', { class: 'board-pin' });
-    pin.style.background = item.player_color || '#8c2b20';
+    const pin = makeTack(item.player_color || '#8c2b20');
 
     const head = h('div', { class: 'board-card-head' },
       h('span', { class: item.kind === 'clue' ? 'board-card-code' : 'board-card-kind', text: title }),
@@ -371,24 +403,119 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   }
 
   // ── Link drawing ──
+  // Real string hangs and is spun from fibres, so each strand is a sagging
+  // curve drawn three times: a dark under-strand for depth, the coloured body,
+  // and a dashed lighter strand over the top whose gaps read as the twist. A
+  // fourth, invisible, fat stroke is the click target — a 3px thread is
+  // impossible to hit on a phone.
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function strandPath(a: { x: number; y: number }, b: { x: number; y: number }): string {
+    const x1 = a.x + CARD_W / 2, y1 = a.y + 30;
+    const x2 = b.x + CARD_W / 2, y2 = b.y + 30;
+    // Sag grows with span, the way a longer piece of yarn droops further.
+    const sag = Math.min(70, Math.hypot(x2 - x1, y2 - y1) * 0.16);
+    return `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 + sag} ${x2} ${y2}`;
+  }
+
+  /** Midpoint of that quadratic, where the label tag hangs. */
+  function strandMid(a: { x: number; y: number }, b: { x: number; y: number }): { x: number; y: number } {
+    const x1 = a.x + CARD_W / 2, y1 = a.y + 30;
+    const x2 = b.x + CARD_W / 2, y2 = b.y + 30;
+    const sag = Math.min(70, Math.hypot(x2 - x1, y2 - y1) * 0.16);
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2 + sag;
+    return { x: 0.25 * x1 + 0.5 * cx + 0.25 * x2, y: 0.25 * y1 + 0.5 * cy + 0.25 * y2 };
+  }
+
   function drawLinks(): void {
     const s = store.getState();
-    const shown = new Set(visibleItems().map((i) => i.id));
-    const byId = new Map(visibleItems().map((i) => [i.id, i] as const));
+    const items = visibleItems();
+    const shown = new Set(items.map((i) => i.id));
+    const byId = new Map(items.map((i) => [i.id, i] as const));
     clear(linkLayer as unknown as Node);
+    clear(labelLayer);
+
     for (const link of s.boardLinks) {
       if (!shown.has(link.from_id) || !shown.has(link.to_id)) continue;
       const a = posOf(byId.get(link.from_id)!);
       const b = posOf(byId.get(link.to_id)!);
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', String(a.x + CARD_W / 2));
-      line.setAttribute('y1', String(a.y + 30));
-      line.setAttribute('x2', String(b.x + CARD_W / 2));
-      line.setAttribute('y2', String(b.y + 30));
-      line.setAttribute('class', 'board-link');
-      line.setAttribute('stroke', link.player_color || '#a8451f');
-      line.addEventListener('click', (e) => { e.stopPropagation(); void removeLink(link); });
-      linkLayer.appendChild(line);
+      const d = strandPath(a, b);
+      const colour = link.player_color || '#a8451f';
+
+      const strand = (cls: string, stroke: string) => {
+        const el = document.createElementNS(SVG_NS, 'path');
+        el.setAttribute('d', d);
+        el.setAttribute('class', cls);
+        el.setAttribute('stroke', stroke);
+        el.setAttribute('fill', 'none');
+        return el;
+      };
+
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('class', 'board-strand');
+      g.appendChild(strand('board-strand-shadow', 'rgba(20,14,6,0.45)'));
+      g.appendChild(strand('board-strand-body', colour));
+      g.appendChild(strand('board-strand-twist', 'rgba(255,246,226,0.5)'));
+      const hit = strand('board-strand-hit', 'transparent');
+      hit.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
+      g.appendChild(hit);
+      linkLayer.appendChild(g);
+
+      if (link.label.trim()) {
+        const m = strandMid(a, b);
+        const tag = h('div', { class: 'board-link-tag', text: link.label });
+        tag.style.transform = `translate(${m.x}px, ${m.y}px)`;
+        tag.addEventListener('click', (e) => { e.stopPropagation(); openLinkEditor(link); });
+        labelLayer.appendChild(tag);
+      }
+    }
+  }
+
+  // Tapping a string used to delete it outright — no confirmation, and no way
+  // to say WHY two cards are connected. It now opens a small editor instead.
+  function openLinkEditor(link: BoardLinkRow): void {
+    const { handle, body } = openTitledModal('This connection', { contentClass: 'board-note-modal' });
+    const field = h('input', {
+      class: 'gm-input',
+      attrs: { type: 'text', maxlength: '40', placeholder: 'e.g. contradicts, same night, both saw the mirror' },
+    }) as HTMLInputElement;
+    field.value = link.label ?? '';
+
+    const save = h('button', { class: 'btn btn-primary btn-sm', text: 'Save' });
+    const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
+    const actions = h('div', { class: 'board-note-actions' }, cancel, save);
+
+    // Anyone may label a string, as anyone may move a card; cutting it stays
+    // with its author or the GM.
+    if (canDelete(link)) {
+      const cut = h('button', { class: 'btn btn-danger btn-sm', text: '✂ Cut string' });
+      cut.addEventListener('click', () => { handle.close(); void removeLink(link); });
+      actions.prepend(cut);
+    }
+
+    function submit(): void {
+      const next = field.value.trim();
+      handle.close();
+      if (next !== (link.label ?? '')) void setLinkLabel(link, next);
+    }
+    save.addEventListener('click', submit);
+    cancel.addEventListener('click', () => handle.close());
+    field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+
+    body.append(field, actions);
+    field.focus();
+    field.select();
+  }
+
+  async function setLinkLabel(link: BoardLinkRow, label: string): Promise<void> {
+    if (isPending(link.id)) return;
+    const before = store.getState().boardLinks;
+    store.set({ boardLinks: before.map((l) => (l.id === link.id ? { ...l, label } : l)) });
+    try {
+      await linkRepo.setLabel(link.id, label);
+    } catch {
+      store.set({ boardLinks: before });
+      toast('Could not save that label.');
     }
   }
 
