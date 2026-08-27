@@ -482,11 +482,53 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     h('span', { text: '🧵' }), h('span', { text: 'Link' }));
   linkBtn.addEventListener('click', () => setLinkMode(!linkMode));
 
-  const resetBtn = h('button', { class: 'board-btn', attrs: { type: 'button', title: 'Reset view' } },
-    h('span', { text: '⟲' }));
+  const zoomOutBtn = h('button', {
+    class: 'board-btn board-btn--icon', text: '\u2212',
+    attrs: { type: 'button', title: 'Zoom out', 'aria-label': 'Zoom out' },
+  });
+  zoomOutBtn.addEventListener('click', () => pz.zoomOut());
+
+  const zoomInBtn = h('button', {
+    class: 'board-btn board-btn--icon', text: '+',
+    attrs: { type: 'button', title: 'Zoom in', 'aria-label': 'Zoom in' },
+  });
+  zoomInBtn.addEventListener('click', () => pz.zoomIn());
+
+  const resetBtn = h('button', {
+    class: 'board-btn board-btn--icon', text: '\u27F2',
+    attrs: { type: 'button', title: 'Reset view', 'aria-label': 'Reset view' },
+  });
   resetBtn.addEventListener('click', () => { pz.reset(); pz.setFitScale(0.5); });
 
-  toolbar.append(drawerBtn, noteBtn, linkBtn, resetBtn);
+  // The toolbar sits on top of the board, so it can cover cards on a small
+  // screen. This folds it away to a single handle without losing the board
+  // position underneath.
+  const tools = h('div', { class: 'board-tools' }, drawerBtn, noteBtn, linkBtn, zoomOutBtn, zoomInBtn, resetBtn);
+  let toolsOpen = true;
+  const foldBtn = h('button', {
+    class: 'board-fold',
+    attrs: { type: 'button', title: 'Hide tools', 'aria-label': 'Hide tools', 'aria-expanded': 'true' },
+  });
+
+  function setToolsOpen(open: boolean): void {
+    toolsOpen = open;
+    tools.hidden = !open;
+    foldBtn.textContent = open ? '\u00AB' : '\u00BB';
+    foldBtn.title = open ? 'Hide tools' : 'Show tools';
+    foldBtn.setAttribute('aria-label', foldBtn.title);
+    foldBtn.setAttribute('aria-expanded', String(open));
+    element.classList.toggle('tools-folded', !open);
+    // Folding away shouldn't leave a mode running that the viewer can no
+    // longer see or turn off.
+    if (!open) {
+      if (drawerOpen) { drawerOpen = false; drawerBtn.classList.remove('active'); renderDrawer(); }
+      if (linkMode) setLinkMode(false);
+    }
+  }
+  foldBtn.addEventListener('click', () => setToolsOpen(!toolsOpen));
+
+  toolbar.append(tools, foldBtn);
+  setToolsOpen(true);
 
   // ── Clue drawer: revealed clues not yet on the board ──
   function renderDrawer(): void {

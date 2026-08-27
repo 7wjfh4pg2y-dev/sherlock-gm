@@ -1423,9 +1423,21 @@ input[type="date"].gm-input { color-scheme: dark; }
 
 /* Toolbar + drawer float over the surface. */
 .board-toolbar {
-  position: absolute; top: 12px; left: 12px; display: flex; gap: 4px;
+  position: absolute; top: 12px; left: 12px; display: flex; align-items: stretch; gap: 4px;
   background: rgba(20, 14, 6, 0.9); border: 1px solid #8a6f47; padding: 6px; z-index: 3;
 }
+.board-tools { display: flex; align-items: stretch; gap: 4px; }
+/* display:flex above would otherwise win over the hidden attribute. */
+.board-tools[hidden] { display: none; }
+/* Folded, the bar shrinks to just its handle so the board underneath is clear. */
+.board-fold {
+  min-width: 30px; min-height: 44px; padding: 0 6px; cursor: pointer;
+  background: none; border: none; border-left: 1px solid #6b5730;
+  font-family: 'Courier Prime', monospace; font-size: 14px; line-height: 1; color: #c0a678;
+}
+.board-fold:hover { color: #f2e6cd; }
+.board-fold:focus-visible { outline: 2px solid #d8a75a; outline-offset: -2px; }
+.board-inlay.tools-folded .board-fold { border-left: none; }
 .board-btn {
   display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 13px;
   background: none; border: none; cursor: pointer;
@@ -1435,6 +1447,11 @@ input[type="date"].gm-input { color-scheme: dark; }
 .board-btn:hover { color: #f2e6cd; }
 .board-btn.active { background: rgba(216, 167, 90, 0.18); color: #f2e6cd; }
 .board-btn:focus-visible { outline: 2px solid #d8a75a; outline-offset: -2px; }
+/* Square icon buttons (zoom, reset) — still a 44px touch target. */
+.board-btn--icon {
+  min-width: 44px; padding: 0; justify-content: center;
+  font-family: 'Courier Prime', monospace; font-size: 16px; letter-spacing: 0;
+}
 
 .board-drawer {
   position: absolute; top: 68px; left: 12px; width: 320px; max-width: calc(100% - 24px);
