@@ -81,6 +81,8 @@ export function createPlayerScreen(): ScreenHandle {
     store.set({
       identity: { ...me, color: newColor },
       mapStrokes: recolor(state.mapStrokes, oldColor, newColor),
+      // Team notes match ownership on the same pair, so they move too.
+      notes: recolor(state.notes, oldColor, newColor),
       // Board cards and string carry the author's colour too, and canDelete
       // matches on name AND colour — miss these and a player loses the right to
       // delete their own cards the moment they change colour.
@@ -92,6 +94,7 @@ export function createPlayerScreen(): ScreenHandle {
     updatePresenceMeta({ player_name: me.name, player_color: newColor });
     try {
       await Promise.all([
+        noteRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         strokeRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         boardItemRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         boardLinkRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
@@ -103,6 +106,7 @@ export function createPlayerScreen(): ScreenHandle {
       store.set({
         identity: { ...cur.identity!, color: oldColor },
         mapStrokes: recolor(cur.mapStrokes, newColor, oldColor),
+        notes: recolor(cur.notes, newColor, oldColor),
         boardItems: recolor(cur.boardItems, newColor, oldColor),
         boardLinks: recolor(cur.boardLinks, newColor, oldColor),
       });

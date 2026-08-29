@@ -141,6 +141,16 @@ export const players = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('players').delete().eq('id', id).select());
   },
+  /** The colour this name is already playing under in this case, if any.
+   *  Ownership of notes, marks and board cards is matched on name AND colour,
+   *  so someone rejoining has to come back as the same pair or they lose the
+   *  right to touch their own things. */
+  async colorFor(caseId: string, playerName: string): Promise<string | null> {
+    const res = await sb.from('players').select('player_color')
+      .eq('case_id', caseId).eq('player_name', playerName).limit(1);
+    if (res.error) return null;
+    return (res.data as { player_color: string }[] | null)?.[0]?.player_color ?? null;
+  },
   async updateColor(caseId: string, playerName: string, color: string): Promise<void> {
     unwrap(
       await sb.from('players').update({ player_color: color })
@@ -151,6 +161,19 @@ export const players = {
 
 // ── Notes ──
 export const notes = {
+  /** Notes carry their author's colour and ownership is matched on the pair,
+   *  so a colour change has to bring them along or the author quietly loses
+   *  edit and delete on their own team notes. */
+  async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+    unwrap(
+      await sb.from('notes')
+        .update({ player_color: newColor })
+        .eq('case_id', caseId)
+        .eq('player_name', playerName)
+        .eq('player_color', oldColor)
+        .select(),
+    );
+  },
   async listForCase(caseId: string): Promise<NoteRow[]> {
     return unwrap(
       await sb.from('notes').select('*').eq('case_id', caseId).order('created_at'),

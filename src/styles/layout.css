@@ -1199,6 +1199,13 @@ input[type="date"].gm-input { color-scheme: dark; }
   font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--sepia); margin: 14px 0 8px; opacity: 0.85;
 }
+/* Shown when a returning name reclaims the colour it played under before. */
+.color-picker-hint {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 0.88rem; font-style: italic; line-height: 1.45;
+  color: var(--sepia); margin: 8px 0 0;
+}
+.color-picker-hint[hidden] { display: none; }
 .color-picker-row {
   display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
 }

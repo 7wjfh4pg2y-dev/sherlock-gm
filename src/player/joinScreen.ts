@@ -4,7 +4,7 @@
 // full case id, then hands off to joinCase().
 
 import { h } from '../util/dom';
-import { cases } from '../data/supabase';
+import { cases, players } from '../data/supabase';
 import { PLAYER_COLORS } from '../data/colors';
 import { joinCase } from './join';
 
@@ -46,6 +46,37 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
 
   // ── Color picker ──
   let selectedColor = PLAYER_COLORS[0]!.value;
+  // Whether the player has actually chosen. Until they do, a returning name
+  // adopts the colour it is already playing under: ownership of notes, marks
+  // and board cards is matched on name AND colour, so coming back as a
+  // different colour quietly costs you the right to touch your own things.
+  let colorTouched = false;
+  const colorHint = h('div', { class: 'color-picker-hint' });
+  colorHint.hidden = true;
+
+  function selectColor(value: string): void {
+    selectedColor = value;
+    for (const s of colorSwatchWrap.querySelectorAll<HTMLElement>('.color-swatch')) {
+      s.classList.toggle('selected', s.dataset['color'] === value);
+    }
+  }
+
+  /** A name that has played here before comes back to its own colour, and is
+   *  told so, rather than the form quietly promising the first swatch. */
+  async function adoptExistingColor(): Promise<void> {
+    if (colorTouched) return;
+    const name = nameInput.value.trim();
+    if (!name) { colorHint.hidden = true; return; }
+    try {
+      const caseId = await resolveCaseId(codeInput.value);
+      if (!caseId) return;
+      const existing = await players.colorFor(caseId, name);
+      if (!existing || colorTouched) return;
+      selectColor(existing);
+      colorHint.textContent = `Welcome back, ${name} — this was your colour. Pick another if you like.`;
+      colorHint.hidden = false;
+    } catch { /* the join itself will report anything real */ }
+  }
   const colorSwatches = PLAYER_COLORS.map(({ label, value }) => {
     const swatch = h('button', {
       class: 'color-swatch' + (value === selectedColor ? ' selected' : ''),
@@ -53,10 +84,9 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     }) as HTMLButtonElement;
     swatch.style.background = value;
     swatch.addEventListener('click', () => {
-      selectedColor = value;
-      for (const s of colorSwatchWrap.querySelectorAll<HTMLElement>('.color-swatch')) {
-        s.classList.toggle('selected', s.dataset['color'] === value);
-      }
+      colorTouched = true;
+      colorHint.hidden = true;
+      selectColor(value);
     });
     return swatch;
   });
@@ -71,7 +101,9 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     try {
       const caseId = await resolveCaseId(codeInput.value);
       if (!caseId) { errEl.textContent = 'No case found for that code.'; joinBtn.removeAttribute('disabled'); return; }
-      const result = await joinCase(name, caseId, selectedColor);
+      // Undefined, not the swatch on screen: an untouched picker lets joinCase
+      // restore the colour this name already plays under.
+      const result = await joinCase(name, caseId, colorTouched ? selectedColor : undefined);
       if (!result.ok) {
         errEl.textContent = result.error ?? 'Could not join.';
         joinBtn.removeAttribute('disabled');
@@ -93,6 +125,8 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     }
   }
 
+  nameInput.addEventListener('change', () => void adoptExistingColor());
+  nameInput.addEventListener('blur', () => void adoptExistingColor());
   joinBtn.addEventListener('click', () => void submit());
   nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void submit(); });
   codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameInput.focus(); });
@@ -107,6 +141,7 @@ export function createJoinScreen(presetCaseCode?: string): JoinScreenHandle {
     nameInput,
     colorPickerLabel,
     colorSwatchWrap,
+    colorHint,
     errEl,
     joinBtn,
   );

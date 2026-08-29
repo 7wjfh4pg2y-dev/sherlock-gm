@@ -41,8 +41,24 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
     return { ok: false, error: 'You have been removed from this case by the Game Master.' };
   }
 
-  const color = chosenColor ?? nameToColor(name);
+  // Ownership of a note, a map mark or a board card is matched on the author's
+  // name AND colour. Someone rejoining therefore has to come back as the same
+  // pair, or they silently lose the right to touch their own things — so an
+  // untouched picker adopts the colour this name is already playing under.
+  const existing = await players.colorFor(caseId, name);
+  const color = chosenColor ?? existing ?? nameToColor(name);
   await players.join({ case_id: caseId, player_name: name, player_color: color });
+  // Deliberately rejoining under a NEW colour is allowed, but everything the
+  // player made has to follow them across, exactly as an in-case colour change
+  // does — otherwise it is orphaned in the old colour.
+  if (existing && existing !== color) {
+    await Promise.all([
+      notes.recolorPlayer(caseId, name, existing, color),
+      mapStrokes.recolorPlayer(caseId, name, existing, color),
+      boardItems.recolorPlayer(caseId, name, existing, color),
+      boardLinks.recolorPlayer(caseId, name, existing, color),
+    ]).catch(() => { /* best effort: joining still succeeds */ });
+  }
 
   const mapList: MapRow[] = [];
   if (caseData.map_id) {
