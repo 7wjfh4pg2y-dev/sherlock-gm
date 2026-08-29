@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #0e0b06; }
+    a { color: #b8892a; } a:hover { color: #f4e8ce; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0e0b06; padding: 12px 14px; display: flex; flex-direction: column;">
+
+  <!-- Header -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 14px;">
+    <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 19px; color: #f4e8ce;">Prized Meeple</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="width: 10px; height: 10px; border-radius: 50%; background: #bf5af2; display: inline-block;"></span>
+      <span style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.1em; color: #a89070;">HAZ</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display: flex; gap: 0; border-bottom: 2px solid rgba(201,169,110,0.3); overflow: hidden;">
+    <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a89070; padding: 10px 14px;">Clues</div>
+    <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a89070; padding: 10px 14px;">Board</div>
+    <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a89070; padding: 10px 14px;">Questions</div>
+    <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #f4e8ce; padding: 10px 14px; border-bottom: 2px solid #7a5c12; margin-bottom: -2px; background: rgba(201,169,110,0.06);">Solution</div>
+  </div>
+
+  <!-- Panel -->
+  <div style="flex-grow: 1; overflow: hidden; padding-top: 18px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="background: #faf2e0; border: 1px solid #c9a96e; padding: 16px 17px;">
+      <div style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a5c12;">Case closed</div>
+      <div style="display: flex; align-items: baseline; gap: 12px; margin-top: 8px;">
+        <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1; color: #14100a;">95</div>
+        <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 15px; color: #14100a;">to Holmes&rsquo;s <span style="color: #7a1515; font-weight: 700;">100</span></div>
+      </div>
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 15px; line-height: 1.55; color: #14100a; margin-top: 10px;">Four leads to Holmes&rsquo;s two. He allowed you the mirror and took five for the walk to it.</div>
+    </div>
+
+    <!-- The entry point -->
+    <div style="border: 1px solid #c9a96e; background: #f4e8ce; padding: 15px 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; gap: 13px; align-items: flex-start;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7a5c12" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+          <path d="M5 3.5h9.5L19 8v12.5H5z"></path>
+          <path d="M14.5 3.5V8H19"></path>
+          <path d="M8 12.5h8M8 15.5h8M8 18h5"></path>
+        </svg>
+        <div>
+          <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 15px; color: #14100a;">Case dossier</div>
+          <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 14px; line-height: 1.5; color: #14100a; margin-top: 3px;">Every lead you visited, your answers beside Holmes&rsquo;s, and the board as you left it &mdash; on one page.</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 9px;">
+        <div style="flex-grow: 1; text-align: center; font-family: 'Courier New', Courier, monospace; font-size: 13px; letter-spacing: 0.02em; background: #14100a; color: #f4e8ce; padding: 13px 14px;">Open dossier</div>
+        <div style="text-align: center; font-family: 'Courier New', Courier, monospace; font-size: 13px; border: 1px solid #7a5c12; color: #7a5c12; padding: 13px 16px;">Share</div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a5c12; margin-bottom: 9px;">Holmes&rsquo;s solution</div>
+      <div style="background: #faf2e0; border: 1px solid #c9a96e; padding: 15px 16px; font-family: 'IM Fell English', Georgia, serif; font-size: 15px; line-height: 1.62; color: #14100a;">&ldquo;Elementary, Wiggins, though I confess this case tested my nerve rather more than most, seated as I was between two of the most quietly terrifying people I have ever shared a table with.<br><br>&ldquo;Let us dispense first with San and Rashwan. Every instinct in the room screamed their guilt &mdash; the stillness, the knuckle-cracking, the general sense that crossing either of them&hellip;</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

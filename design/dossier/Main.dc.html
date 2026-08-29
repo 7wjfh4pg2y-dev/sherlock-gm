@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Courier+Prime:wght@400;700&family=Special+Elite&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #faf2e0; }
+    a { color: #7a5c12; } a:hover { color: #b8892a; }
+  </style>
+</helmet>
+
+<div style="width: 794px; box-sizing: border-box; padding: 54px 56px 44px; background: #faf2e0; color: #14100a;">
+
+  <!-- Masthead -->
+  <div style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Courier Prime', 'Courier New', monospace; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #7a5c12;">
+    <div>Case File No. 3</div>
+    <div>Closed 27 August 2026</div>
+  </div>
+
+  <div style="border-bottom: 3px double #c9a96e; padding-bottom: 20px; margin-top: 10px;">
+    <h1 style="margin: 0; font-family: 'Playfair Display', 'Palatino Linotype', Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1.12; letter-spacing: -0.01em;">The Case of the Prized Meeple</h1>
+    <div style="display: flex; gap: 28px; margin-top: 14px; font-family: 'IM Fell English', Georgia, serif; font-size: 16px; color: #14100a;">
+      <div><span style="color: #7a5c12;">Game Master</span> &nbsp;Zim</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="color: #7a5c12;">Investigators</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #bf5af2; display: inline-block;"></span>Haz</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #0a84ff; display: inline-block;"></span>Shah</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #34c759; display: inline-block;"></span>Hazwar</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #ff9500; display: inline-block;"></span>Rashwan</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 26px; border: 1px solid #c9a96e; background: #f4e8ce;">
+    <div style="padding: 18px 22px; border-right: 1px solid #c9a96e;">
+      <div style="font-family: 'Courier Prime', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Your score</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 46px; font-weight: 700; line-height: 1;">95</div>
+    </div>
+    <div style="padding: 18px 22px; border-right: 1px solid #c9a96e;">
+      <div style="font-family: 'Courier Prime', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Holmes</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 46px; font-weight: 700; line-height: 1; color: #7a1515;">100</div>
+    </div>
+    <div style="padding: 18px 22px; display: flex; flex-direction: column; justify-content: center;">
+      <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 15px; color: #1a4020;">Case solved</div>
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 15px; line-height: 1.5; margin-top: 4px;">Five short of Holmes, who needed two leads to your four.</div>
+    </div>
+  </div>
+
+  <!-- Leads + marked -->
+  <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 34px; margin-top: 32px;">
+
+    <div>
+      <h2 style="margin: 0 0 12px; font-family: 'Special Elite', 'Courier New', monospace; font-size: 16px; letter-spacing: 0.04em; padding-bottom: 6px; border-bottom: 1px solid rgba(180,140,60,0.4);">Leads visited, in order</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+
+        <div style="display: flex; gap: 12px; align-items: baseline;">
+          <div style="font-family: 'Courier Prime', monospace; font-size: 13px; color: #a89070; width: 18px;">01</div>
+          <div style="flex-grow: 1;">
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 14px;">The Game Table</div>
+            <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: #7a5c12; line-height: 1.4;">The meeple at 8:15, gone by 8:22 &middot; the flare &middot; the April letter</div>
+          </div>
+          <div style="font-family: 'Courier Prime', monospace; font-size: 12px; color: #a89070;">20:41</div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: baseline;">
+          <div style="font-family: 'Courier Prime', monospace; font-size: 13px; color: #a89070; width: 18px;">02</div>
+          <div style="flex-grow: 1;">
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 14px;">Witness: San <span style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.12em; color: #7a5c12; border: 1px solid #c9a96e; padding: 1px 5px; margin-left: 6px;">FREE LEAD</span></div>
+            <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: #7a5c12; line-height: 1.4;">Shah asked her to put the lights out. She refused.</div>
+          </div>
+          <div style="font-family: 'Courier Prime', monospace; font-size: 12px; color: #a89070;">20:58</div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: baseline;">
+          <div style="font-family: 'Courier Prime', monospace; font-size: 13px; color: #a89070; width: 18px;">03</div>
+          <div style="flex-grow: 1;">
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 14px;">Under the Table</div>
+            <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: #7a5c12; line-height: 1.4;">A hand-mirror, and a note signed &ldquo;S&rdquo; to &ldquo;H&rdquo;</div>
+          </div>
+          <div style="font-family: 'Courier Prime', monospace; font-size: 12px; color: #a89070;">21:16</div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: baseline;">
+          <div style="font-family: 'Courier Prime', monospace; font-size: 13px; color: #a89070; width: 18px;">04</div>
+          <div style="flex-grow: 1;">
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 14px;">Witness: Haz &mdash; and the Coat</div>
+            <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: #7a5c12; line-height: 1.4;">Basswood varnish in the pocket of an abandoned overcoat</div>
+          </div>
+          <div style="font-family: 'Courier Prime', monospace; font-size: 12px; color: #a89070;">21:34</div>
+        </div>
+
+      </div>
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(180,140,60,0.4); font-family: 'IM Fell English', Georgia, serif; font-size: 14px; font-style: italic; color: #7a5c12;">Holmes reached the same conclusion from leads 1 and 3 alone.</div>
+    </div>
+
+    <div>
+      <h2 style="margin: 0 0 12px; font-family: 'Special Elite', 'Courier New', monospace; font-size: 16px; letter-spacing: 0.04em; padding-bottom: 6px; border-bottom: 1px solid rgba(180,140,60,0.4);">Marked important</h2>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <div style="display: flex; gap: 9px; align-items: flex-start; background: #f4e8ce; border-left: 3px solid #7a1515; padding: 9px 11px;">
+          <div>
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 13px;">Under the Table</div>
+            <div style="font-family: 'Caveat', cursive; font-size: 17px; color: #14100a; line-height: 1.25; margin-top: 2px;">&ldquo;S and H &mdash; count the names in the room&rdquo; &mdash; Shah</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 9px; align-items: flex-start; background: #f4e8ce; border-left: 3px solid #7a1515; padding: 9px 11px;">
+          <div>
+            <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 13px;">The Game Table</div>
+            <div style="font-family: 'Caveat', cursive; font-size: 17px; color: #14100a; line-height: 1.25; margin-top: 2px;">&ldquo;a mirror cannot make a room dark&rdquo; &mdash; Haz</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 16px; font-family: 'IM Fell English', Georgia, serif; font-size: 14px; line-height: 1.55; color: #7a5c12;">Two of four leads were flagged by the team during play.</div>
+    </div>
+
+  </div>
+
+  <!-- Questions -->
+  <h2 style="margin: 34px 0 0; font-family: 'Special Elite', 'Courier New', monospace; font-size: 16px; letter-spacing: 0.04em; padding-bottom: 6px; border-bottom: 1px solid rgba(180,140,60,0.4);">The questions</h2>
+
+  <div style="margin-top: 16px; border: 1px solid #c9a96e;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; background: #f4e8ce; border-bottom: 1px solid #c9a96e; padding: 11px 16px;">
+      <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 15px;">Who stole Zim&rsquo;s prize meeple, and how?</div>
+      <div style="font-family: 'Courier Prime', monospace; font-size: 12px; letter-spacing: 0.1em; color: #1a4020; white-space: nowrap;">100 / 100</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;">
+      <div style="padding: 14px 16px; border-right: 1px solid #c9a96e;">
+        <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Your answer</div>
+        <div style="font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.3; margin-top: 6px;">Shah and Hazwar. Shah flashed the lamp off the mirror to blind the table, Hazwar lifted it into his coat pocket in the three seconds.</div>
+      </div>
+      <div style="padding: 14px 16px;">
+        <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Holmes</div>
+        <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 15px; line-height: 1.55; margin-top: 6px;">Shah and Hazwar. The mirror dazzled rather than darkened &mdash; hence an untouched fuse box &mdash; and the varnish in the abandoned coat places the meeple in Hazwar&rsquo;s pocket.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 14px; border: 1px solid #c9a96e;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; background: #f4e8ce; border-bottom: 1px solid #c9a96e; padding: 11px 16px;">
+      <div style="font-family: 'Special Elite', 'Courier New', monospace; font-size: 15px;">What happened to the lights at 8:19, and what part did San play in it?</div>
+      <div style="font-family: 'Courier Prime', monospace; font-size: 12px; letter-spacing: 0.1em; color: #7a1515; white-space: nowrap;">5 / 10</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;">
+      <div style="padding: 14px 16px; border-right: 1px solid #c9a96e;">
+        <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Your answer</div>
+        <div style="font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.3; margin-top: 6px;">The mirror, not the fuse box. San was asked to help and said no.</div>
+      </div>
+      <div style="padding: 14px 16px;">
+        <div style="font-family: 'Courier Prime', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7a5c12;">Holmes</div>
+        <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 15px; line-height: 1.55; margin-top: 6px;">The lights were never tampered with. San&rsquo;s refusal is why the room flared instead of going dark &mdash; the second plan, forced by the first being declined.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Board -->
+  <h2 style="margin: 34px 0 0; font-family: 'Special Elite', 'Courier New', monospace; font-size: 16px; letter-spacing: 0.04em; padding-bottom: 6px; border-bottom: 1px solid rgba(180,140,60,0.4);">The board, as you left it</h2>
+
+  <div style="position: relative; height: 216px; margin-top: 16px; background: #6f5a35; border: 1px solid #4a3a1f; overflow: hidden;">
+    <svg width="682" height="216" viewBox="0 0 682 216" style="position: absolute; top: 0; left: 0;">
+      <path d="M 118 56 Q 210 130 300 74" fill="none" stroke="rgba(20,14,6,0.5)" stroke-width="6" stroke-linecap="round" transform="translate(0,3)"></path>
+      <path d="M 118 56 Q 210 130 300 74" fill="none" stroke="#bf5af2" stroke-width="4" stroke-linecap="round"></path>
+      <path d="M 300 74 Q 420 168 528 92" fill="none" stroke="rgba(20,14,6,0.5)" stroke-width="6" stroke-linecap="round" transform="translate(0,3)"></path>
+      <path d="M 300 74 Q 420 168 528 92" fill="none" stroke="#34c759" stroke-width="4" stroke-linecap="round"></path>
+    </svg>
+
+    <div style="position: absolute; left: 40px; top: 34px; width: 156px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 5px 10px rgba(20,16,10,0.4); padding: 9px 10px;">
+      <div style="font-family: 'Courier Prime', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #7a5c12;">The Game Table</div>
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 11px; line-height: 1.35; margin-top: 3px; color: #3a2c18;">Gone between 8:15 and 8:22. The fuse box is innocent.</div>
+    </div>
+
+    <div style="position: absolute; left: 222px; top: 52px; width: 156px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 5px 10px rgba(20,16,10,0.4); padding: 9px 10px;">
+      <div style="font-family: 'Courier Prime', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #7a5c12;">Under the Table</div>
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 11px; line-height: 1.35; margin-top: 3px; color: #3a2c18;">&ldquo;H &mdash; mirror on the lamp &hellip; &mdash; S&rdquo;</div>
+    </div>
+
+    <div style="position: absolute; left: 450px; top: 70px; width: 156px; background: #f7f1e2; border: 1px solid #cbb489; box-shadow: 4px 5px 10px rgba(20,16,10,0.4); padding: 9px 10px;">
+      <div style="font-family: 'Courier Prime', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #7a5c12;">Witness: Haz</div>
+      <div style="font-family: 'IM Fell English', Georgia, serif; font-size: 11px; line-height: 1.35; margin-top: 3px; color: #3a2c18;">Varnish in the pocket of the coat they left.</div>
+    </div>
+
+    <div style="position: absolute; left: 168px; top: 106px; background: linear-gradient(168deg, #e7d6ae 0%, #d5bf90 100%); clip-path: polygon(50% 0%, 100% 16%, 100% 100%, 0% 100%, 0% 16%); padding: 13px 11px 7px; transform: rotate(-2deg); font-family: 'Special Elite', 'Courier New', monospace; font-size: 10px; color: #3a2c18;">names, counted</div>
+
+    <div style="position: absolute; left: 392px; top: 142px; background: linear-gradient(168deg, #e7d6ae 0%, #d5bf90 100%); clip-path: polygon(50% 0%, 100% 16%, 100% 100%, 0% 100%, 0% 16%); padding: 13px 11px 7px; transform: rotate(-2deg); font-family: 'Special Elite', 'Courier New', monospace; font-size: 10px; color: #3a2c18;">puts it in his pocket</div>
+  </div>
+
+  <!-- Footer -->
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 30px; padding-top: 12px; border-top: 3px double #c9a96e; font-family: 'Courier Prime', 'Courier New', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #a89070;">
+    <div>The Case of the Prized Meeple</div>
+    <div>Four leads &middot; two flagged &middot; 95 to Holmes&rsquo;s 100</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 794, "h": 1420, "title": "Dossier (print)", "print": "flow" },
+    { "file": "InApp.dc.html", "x": 914, "y": 0, "w": 390, "h": 844, "title": "Where it lives" }
+  ],
+  "annotations": [
+    { "id": "dossier-note", "x": 0, "y": -128, "w": 500, "text": "The end-of-case dossier: one page, generated when the solution is revealed.\nEverything on it already exists in the app — leads, flags, answers, score, board." },
+    { "id": "inapp-note", "x": 914, "y": -128, "w": 390, "text": "The Solution tab gains one card. Nothing else moves." }
+  ],
+  "launch": { "view": "canvas" }
+}
