@@ -343,7 +343,7 @@
   <header class="masthead">
     <p class="eyebrow">Sherlock Holmes · Consulting Detective</p>
     <h1>Baker Street Field Trials</h1>
-    <p class="standfirst">You're testing the app, not solving the case — though you'll do a bit of both. Work down the list, tick what works, and tell me what doesn't. Half an hour, give or take.</p>
+    <p class="standfirst">You're testing the app, not solving the case — though you'll do a bit of both. Work down the list, tick what works, and tell me what doesn't. Three quarters of an hour, give or take.</p>
   </header>
 
   <div class="progress">
@@ -546,7 +546,7 @@
     <input type="checkbox" data-c="clue-gap" data-role="player">
     <div class="chips"><span class="chip">Phone</span></div>
     <p class="do">With a clue open, look at the space between the clue and the notepad below.</p>
-    <p class="expect">No big empty black gap, and the notepad shouldn't cover the text. <strong>This is the bug I've been chasing</strong> — please look hard here.</p>
+    <p class="expect">No big empty black gap, and the notepad shouldn't cover the text. <strong>This one was broken for weeks</strong> — I think it's fixed, so please look hard and tell me if it isn't.</p>
   </div>
 
   <div class="check">
@@ -609,14 +609,26 @@
 
   <div class="check">
     <input type="checkbox" data-c="board-open">
-    <p class="do">Open the <strong>Board</strong> tab. Drag the background to move around; pinch or scroll to zoom.</p>
-    <p class="expect">An empty cork board with a toolbar. Zooming should keep the spot under your finger roughly put.</p>
+    <p class="do">Open the <strong>Board</strong> tab &mdash; it sits right after Clues. Drag the background to move around. Two fingers on a trackpad <em>slides</em> the board; pinch, or hold <code>Ctrl</code> while scrolling a mouse wheel, to zoom. The <code>+</code> and <code>&minus;</code> buttons do the same.</p>
+    <p class="expect">An empty cork board with a toolbar. Zooming keeps the spot under your finger roughly put, and scrolling should never zoom by accident.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-lost">
+    <p class="do">Now try to get lost: zoom all the way out, then drag hard towards each edge.</p>
+    <p class="expect">You can't. Zooming out stops once the whole board fits, and the edges stop you rather than letting you drift into empty space.</p>
   </div>
 
   <div class="check">
     <input type="checkbox" data-c="board-pin">
-    <p class="do">Hit <strong>Add clue</strong> and pin two or three clues.</p>
+    <p class="do">Hit <strong>Add clue</strong> and pin two or three clues. Include one that has a <em>picture</em>.</p>
     <p class="expect">The drawer only offers clues that are revealed and not already pinned. Everyone else sees them appear.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-image">
+    <p class="do">On the card with a picture: tap the picture. Then drag that same card <em>by</em> the picture and let go.</p>
+    <p class="expect">Tapping opens it full size. Dragging just moves the card &mdash; letting go shouldn't throw the picture open in your face.</p>
   </div>
 
   <div class="check">
@@ -634,7 +646,19 @@
   <div class="check">
     <input type="checkbox" data-c="board-link">
     <p class="do">Hit <strong>Link</strong>, then tap two cards. Now tap the string itself and give it a label &mdash; <em>contradicts</em>, <em>same night</em>, whatever fits.</p>
-    <p class="expect">Wool joins the two tacks and sags between them, following the cards when either moves. Tapping it opens a little editor, where you can label it or cut it &mdash; it shouldn't just vanish on a tap.</p>
+    <p class="expect">Wool joins the two tacks and sags between them, following the cards when either moves. Tapping it opens a little editor, where you can label it or cut it &mdash; it shouldn't just vanish on a tap. The label hangs off the string on its own little tag.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-colour">
+    <p class="do">In that same editor, change the string's colour, save, then open it again.</p>
+    <p class="expect">The whole strand changes colour for everyone, and the colour you picked is still selected when you reopen it. The first swatch means &ldquo;keep following whoever drew it&rdquo;.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-tools">
+    <p class="do">Fold the toolbar away with <code>&laquo;</code>, look at the board, then bring it back.</p>
+    <p class="expect">It collapses to a single handle without moving the board underneath. Especially worth a look on a phone, where the toolbar covers real estate.</p>
   </div>
 
   <div class="check">
@@ -648,6 +672,13 @@
     <div class="chips"><span class="chip">Phone</span><span class="chip">Desktop</span></div>
     <p class="do">Now all move cards around <em>at the same time</em> for a minute. Deliberately grab the same card as someone else.</p>
     <p class="expect">No cards vanish, freeze, or snap back to old spots, and the board stays pannable throughout.</p>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" data-c="board-clear" data-role="gm">
+    <div class="chips"><span class="chip chip--gm">GM</span></div>
+    <p class="do">Last thing in this round, once everyone's finished poking at it: hit <strong>Clear</strong>.</p>
+    <p class="expect">It asks first, and tells you how much it's about to remove. Then the board empties for everyone at once.</p>
   </div>
 
   <div class="check">
