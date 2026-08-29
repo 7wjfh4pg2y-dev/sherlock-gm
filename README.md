@@ -75,6 +75,13 @@ Each of these was a real bug. They are cheap to reintroduce.
   flight.
 - **Handlers must not close over a row.** Elements outlive the rows they were
   built from; look the row up per gesture or you get stale coordinates.
+- **A captured pointer delivers its `click` to the capturing element.** Board
+  cards call `setPointerCapture` so a fast drag cannot slide off the card and
+  drop it. That also redirects the click, so a listener on anything *inside* a
+  card — the clue photograph, say — silently never runs. Hang the behaviour off
+  the end of the gesture instead: note on pointerdown what the press started on,
+  and act on pointerup if the pointer never travelled `DRAG_MIN`. That framing
+  also stops a drag ending over the photo from opening it.
 
 ## Auto-update
 
