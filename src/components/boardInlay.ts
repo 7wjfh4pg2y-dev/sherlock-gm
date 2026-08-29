@@ -26,6 +26,7 @@ import { stripMarkup } from '../util/richText';
 import { PLAYER_COLORS } from '../data/colors';
 import { toast } from './toast';
 import { openTitledModal } from './modal';
+import { openMapViewer } from './mapViewer';
 import { confirmDelete } from './confirmDelete';
 import type { BoardItemRow, BoardLinkRow, ClueRow } from '../data/types';
 
@@ -110,6 +111,11 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   let linkMode = false;
   let linkFrom: string | null = null;
   let drawerOpen = false;
+  /** Did this gesture start on a card's photograph? A tap there opens the
+   *  clue full size. It cannot be an ordinary click listener on the image:
+   *  the card takes pointer capture to drag, and a captured pointer delivers
+   *  the click to the CARD, so a listener on the image never runs. */
+  let downOnImage = false;
   // Positions we are mid-drag on, so realtime echoes can't yank them away.
   const localPos = new Map<string, { x: number; y: number }>();
   // Card elements by item id, so refresh() can patch rather than rebuild.
@@ -328,6 +334,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       dragDX = p.x - cur.x;
       dragDY = p.y - cur.y;
       dragOrigin = cur;
+      downOnImage = !!(e.target as Element | null)?.closest?.('.board-card-img');
       localPos.set(id, cur);
       card.setPointerCapture(e.pointerId);
       card.classList.add('dragging');
@@ -362,8 +369,10 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
       pz.setPanEnabled(!linkMode);
       if (!next) return;
       const moved = origin ? Math.hypot(next.x - origin.x, next.y - origin.y) > DRAG_MIN : true;
-      if (moved) void commitMove(id, next.x, next.y);
-      else localPos.delete(id);
+      if (moved) { void commitMove(id, next.x, next.y); return; }
+      localPos.delete(id);
+      // A tap that never became a drag, on the picture: show it full size.
+      if (downOnImage) openClueImage(id);
     }
     card.addEventListener('pointerup', endDrag);
     card.addEventListener('pointercancel', endDrag);
@@ -421,7 +430,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     const clue = clueFor(item);
     return [
       item.kind, item.player_color, item.text,
-      clue?.location_name ?? '', clue?.clue_text ?? '',
+      clue?.location_name ?? '', clue?.clue_text ?? '', clue?.image_url ?? '',
       canDelete(item) ? '1' : '0',
     ].join('\u0000');
   }
@@ -449,7 +458,36 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     }
 
     card.classList.toggle('board-card--note', item.kind === 'note');
-    card.append(pin, head, h('div', { class: 'board-card-body', text: body || '…' }));
+    card.append(pin, head);
+
+    // Plenty of clues in this game ARE the image — a torn note, a ledger page —
+    // with little or no transcribed text. Without this the card was a code and
+    // an ellipsis, and the board lost the thing the players were reasoning from.
+    if (clue?.image_url) {
+      const img = document.createElement('img');
+      img.className = 'board-card-img';
+      img.alt = clue.location_name;
+      // Cards off-screen at this zoom cost nothing until they are looked at:
+      // these are full-size photographs, and a board of them decoded at once is
+      // how you exhaust an iPhone's memory.
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.draggable = false;      // or the browser's own drag hijacks the card
+      img.src = clue.image_url;
+      card.append(img);
+    }
+    if (body || !clue?.image_url) {
+      card.append(h('div', { class: 'board-card-body', text: body || '…' }));
+    }
+  }
+
+  /** A card is a thumbnail; a clue photograph is unreadable at 240px. Open it
+   *  in the same viewer the Clues tab uses. Resolved from the id at tap time,
+   *  never from a captured row. */
+  function openClueImage(id: string): void {
+    const row = rowOf(id);
+    const clue = row && clueFor(row);
+    if (clue?.image_url) openMapViewer(clue.image_url, clue.location_name);
   }
 
   function place(card: HTMLElement, p: { x: number; y: number }): void {

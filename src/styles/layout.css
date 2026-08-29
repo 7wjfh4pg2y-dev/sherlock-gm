@@ -1478,6 +1478,13 @@ input[type="date"].gm-input { color-scheme: dark; }
   line-height: 1.5; color: #3a2c18; white-space: pre-wrap;
 }
 .board-card--note .board-card-body { font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.35; }
+/* A clue's photograph, pinned to the card like a print. Capped so a tall
+   scan cannot turn one card into a column taller than the board. */
+.board-card-img {
+  display: block; width: 100%; max-height: 200px; object-fit: cover;
+  border: 1px solid #cbb489; background: #efe7d4; cursor: zoom-in;
+  user-select: none; -webkit-user-drag: none;
+}
 
 /* Toolbar + drawer float over the surface. */
 .board-toolbar {
