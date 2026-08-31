@@ -807,7 +807,7 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 
 /* ── "How to play" header button (small, circular ?) ── */
-.rules-btn { white-space: nowrap; }
+.rules-btn { font-weight: 700; min-width: 32px; padding-left: 0; padding-right: 0; text-align: center; }
 
 .gm-map-panel { padding: 0; height: 100%; min-height: 0; display: flex; }
 .gm-newspaper-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -1205,11 +1205,6 @@ input[type="date"].gm-input { color-scheme: dark; }
      30px tall — small for the thing that gets you your screen back. */
   .player-notebook .nb-action-tab { padding-top: 13px; padding-bottom: 15px; }
 
-  /* The header buttons carry words rather than glyphs, and on a phone all of
-     them plus the case name do not fit at desktop padding. Tightening them is
-     what keeps the header to a single 30px row instead of three. */
-  .player-header .btn-sm, .gm-header .btn-sm { padding: 6px 8px; font-size: 0.63rem; }
-  .player-header-right { gap: 5px; }
 }
 
 /* ── Color picker (join screen + mid-session) ── */

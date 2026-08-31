@@ -184,7 +184,7 @@ export function createPlayerScreen(): ScreenHandle {
 
   const rulesBtn = h('button', {
     class: 'btn btn-secondary btn-sm rules-btn',
-    text: 'How to Play',
+    text: '?',
     attrs: { title: 'How to play', 'aria-label': 'How to play' },
     on: { click: () => openRulesModal() },
   });
