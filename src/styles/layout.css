@@ -1423,7 +1423,7 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 /* The bit of wool the tag dangles from. */
 .board-strand-stub { stroke-width: 3; stroke-linecap: round; opacity: 0.9; }
-.board-strand-hit { stroke-width: 26; pointer-events: stroke; cursor: pointer; }
+.board-strand-hit { stroke-width: var(--strand-hit, 46); pointer-events: stroke; cursor: pointer; }
 .board-strand:hover .board-strand-body { stroke-width: 6.5; }
 .board-strand:hover .board-strand-twist { stroke-width: 6.5; opacity: 0.46; }
 

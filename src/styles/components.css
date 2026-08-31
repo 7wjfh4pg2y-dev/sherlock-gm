@@ -239,7 +239,10 @@
 .directory-search-icon { font-size: 0.85rem; color: var(--sepia); flex-shrink: 0; line-height: 1; opacity: 0.7; }
 .directory-search-input { flex: 1; font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.88rem; padding: 8px 0; border: none; background: transparent; color: var(--ink); outline: none; min-width: 0; }
 .directory-search-input::placeholder { color: var(--fog); }
-.directory-category-select { font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.82rem; padding: 8px 10px; border: none; background: transparent; color: var(--ink); cursor: pointer; max-width: 170px; outline: none; }
+/* min-width:0 is what keeps this inside the bordered row: a <select> is sized
+   by its widest option, and without it "All Categories" (or a long category)
+   pushes straight out through the border on a phone. */
+.directory-category-select { font-family: 'Courier Prime', 'Courier New', monospace; font-size: 0.82rem; padding: 8px 10px; border: none; background: transparent; color: var(--ink); cursor: pointer; flex: 0 1 auto; min-width: 0; max-width: 170px; text-overflow: ellipsis; outline: none; }
 .directory-results-info { font-family: 'Courier New', Courier, monospace; font-size: 0.64rem; letter-spacing: 0.12em; color: var(--fog); text-transform: uppercase; margin-bottom: 6px; min-height: 15px; }
 .directory-results { overflow-y: auto; flex: 1; border-top: 1px solid rgba(180,140,60,0.35); }
 .directory-empty { font-family: 'IM Fell English', Georgia, serif; font-size: 0.88rem; font-style: italic; color: var(--fog); padding: 28px 16px; text-align: center; }

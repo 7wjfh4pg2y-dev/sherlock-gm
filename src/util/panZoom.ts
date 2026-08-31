@@ -187,7 +187,12 @@ export function attachPanZoom(
       pinchStartDist = touchDist(e.touches[0], e.touches[1]);
       pinchStartScale = scale;
     } else if (e.touches.length === 1 && panEnabled) {
-      e.preventDefault();
+      // Deliberately NOT preventDefault here. Cancelling a touchstart also
+      // cancels the click the browser would synthesise from the tap, which
+      // silently killed every click-driven interaction inside a pan/zoom
+      // layer on a phone: tapping a string to label it, and tapping cards in
+      // link mode. Scrolling is already prevented by touch-action: none on
+      // the viewport (set below), so the preventDefault bought nothing.
       dragging = true;
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;

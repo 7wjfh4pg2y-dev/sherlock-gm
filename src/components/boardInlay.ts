@@ -93,10 +93,22 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   const pz: PanZoomHandle = attachPanZoom(viewport, surface, {
     min: 0.2, max: 2, origin: 'top-left',
     bounds: { width: BOARD_W, height: BOARD_H },
+    onTransform: () => sizeHitAreas(),
   });
+
+  /** The invisible stroke that catches a tap on a strand is measured in BOARD
+   *  units, so zoom shrinks it on screen: at the default 0.5 a 26-unit target
+   *  is 13 real pixels — a third of a fingertip, which is why a phone could
+   *  not tap a string at all. Keep it a constant size on SCREEN instead. */
+  const HIT_SCREEN_PX = 46;
+  function sizeHitAreas(): void {
+    const { scale } = pz.getTransform();
+    surface.style.setProperty('--strand-hit', `${HIT_SCREEN_PX / (scale || 1)}`);
+  }
   // A comfortable reading zoom to start and to reset to; the floor above is
   // whatever fits the board, which is usually further out than this.
   pz.setFitScale(0.5);
+  sizeHitAreas();
 
   // The zoom floor depends on viewport size, so a rotation or a resized window
   // has to re-clamp — otherwise you can end up below the floor, looking at the

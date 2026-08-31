@@ -358,11 +358,20 @@ export function createPlayerScreen(): ScreenHandle {
 
   async function deleteNote(note: NoteRow): Promise<void> {
     if (!(await confirmDelete('Delete this note?'))) return;
-    const caseId = store.getState().currentCaseId;
+    // Optimistic, like every other mutation here. This used to await the
+    // delete AND a full re-list of the case's notes before the row went away —
+    // two round trips, which on a phone read as the button not working.
+    store.set({ notes: store.getState().notes.filter((n) => n.id !== note.id) });
     try {
       await noteRepo.remove(note.id);
-      if (caseId) store.set({ notes: await noteRepo.listForCase(caseId) });
-    } catch { toast('Could not delete note.'); }
+    } catch {
+      // Put back just this note, against CURRENT state, and only if a realtime
+      // event has not already restored it.
+      if (!store.getState().notes.some((n) => n.id === note.id)) {
+        store.set({ notes: [...store.getState().notes, note] });
+      }
+      toast('Could not delete note.');
+    }
   }
 
   async function saveEdit(note: NoteRow, text: string): Promise<void> {

@@ -74,10 +74,17 @@ export function createNotebook(
   const element = h('div', { class: 'notebook' }, tabBar, paper);
 
   if (opts.mobileControls) {
+    // A phone held sideways has ~390px of height, and the notebook takes 40% of
+    // it — which left a playtester unable to see anything past it. Start folded
+    // when the screen is that short; portrait is untouched, and either way one
+    // tap changes it.
+    const startCollapsed = window.matchMedia('(max-height: 520px)').matches;
+    if (startCollapsed) element.classList.add('notebook--collapsed');
+
     // ── Collapse tab ──
     const collapseTab = h('button', {
-      class: 'nb-tab nb-action-tab', text: '▾',
-      attrs: { type: 'button', title: 'Collapse notes' },
+      class: 'nb-tab nb-action-tab', text: startCollapsed ? '▴' : '▾',
+      attrs: { type: 'button', title: startCollapsed ? 'Expand notes' : 'Collapse notes' },
     });
     collapseTab.addEventListener('click', () => {
       const collapsed = element.classList.toggle('notebook--collapsed');
