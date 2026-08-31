@@ -107,7 +107,13 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
   }
   // A comfortable reading zoom to start and to reset to; the floor above is
   // whatever fits the board, which is usually further out than this.
-  pz.setFitScale(0.5);
+  //
+  // Phones open much closer in. At 0.5 a card is 120px wide and its ✕ is a
+  // 17px target — the board's whole vocabulary arrives at half the size it is
+  // drawn at, on the screen with the least room to spare. Seeing fewer cards
+  // is the right trade on a small screen; you can always zoom out.
+  const FIT_SCALE = window.matchMedia('(max-width: 860px)').matches ? 0.85 : 0.5;
+  pz.setFitScale(FIT_SCALE);
   sizeHitAreas();
 
   // The zoom floor depends on viewport size, so a rotation or a resized window
@@ -875,7 +881,7 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     // reset() alone lands on the board's top-left corner, which after any
     // panning is usually empty — it reads as "my board got wiped". Go to the
     // team's actual arrangement instead.
-    pz.setFitScale(0.5);
+    pz.setFitScale(FIT_SCALE);
     const items = visibleItems();
     if (!items.length) return;
     const xs = items.map((i) => posOf(i).x), ys = items.map((i) => posOf(i).y);

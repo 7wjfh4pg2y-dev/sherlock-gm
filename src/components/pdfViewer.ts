@@ -208,7 +208,10 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
       pinchStartDist = touchDist(e.touches[0], e.touches[1]);
       pinchStartZoom = zoom;
     } else if (e.touches.length === 1) {
-      e.preventDefault();
+      // No preventDefault: cancelling a touchstart also cancels the click the
+      // browser synthesises from the tap, which silently kills every
+      // click-driven control inside this layer. That shipped once already in
+      // panZoom. touch-action: none (set below) is what stops the scroll.
       startDrag(e.touches[0].clientX, e.touches[0].clientY);
     }
   }

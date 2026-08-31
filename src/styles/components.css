@@ -325,3 +325,28 @@
 .pdf-viewer-pages { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; margin: 0 auto; }
 .pdf-viewer-page { display: block; box-shadow: 0 0 60px rgba(122,92,18,0.3); border: 1px solid var(--sepia); background: #fff; }
 .pdf-viewer-status { color: var(--fog); font-style: italic; padding: 80px 20px; font-size: 1.1rem; }
+
+/* ── Touch-screen form fields ──
+   iOS Safari zooms the entire page when a field smaller than 16px takes
+   focus, and nothing zooms it back out afterwards: tap the clue search and
+   the whole app lurches, then stays lurched. Every field on a touch screen is
+   therefore 16px, whatever it is on the desktop. Class selectors, not bare
+   element ones, because each of these sets its own size and would win — and
+   this block lives at the END of the LAST stylesheet imported, or the rules it
+   is overriding win on source order instead. */
+@media (max-width: 860px) {
+  .gm-input,
+  .gm-input--district,
+  .gm-input--clue-num,
+  .field-input,
+  .ci-text-input,
+  .map-rename-input,
+  .clue-search-input,
+  .directory-search-input,
+  .directory-category-select,
+  .nb-textarea,
+  .clue-edit-textarea,
+  input, select, textarea {
+    font-size: 16px;
+  }
+}

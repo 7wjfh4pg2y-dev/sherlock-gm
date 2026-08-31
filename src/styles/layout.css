@@ -1155,6 +1155,9 @@ input[type="date"].gm-input { color-scheme: dark; }
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 600;
     height: 40vh; height: 40dvh; margin: 0;
     display: flex; flex-direction: column;
+    /* Matches the fullscreen and collapsed states: without it the feed runs
+       under the home indicator on a notched phone. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   /* Collapsed: notebook shrinks to just its tab bar (it docks itself, below),
      so the main content reclaims nearly the whole screen. */
@@ -1193,7 +1196,14 @@ input[type="date"].gm-input { color-scheme: dark; }
     -webkit-overflow-scrolling: touch;
   }
   .player-tab-bar::-webkit-scrollbar, .gm-tab-bar::-webkit-scrollbar { display: none; }
-  .player-tab-btn, .gm-tab-btn { flex: 0 0 auto; padding: 9px 13px; }
+  /* Tabs are the most-tapped thing in the app, and 9px of padding made them a
+     32px target. 44px here, deliberately only on phone-width portrait: a
+     landscape phone (≤860 but very short) needs its vertical space more than
+     it needs the extra 12px of tab, and a tablet has the room to be precise. */
+  .player-tab-btn, .gm-tab-btn { flex: 0 0 auto; padding: 15px 13px; }
+  /* Same for the notebook's own collapse / fullscreen controls, which were
+     30px tall — small for the thing that gets you your screen back. */
+  .player-notebook .nb-action-tab { padding-top: 13px; padding-bottom: 15px; }
 
   /* The header buttons carry words rather than glyphs, and on a phone all of
      them plus the case name do not fit at desktop padding. Tightening them is
