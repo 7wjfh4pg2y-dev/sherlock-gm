@@ -84,7 +84,7 @@ export function createGMScreen(): GMScreenHandle {
   });
   const rulesBtn = h('button', {
     class: 'btn btn-secondary btn-sm rules-btn',
-    text: '?',
+    text: 'How to Play',
     attrs: { title: 'How to play', 'aria-label': 'How to play' },
     on: { click: () => openRulesModal() },
   });

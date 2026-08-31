@@ -804,7 +804,7 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 
 /* ── "How to play" header button (small, circular ?) ── */
-.rules-btn { font-weight: 700; min-width: 32px; padding-left: 0; padding-right: 0; text-align: center; }
+.rules-btn { white-space: nowrap; }
 
 .gm-map-panel { padding: 0; height: 100%; min-height: 0; display: flex; }
 .gm-newspaper-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -1191,6 +1191,12 @@ input[type="date"].gm-input { color-scheme: dark; }
   }
   .player-tab-bar::-webkit-scrollbar, .gm-tab-bar::-webkit-scrollbar { display: none; }
   .player-tab-btn, .gm-tab-btn { flex: 0 0 auto; padding: 9px 13px; }
+
+  /* The header buttons carry words rather than glyphs, and on a phone all of
+     them plus the case name do not fit at desktop padding. Tightening them is
+     what keeps the header to a single 30px row instead of three. */
+  .player-header .btn-sm, .gm-header .btn-sm { padding: 6px 8px; font-size: 0.63rem; }
+  .player-header-right { gap: 5px; }
 }
 
 /* ── Color picker (join screen + mid-session) ── */
@@ -1229,11 +1235,22 @@ input[type="date"].gm-input { color-scheme: dark; }
   transition: transform 0.12s, border-color 0.12s;
 }
 .color-dot-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.9); }
-.player-header-right { display: flex; align-items: center; gap: 8px; }
+/* Never wraps: these buttons carry words now, and letting them fall onto a
+   second row costs three lines of header on a phone. The case name ellipsises
+   instead — it is the one thing here that can lose characters and still read. */
+.player-header-right { display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; gap: 8px; }
 .player-title-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .player-title-stack { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .player-title-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .player-title-row .screen-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The name may ellipsise on a phone, but it must never vanish entirely — this
+   has to sit after the rule above, which zeroes the minimum. */
+@media (max-width: 860px) {
+  .player-title-row .screen-title { min-width: 6.5rem; }
+  /* The title column is narrow on a phone, and a wrapping date turns one line
+     of header into four. It ellipsises with the name instead. */
+  .player-header .case-date-readonly { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
 .color-btn-wrap { position: relative; display: flex; align-items: center; }
 
 /* ── Presence indicator (player header) ── */
