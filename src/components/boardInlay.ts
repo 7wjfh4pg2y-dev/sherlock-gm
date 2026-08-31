@@ -16,7 +16,10 @@
 //    a laptop. attachPanZoom moves the viewport over that space.
 //
 // Ownership: anyone may MOVE a card — rearranging together is the point — but
-// only the author or the GM may DELETE one.
+// only the author or the GM may DELETE one, since a card holds someone's
+// writing. Strings are not owned at all: anyone may label, recolour or cut
+// any of them, because a connection is a claim about the case and the person
+// who spots that it is wrong is rarely the person who drew it.
 
 import { h, clear } from '../util/dom';
 import { attachPanZoom, type PanZoomHandle } from '../util/panZoom';
@@ -314,8 +317,11 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     }
   }
 
+  /** Anyone may cut any string. A connection is a claim about the case rather
+   *  than a possession, and the person who spots that it is wrong is usually
+   *  not the person who drew it. Cards stay owned — those hold someone's
+   *  writing — but a strand is the team's. */
   async function removeLink(link: BoardLinkRow): Promise<void> {
-    if (!canDelete(link)) { toast('Only the author or the GM can cut this string.'); return; }
     if (isPending(link.id)) return;
     const before = store.getState().boardLinks;
     store.set({ boardLinks: before.filter((l) => l.id !== link.id) });
@@ -669,13 +675,10 @@ export function buildBoardInlay(opts: BoardInlayOptions): BoardInlayHandle {
     const cancel = h('button', { class: 'btn btn-secondary btn-sm', text: 'Cancel' });
     const actions = h('div', { class: 'board-note-actions' }, cancel, save);
 
-    // Anyone may label a string, as anyone may move a card; cutting it stays
-    // with its author or the GM.
-    if (canDelete(link)) {
-      const cut = h('button', { class: 'btn btn-danger btn-sm', text: '✂ Cut string' });
-      cut.addEventListener('click', () => { handle.close(); void removeLink(link); });
-      actions.prepend(cut);
-    }
+    // Label, recolour and cut are all open to anyone, as moving a card is.
+    const cut = h('button', { class: 'btn btn-danger btn-sm', text: '✂ Cut string' });
+    cut.addEventListener('click', () => { handle.close(); void removeLink(link); });
+    actions.prepend(cut);
 
     function submit(): void {
       const next = field.value.trim();

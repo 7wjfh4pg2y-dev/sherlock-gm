@@ -91,7 +91,7 @@ export function createPlayerScreen(): ScreenHandle {
       // Strings deliberately KEEP their appearance: the team may be using
       // colour to mean something ("green = same night"), and one person
       // switching should not repaint their half of the board. The author's
-      // colour still moves — ownership depends on it — so the old colour is
+      // colour still moves, so "who drew this" stays true; the old colour is
       // pinned into each string's own override to hold the look steady.
       boardLinks: state.boardLinks.map((l) => (
         l.player_name === me.name && l.player_color === oldColor
