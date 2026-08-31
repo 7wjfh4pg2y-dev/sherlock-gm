@@ -794,9 +794,12 @@ input[type="date"].gm-input { color-scheme: dark; }
   font-size: 0.88rem; font-style: italic; line-height: 1.55;
 }
 .lecture-tip.open { display: block; }
-/* Pointer devices get it on hover of the row (the lecture button included). */
+/* Pointer devices get it from the `i` alone. Hovering the whole row meant the
+   tip ambushed anyone on their way to the lecture button — which is most
+   people, since that is the thing they actually came to press. */
 @media (hover: hover) {
-  .lecture-row:hover .lecture-tip { display: block; }
+  .lecture-info-btn:hover + .lecture-tip,
+  .lecture-info-btn:focus-visible + .lecture-tip { display: block; }
 }
 /* Narrow screens: span the panel rather than overflow off the side. */
 @media (max-width: 600px) {
