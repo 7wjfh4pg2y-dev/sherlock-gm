@@ -600,6 +600,21 @@ export interface PresenceMeta {
 // Single presence channel that both tracks the local player AND notifies on
 // sync events. All listeners must be added before .subscribe() — Supabase
 // throws if you call .on() on an already-subscribed channel.
+/** One row per person, keyed on the NAME alone.
+ *
+ *  Keying on name AND colour counted somebody twice the moment they changed
+ *  colour: the old meta lingers in presence state beside the new one, so the
+ *  header read "2 online" and listed the same player under both colours.
+ *  A name is unique within a case (the players table enforces it), so the name
+ *  is the identity here; later entries win, which is the current colour. */
+function dedupePresence(state: Record<string, PresenceMeta[]>): PresenceMeta[] {
+  const seen = new Map<string, PresenceMeta>();
+  for (const entries of Object.values(state)) {
+    for (const e of entries) seen.set(e.player_name, e);
+  }
+  return [...seen.values()];
+}
+
 export function joinPresence(
   caseId: string,
   meta: PresenceMeta,
@@ -608,11 +623,7 @@ export function joinPresence(
   const channel = sb.channel(`presence-${caseId}`);
   channel
     .on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState<PresenceMeta>();
-      const seen = new Map<string, PresenceMeta>();
-      for (const entries of Object.values(state))
-        for (const e of entries) seen.set(`${e.player_name}|${e.player_color}`, e);
-      onSync([...seen.values()]);
+      onSync(dedupePresence(channel.presenceState<PresenceMeta>()));
     })
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') void channel.track(meta);
@@ -628,12 +639,7 @@ export function watchPresence(
   const channel = sb.channel(`presence-watch-${caseId}`);
   channel
     .on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState<PresenceMeta>();
-      const seen = new Map<string, PresenceMeta>();
-      for (const entries of Object.values(state)) {
-        for (const e of entries) seen.set(`${e.player_name}|${e.player_color}`, e);
-      }
-      onSync([...seen.values()]);
+      onSync(dedupePresence(channel.presenceState<PresenceMeta>()));
     })
     .subscribe();
   return channel;

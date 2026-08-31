@@ -453,7 +453,9 @@ export function createGMScreen(): GMScreenHandle {
       }),
     );
     presenceChannel = watchPresence(caseId, (list) => {
-      onlineSet = new Set(list.map((p) => `${p.player_name}|${p.player_color}`));
+      // Keyed on the name alone: colour is mutable, so a meta that still
+      // carries the old one would show a player who just recoloured as offline.
+      onlineSet = new Set(list.map((p) => p.player_name));
       renderPlayers(store.getState());
     });
   }
@@ -854,7 +856,7 @@ export function createGMScreen(): GMScreenHandle {
     const kicked = s.players.filter((p) => p.is_kicked);
 
     function playerRow(p: PlayerRow, isKicked: boolean): HTMLElement {
-      const online = onlineSet.has(`${p.player_name}|${p.player_color}`);
+      const online = onlineSet.has(p.player_name);
       const dot = isKicked
         ? null
         : h('div', {
