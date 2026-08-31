@@ -38,7 +38,8 @@ export function createPlayerScreen(): ScreenHandle {
   let presencePopupOpen = false;
   let editingAnswerId: string | null = null;
   let answerDraft = '';
-  let activeTab: TabId = 'clues';
+  // The brief is where a case starts — you read it before you follow anything.
+  let activeTab: TabId = 'briefing';
   let mapInlay: MapInlayHandle | null = null;
   let boardInlay: BoardInlayHandle | null = null;
   let builtMapId: string | null = null;
@@ -87,7 +88,16 @@ export function createPlayerScreen(): ScreenHandle {
       // matches on name AND colour — miss these and a player loses the right to
       // delete their own cards the moment they change colour.
       boardItems: recolor(state.boardItems, oldColor, newColor),
-      boardLinks: recolor(state.boardLinks, oldColor, newColor),
+      // Strings deliberately KEEP their appearance: the team may be using
+      // colour to mean something ("green = same night"), and one person
+      // switching should not repaint their half of the board. The author's
+      // colour still moves — ownership depends on it — so the old colour is
+      // pinned into each string's own override to hold the look steady.
+      boardLinks: state.boardLinks.map((l) => (
+        l.player_name === me.name && l.player_color === oldColor
+          ? { ...l, color: (l.color ?? '').trim() || oldColor, player_color: newColor }
+          : l
+      )),
     });
     closeColorPopup();
     // Re-broadcast presence so other players see the new colour immediately.
@@ -97,7 +107,7 @@ export function createPlayerScreen(): ScreenHandle {
         noteRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         strokeRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
         boardItemRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
-        boardLinkRepo.recolorPlayer(caseId, me.name, oldColor, newColor),
+        boardLinkRepo.keepColorThroughRecolor(caseId, me.name, oldColor, newColor),
         playersRepo.updateColor(caseId, me.name, newColor),
       ]);
     } catch {
@@ -108,7 +118,11 @@ export function createPlayerScreen(): ScreenHandle {
         mapStrokes: recolor(cur.mapStrokes, newColor, oldColor),
         notes: recolor(cur.notes, newColor, oldColor),
         boardItems: recolor(cur.boardItems, newColor, oldColor),
-        boardLinks: recolor(cur.boardLinks, newColor, oldColor),
+        boardLinks: cur.boardLinks.map((l) => (
+          l.player_name === me.name && l.player_color === newColor
+            ? { ...l, color: l.color === oldColor ? '' : l.color, player_color: oldColor }
+            : l
+        )),
       });
       toast('Could not change colour.');
     }

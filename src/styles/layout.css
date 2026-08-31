@@ -1605,8 +1605,15 @@ input[type="date"].gm-input { color-scheme: dark; }
 }
 
 @media (max-width: 860px) {
-  .board-toolbar { top: 8px; left: 8px; padding: 4px; }
-  .board-btn { padding: 0 10px; font-size: 11px; }
+  /* Bounded to the screen: the bar is as wide as its contents, so on a phone
+     the tools ran off the right edge and took the fold handle with them —
+     the control for getting the toolbar out of the way was itself off-screen.
+     The tools scroll sideways now; the handle stays put. */
+  .board-toolbar { top: 8px; left: 8px; right: 8px; padding: 4px; }
+  .board-tools { overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .board-tools::-webkit-scrollbar { display: none; }
+  .board-btn { padding: 0 10px; font-size: 11px; flex: 0 0 auto; }
+  .board-fold { flex: 0 0 auto; }
   .board-drawer { top: 60px; left: 8px; right: 8px; width: auto; }
 }
 .board-note-modal { max-width: 440px; }

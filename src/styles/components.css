@@ -350,3 +350,14 @@
     font-size: 16px;
   }
 }
+
+/* A touch device never hovers, so the bar would sit at half opacity forever —
+   which reads as "the toolbar disappeared" — and its 28px buttons are one
+   missed tap away from dropping an unwanted pin, on a surface where every
+   stray tap does exactly that. Full opacity and full-size targets there.
+   At the end of the file deliberately: these override rules declared later
+   above, and a media query adds no specificity to win on its own. */
+@media (hover: none) {
+  .map-ctrl-bar { opacity: 1; }
+  .map-ctrl-btn { width: 44px; height: 44px; font-size: 1rem; }
+}

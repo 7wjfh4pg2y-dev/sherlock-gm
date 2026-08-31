@@ -56,7 +56,9 @@ export async function joinCase(rawName: string, caseId: string, chosenColor?: st
       notes.recolorPlayer(caseId, name, existing, color),
       mapStrokes.recolorPlayer(caseId, name, existing, color),
       boardItems.recolorPlayer(caseId, name, existing, color),
-      boardLinks.recolorPlayer(caseId, name, existing, color),
+      // Strings keep the look the team gave them; only their author's colour
+      // moves, so they can still cut their own.
+      boardLinks.keepColorThroughRecolor(caseId, name, existing, color),
     ]).catch(() => { /* best effort: joining still succeeds */ });
   }
 

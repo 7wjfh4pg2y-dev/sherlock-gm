@@ -541,7 +541,23 @@ export const boardLinks = {
   async remove(id: string): Promise<void> {
     unwrap(await sb.from('board_links').delete().eq('id', id).select());
   },
-  async recolorPlayer(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+  /** A player changing colour must NOT restyle the team's strings: a board
+   *  where green means "same night" loses its meaning if one person's switch
+   *  repaints half of it. But ownership is matched on name AND colour, so the
+   *  author's colour still has to move or they can no longer cut their own
+   *  string. Both at once: pin the current appearance into the per-string
+   *  override first, then move the author's colour on. Order matters — the
+   *  first statement selects on the OLD colour. */
+  async keepColorThroughRecolor(caseId: string, playerName: string, oldColor: string, newColor: string): Promise<void> {
+    unwrap(
+      await sb.from('board_links')
+        .update({ color: oldColor })
+        .eq('case_id', caseId)
+        .eq('player_name', playerName)
+        .eq('player_color', oldColor)
+        .eq('color', '')
+        .select(),
+    );
     unwrap(
       await sb.from('board_links')
         .update({ player_color: newColor })
