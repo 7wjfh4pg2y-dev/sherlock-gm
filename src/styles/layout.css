@@ -1205,6 +1205,18 @@ input[type="date"].gm-input { color-scheme: dark; }
      30px tall — small for the thing that gets you your screen back. */
   .player-notebook .nb-action-tab { padding-top: 13px; padding-bottom: 15px; }
 
+  /* Four controls plus the case name do not fit across a phone: at 390px they
+     overflowed and the colour dot ran into the leads counter. The word
+     "online" is the cheapest thing to lose — the number carries it. */
+  .presence-count-word { display: none; }
+  .presence-btn { padding: 4px 8px; }
+
+  /* Even then it is too tight, and a case name squeezed to "The Cas…" is not
+     worth keeping on one line. The name takes the first row and the controls
+     the second: 28px of header buys back a readable title and a row of
+     controls that are not jammed against each other. */
+  .player-header { flex-direction: column; align-items: stretch; gap: 10px; }
+
 }
 
 /* ── Color picker (join screen + mid-session) ── */

@@ -136,7 +136,12 @@ export function createPlayerScreen(): ScreenHandle {
   const colorBtnWrap = h('div', { class: 'color-btn-wrap' }, colorDot, colorPopup);
 
   // ── Presence indicator ──
-  const presenceCount = h('span', { class: 'presence-count-label', text: '0 online' });
+  // Number and word are separate so a phone can keep the count and drop the
+  // word: "3" beside a group of people reads as well as "3 online", and the
+  // header has no room for both.
+  const presenceNum = h('span', { class: 'presence-count-num', text: '0' });
+  const presenceCount = h('span', { class: 'presence-count-label' },
+    presenceNum, h('span', { class: 'presence-count-word', text: ' online' }));
   const presenceList = h('div', { class: 'presence-popup hidden' });
   const presenceBtn = h('button', {
     class: 'btn btn-secondary btn-sm presence-btn',
@@ -166,7 +171,7 @@ export function createPlayerScreen(): ScreenHandle {
 
   function updatePresence(list: PresenceMeta[]): void {
     onlinePlayers = list;
-    presenceCount.textContent = `${list.length} online`;
+    presenceNum.textContent = String(list.length);
     if (presencePopupOpen) renderPresencePopup();
   }
 
