@@ -148,11 +148,21 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     const vr = element.getBoundingClientRect();
     const pr = contentRect();
     if (!vr.width || !pr || !(pr.right - pr.left)) return false;
+    // Bounds, not a position. The map and the board CENTRE content smaller
+    // than the viewport, and that is wrong here: re-centring on every move
+    // fights the gesture, so a drag pulls one way and the page slides the
+    // other. This only ever stops the pages leaving — inside the bounds the
+    // finger is in charge, always.
     const axis = (p0: number, p1: number, v0: number, v1: number): number => {
       const pSize = p1 - p0, vSize = v1 - v0;
-      if (pSize <= vSize) return (v0 + vSize / 2) - (p0 + pSize / 2); // centre it
-      if (p0 > v0) return v0 - p0;      // gap above / left of the pages
-      if (p1 < v1) return v1 - p1;      // gap below / right of them
+      if (pSize <= vSize) {
+        // Smaller than the viewport: free to move, but not off the edge.
+        if (p0 < v0) return v0 - p0;
+        if (p1 > v1) return v1 - p1;
+        return 0;
+      }
+      if (p0 > v0) return v0 - p0;      // empty space above / left of the pages
+      if (p1 < v1) return v1 - p1;      // empty space below / right of them
       return 0;
     };
     clampDX = axis(pr.left, pr.right, vr.left, vr.right);
