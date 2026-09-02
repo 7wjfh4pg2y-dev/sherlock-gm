@@ -116,10 +116,59 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     return Math.min(1, avail / BASE_WIDTH);
   }
 
+  // Keep the pages within reach of the viewport. Panning was unbounded, so it
+  // was possible to fling a newspaper off into empty space and have to hunt
+  // for it — there is no reason to offer infinity here. Mirrors the clamp in
+  // util/panZoom: it measures the RENDERED boxes, so it does not care about
+  // transform-origin, zoom, or how many pages are stacked up.
+  let clampDX = 0, clampDY = 0;
+
+  /** The pages a viewer can actually see, in screen coordinates.
+   *
+   *  NOT pagesEl's own box: a zoomed page renders as a canvas far wider than
+   *  its wrapper, which stays viewport-width and overflows. Clamping against
+   *  the wrapper made the viewer believe the page always fitted horizontally,
+   *  and pinned it centred — you could no longer pan sideways to read a page
+   *  you had zoomed into. Child rects carry the ancestor transform, so this
+   *  is the true extent. */
+  function contentRect(): { left: number; right: number; top: number; bottom: number } | null {
+    const canvases = pagesEl.querySelectorAll('canvas');
+    if (!canvases.length) return null;
+    let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    canvases.forEach((c) => {
+      const q = c.getBoundingClientRect();
+      left = Math.min(left, q.left); right = Math.max(right, q.right);
+      top = Math.min(top, q.top); bottom = Math.max(bottom, q.bottom);
+    });
+    return { left, right, top, bottom };
+  }
+
+  function clampPan(): boolean {
+    clampDX = 0; clampDY = 0;
+    const vr = element.getBoundingClientRect();
+    const pr = contentRect();
+    if (!vr.width || !pr || !(pr.right - pr.left)) return false;
+    const axis = (p0: number, p1: number, v0: number, v1: number): number => {
+      const pSize = p1 - p0, vSize = v1 - v0;
+      if (pSize <= vSize) return (v0 + vSize / 2) - (p0 + pSize / 2); // centre it
+      if (p0 > v0) return v0 - p0;      // gap above / left of the pages
+      if (p1 < v1) return v1 - p1;      // gap below / right of them
+      return 0;
+    };
+    clampDX = axis(pr.left, pr.right, vr.left, vr.right);
+    clampDY = axis(pr.top, pr.bottom, vr.top, vr.bottom);
+    tx += clampDX;
+    ty += clampDY;
+    return clampDX !== 0 || clampDY !== 0;
+  }
+
   // Single source of truth for the live visual transform.
   function applyTransform(): void {
     const s = zoom / renderedZoom;
+    // Write first, THEN measure and correct: measuring before the write reads
+    // the previous transform, and the clamp trails the gesture by one event.
     pagesEl.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    if (clampPan()) pagesEl.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
   }
 
   async function renderPages(): Promise<void> {
@@ -127,6 +176,9 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     renderedZoom = zoom;
     pagesEl.style.transform = `translate(${tx}px, ${ty}px)`;
     await rasterizePages(doc, pagesEl, zoom);
+    // The pages are a different size now, so where they are allowed to sit has
+    // changed with them.
+    applyTransform();
   }
 
   loadDoc(url)
@@ -165,6 +217,11 @@ export function createInlinePdfViewer(url: string): InlinePdfHandle {
     tx = startTx + (clientX - startX);
     ty = startTy + (clientY - startY);
     applyTransform();
+    // Fold the correction into the baseline: this recomputes tx absolutely
+    // from the gesture start, so without this the clamp is thrown away and
+    // recomputed on every single move.
+    startTx += clampDX;
+    startTy += clampDY;
   }
   function endDrag(): void {
     if (!dragging) return;
