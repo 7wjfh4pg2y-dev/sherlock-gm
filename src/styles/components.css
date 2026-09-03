@@ -76,6 +76,9 @@
 .confirm-message {
   font-family: 'IM Fell English', Georgia, serif;
   font-size: 0.98rem; color: var(--ink); line-height: 1.6; margin: 0; padding: 18px;
+  /* Lets a confirmation break into paragraphs — the destructive ones are worth
+     more than one line, and text nodes otherwise collapse the newlines. */
+  white-space: pre-line;
 }
 .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 18px 16px; }
 

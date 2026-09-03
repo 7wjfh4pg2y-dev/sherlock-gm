@@ -65,6 +65,12 @@ export function createGMScreen(): GMScreenHandle {
         store.set({ cases: store.getState().cases.map((x) => x.id === c.id ? c : x) });
         renderCaseSelect(store.getState());
       },
+      onCaseReset: (id) => {
+        // Reload from the server rather than patching the store: a reset
+        // touches seven tables, and re-reading is both simpler and certain.
+        // Players' own screens catch up through realtime.
+        void openCase(id);
+      },
       onCaseDeleted: (id) => {
         const s = store.getState();
         store.set({ cases: s.cases.filter((c) => c.id !== id), currentCaseId: null, clues: [], players: [], notes: [] });

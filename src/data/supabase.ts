@@ -569,6 +569,45 @@ export const boardLinks = {
   },
 };
 
+// ── Reset a case for a new group ──
+// Wipes everything the last group DID, and keeps everything the GM WROTE.
+//
+// Gone: who was playing, their notes, their markings, their board, their
+// answers, and every reveal — clues go back to hidden, questions and the
+// solution back to unrevealed, the score back to unscored.
+//
+// Kept: the case itself, its brief and date, the clues and their text and
+// pictures, the questions and their official answers, the solution text, the
+// map, and which newspapers are enabled. That is the case; the rest was a
+// playthrough of it.
+//
+// There is no transaction here — PostgREST gives us one statement at a time —
+// so a failure part-way leaves a partly-reset case. That is recoverable by
+// running it again (every step is idempotent), which is why the caller says so
+// rather than pretending it is atomic.
+export async function resetCaseForNewGroup(caseId: string): Promise<void> {
+  // Play artefacts first: these are what the next group must not inherit.
+  unwrap(await sb.from('notes').delete().eq('case_id', caseId).select());
+  unwrap(await sb.from('map_strokes').delete().eq('case_id', caseId).select());
+  // Links cascade with their cards, but delete them first anyway so a failure
+  // between the two leaves no dangling string.
+  unwrap(await sb.from('board_links').delete().eq('case_id', caseId).select());
+  unwrap(await sb.from('board_items').delete().eq('case_id', caseId).select());
+  unwrap(await sb.from('question_answers').delete().eq('case_id', caseId).select());
+  unwrap(await sb.from('players').delete().eq('case_id', caseId).select());
+
+  // Then un-tell the story: everything the GM revealed goes back to hidden.
+  unwrap(await sb.from('clues').update({ revealed: false }).eq('case_id', caseId).select());
+  unwrap(await sb.from('case_questions').update({ visible: false, revealed: false }).eq('case_id', caseId).select());
+  // The solution row may not exist for a case that never had one written.
+  unwrap(
+    await sb.from('case_solutions')
+      .update({ revealed: false, score: null, score_revealed: false })
+      .eq('case_id', caseId)
+      .select(),
+  );
+}
+
 // ── Realtime ──
 // One channel per case carrying clues/players/notes changes. Callers pass a
 // single handler invoked (debounced upstream if desired) on any change to the

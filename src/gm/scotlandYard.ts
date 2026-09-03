@@ -7,7 +7,7 @@
 import { h } from '../util/dom';
 import { store, selectors } from '../state/store';
 import type { CaseRow } from '../data/types';
-import { cases as caseRepo } from '../data/supabase';
+import { cases as caseRepo, resetCaseForNewGroup } from '../data/supabase';
 import { openTitledModal } from '../components/modal';
 import { confirmDelete } from '../components/confirmDelete';
 import { toast } from '../components/toast';
@@ -20,6 +20,8 @@ export interface ScotlandYardCallbacks {
   onCaseUpdated(c: CaseRow): void;
   /** Called after a case is deleted so the screen resets to the empty state. */
   onCaseDeleted(caseId: string): void;
+  /** Play state wiped; the case itself is untouched. Reload it. */
+  onCaseReset(caseId: string): void;
 }
 
 export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
@@ -113,6 +115,41 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
         }
       });
 
+      // Hand the same case to a new group. Everything the last lot did goes;
+      // everything the GM wrote stays. Sits beside Delete because it is in the
+      // same family of irreversible things, and reads clearly against it: one
+      // ends the case, the other starts it over.
+      const resetBtn = h('button', { class: 'btn btn-danger btn-sm', text: '↺ Reset for a New Group' });
+      resetBtn.addEventListener('click', async () => {
+        const s = store.getState();
+        const revealed = s.clues.filter((c) => c.revealed).length;
+        const played = [
+          s.players.length ? `${s.players.length} player${s.players.length === 1 ? '' : 's'}` : '',
+          s.notes.length ? `${s.notes.length} note${s.notes.length === 1 ? '' : 's'}` : '',
+          s.mapStrokes.length ? `${s.mapStrokes.length} map marking${s.mapStrokes.length === 1 ? '' : 's'}` : '',
+          s.boardItems.length ? `${s.boardItems.length} board card${s.boardItems.length === 1 ? '' : 's'}` : '',
+          revealed ? `${revealed} revealed clue${revealed === 1 ? '' : 's'}` : '',
+        ].filter(Boolean);
+        const ok = await confirmDelete(
+          `Reset "${current.name}" for a new group?\n\n` +
+          (played.length ? `This clears ${played.join(', ')}, along with the team's answers and the score. ` : '') +
+          'Your clues, questions, solution, brief, map and newspapers all stay exactly as they are. It cannot be undone.',
+          'Reset',
+        );
+        if (!ok) return;
+        resetBtn.setAttribute('disabled', '');
+        try {
+          await resetCaseForNewGroup(current.id);
+          callbacks.onCaseReset(current.id);
+          toast('Case reset — ready for a new group.');
+          handle.close();
+        } catch {
+          // Each step is idempotent, so running it again finishes the job.
+          toast('Could not finish the reset — try once more.');
+          resetBtn.removeAttribute('disabled');
+        }
+      });
+
       const deleteBtn = h('button', { class: 'btn btn-danger btn-sm', text: 'Delete Case' });
       deleteBtn.addEventListener('click', async () => {
         if (!(await confirmDelete(`Delete case "${current.name}"? All clues, players, and notes will be lost.`))) return;
@@ -129,7 +166,7 @@ export function openScotlandYard(callbacks: ScotlandYardCallbacks): void {
       editSection.append(editNameInput, editOrderInput,
         h('label', { class: 'sy-field-label', text: 'Investigation date (optional)' }), editDateInput,
         editErrEl,
-        h('div', { class: 'sy-edit-row' }, editSaveBtn, deleteBtn));
+        h('div', { class: 'sy-edit-row' }, editSaveBtn, resetBtn, deleteBtn));
       body.append(editSection);
 
       // ── Clue Importer (needs an active case) ──
